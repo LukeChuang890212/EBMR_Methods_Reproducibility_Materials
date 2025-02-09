@@ -1,720 +1,297 @@
-Wang2014.0 = function(auxilliary, model.y, model.x1.names, model.x2.names, w, w.prime){
-  propensity = function(y, x, theta, L) 1/w(theta, y, x, L)
+library(stringr)             # Load the package
+library(numDeriv)
+library(R6)
 
-  r = dat$r
-  x1 = auxilliary[[1]]; x2 = auxilliary[[2]]; auxilliary.y = auxilliary[[3]];
-  if(!is.null(x1)) x1 = as.matrix(x1)
-  if(!is.null(x2)) x2 = as.matrix(x2)
-  model.x1 = NULL; model.x2 = NULL;
-  if(!is.null(model.x1.names)) model.x1 = as.matrix(dat[model.x1.names])
-  if(!is.null(model.x2.names)) model.x2 = as.matrix(dat[model.x2.names])
+MyLinearModel <- R6Class("MyLinearModel",
+                         public = list(
+                           formula = NULL,
+                           data = NULL,
+                           coefficients = NULL,
+                           residuals = NULL,
+                           fitted.values = NULL,
+                           model = NULL,
+                           
+                           # Constructor: Initialize with formula and data
+                           initialize = function(formula, data) {
+                             self$formula <- formula
+                             self$data <- data
+                           },
+                           
+                           # Fit the model
+                           fit = function() {
+                             self$model <- lm(self$formula, data = self$data)
+                             self$coefficients <- coef(self$model)
+                             self$residuals <- residuals(self$model)
+                             self$fitted.values <- fitted(self$model)
+                           },
+                           
+                           # Print method to display results like lm()
+                           print = function() {
+                             cat("Call:\n")
+                             print(self$formula)
+                             cat("\nCoefficients:\n")
+                             print(self$coefficients)
+                           },
+                           
+                           # Summary method to show detailed output
+                           summary = function() {
+                             summary(self$model)
+                           }
+                         )
+)
 
-  N = length(r)
-  discrete.dim = 0
-  if(!is.null(x1)) for(j in 1:ncol(x1)) discrete.dim = discrete.dim + length(unique(x1[,j]))
-  discrete.dim = ifelse(discrete.dim == 0, 0, discrete.dim - ncol(x1) + 1) # to avoid collinearity
-  continous.dim = ifelse(!is.null(x2), ncol(x2), 0)
-  auxilliary.dim = discrete.dim + continous.dim + 1
-
-  mnar = ifelse(is.null(model.y), 0, 1)
-  model.discrete.dim = ifelse(is.null(model.x1), 0, ncol(model.x1))
-  model.continous.dim = ifelse(is.null(model.x2), 0, ncol(model.x2))
-  param.num = c(model.discrete.dim, model.continous.dim)
-
-  M = 1+mnar+sum(param.num)+1
-  init = rep(0.5, M)
-
-  d = NULL
-  if(!is.null(x1)){
-    x1 =  as.data.frame(x1)
-    for(j in 1:ncol(x1)) x1[, j] = as.factor(x1[, j])
-    d = model.matrix(lm(rep(1, N)~., data =  x1))
-  }
-
-
-  g = function(theta){
-    g.m = matrix(NA, auxilliary.dim, N)
-    rw = r*w(theta[1:(M-1)], model.y, cbind(model.x1, model.x2), N)
-    if(discrete.dim > 0){
-      for(l in 1:discrete.dim){g.m[l,] = t(d)[l,]*(rw-1)}
-    }
-    if(continous.dim > 0){
-      for(l in (discrete.dim+1):(discrete.dim+continous.dim)) g.m[l,] = t(as.matrix(x2))[l-discrete.dim,]*(rw-1)
-    }
-    g.m[auxilliary.dim,] = y*rw-theta[M]
-    return(g.m)
-  }
-
-  G = function(g.m){
-    return(matrix(apply(g.m, 1, mean), auxilliary.dim, 1))
-  }
-
-  W = function(g.m){
-    return(solve(g.m%*%t(g.m)/N))
-  }
-
-  Gamma = function(theta){
-    gamma = array(NA, dim = c(auxilliary.dim, M, N))
-    r_w.prime = r*w.prime(theta[1:(M-1)], model.y, cbind(model.x1, model.x2), N)
-    if(discrete.dim > 0){
-      for(l in 1:discrete.dim){
-        gamma[l,1,] = t(d)[l,]*r_w.prime
-        if(mnar == 1) gamma[l,2,] = t(d)[l,]*r_w.prime*model.y
-        if(model.discrete.dim > 0){
-          for(c in (1+mnar+1):(1+mnar+param.num[1])){
-            gamma[l,c,] = t(d)[l,]*r_w.prime*t(as.matrix(model.x1))[c-(1+mnar),]
-          }
-        }
-        if(model.continous.dim > 0){
-          for(c in (1+mnar+param.num[1]+1):(1+mnar+sum(param.num))){
-            gamma[l,c,] = t(d)[l,]*r_w.prime*t(as.matrix(model.x2))[c-(1+mnar+param.num[1]),]
-          }
-        }
-      }
-    }
-    if(continous.dim > 0){
-      for(l in (discrete.dim+1):(discrete.dim+continous.dim)){
-        gamma[l,1,] = t(as.matrix(x2))[l-discrete.dim,]*r_w.prime
-        if(mnar == 1) gamma[l,2,] = t(as.matrix(x2))[l-discrete.dim,]*r_w.prime*model.y
-        if(model.discrete.dim >0){
-          for(c in (1+mnar+1):(1+mnar+param.num[1])){
-            gamma[l,c,] = t(as.matrix(x2))[l-discrete.dim,]*r_w.prime*t(as.matrix(model.x1))[c-(1+mnar),]
-          }
-        }
-        if(model.continous.dim > 0){
-          for(c in (1+mnar+param.num[1]+1):(1+mnar+sum(param.num))){
-            gamma[l,c,] = t(as.matrix(x2))[l-discrete.dim,]*r_w.prime*t(as.matrix(model.x2))[c-(1+mnar+param.num[1]),]
-          }
-        }
-      }
-    }
-    gamma[auxilliary.dim, 1:(1+mnar), ] = t(cbind(rep(1, length(auxilliary.y)), model.y)*as.vector(r_w.prime*auxilliary.y))
-    if(length(model.x1.names)+length(model.x2.names) > 0){
-      gamma[auxilliary.dim, (1+mnar+1):(M-1), ] = t(cbind(model.x1, model.x2)*as.vector(r_w.prime*auxilliary.y))
-    }
-    gamma[-auxilliary.dim, M, ] = 0
-    gamma[auxilliary.dim, M, ] = -1
-    return(apply(gamma, c(1, 2), mean))
-  }
-
-  # Gamma(theta)
-  #
-  # Gamma(theta){
-  #   Gamma.hat = array(NA, dim = c(auxilliary.dim, N, M))
-  #   for(l in 1:auxilliary.dim){
-  #     Gamma.hat[l,,] = jacobian(function(theta.v) g(theta.v)[l,], theta)
-  #   }
-  #   return(apply(Gamma.hat, c(1, 3), mean))
-  # }
-
-  obj = function(theta){
-    g.m = g(theta)
-    G.hat = G(g.m)
-    value = t(G.hat)%*%G.hat
-    return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
-  }
-
-  theta.m = matrix(init, M)
-  conv.err = 10^8
-  t = 1
-
-  while (conv.err > 10^(-8) & t < 1000){
-    opt = optim(theta.m[,t], obj, method = "L-BFGS-B")
-    theta.m = cbind(theta.m, opt$par)
-    g.m = g(theta.m[,t+1]); W.hat = W(g.m);
-    obj = function(theta){
-      g.m = g(theta); G.hat = G(g.m);
-      value = t(G.hat)%*%W.hat%*%G.hat
-      return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
-    }
-    conv.err = max(abs(theta.m[,t+1]-theta.m[,t]))
-    t = t + 1
-  }
-
-  theta.hat = theta.m[, t]
-  Gamma.hat = Gamma(theta.hat)
-  g.m = g(theta.hat); W.hat = W(g.m);
-  cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/N
-  se = sqrt(diag(cov.hat))
-
-  return(list(sol.path = theta.m, theta.hat = theta.hat, cov.hat = cov.hat,
-              se = se, lower = theta.hat-qnorm(0.975)*se, upper = theta.hat+qnorm(0.975)*se,
-              g.m = g.m, GammaW = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat,
-              model = propensity, w.prime = w.prime, model.x.names = c(model.x1.names, model.x2.names), h = t(cbind(d, x2))))
+parse_formula <- function(formula) {
+  # Convert the formula to a string
+  formula <- as.character(formula)
+  
+  # Extract the left-hand side of the formula (everything before the ~)
+  lhs <- formula[2]
+  
+  # Isolate r 
+  r <- lhs
+  
+  # Extract the right-hand side of the formula (everything after the ~)
+  rhs <- formula[3]
+  
+  # Extract the variables inside o() using regular expressions
+  y <- str_extract(rhs, "o\\(([^)]+)\\)")   # Variables in o()
+  
+  # Clean up: Remove 'o()' and split the variables (there's only one in this case)
+  y <- gsub("o\\(|\\)", "", y)
+  y <- unlist(strsplit(y, split = "\\+"))
+  
+  # Extract the rest of the variables (excluding o())
+  x <- gsub("o\\([^)]+\\)\\s*\\+?", "", rhs)
+  
+  # Clean up: Split the rest of the variables by '+' and trim whitespace
+  x <- unlist(strsplit(x, split = "\\+"))
+  x <- trimws(x)
+  
+  # Return a list with r, y, x
+  return(list(r = r, y = y, x = x))
 }
 
-Morikawa2021 = function(auxilliary, model.y, model.x1.names, model.x2.names, w, w.prime){
-  propensity = function(y, x, theta, L) 1/w(theta, y, x, L)
-
-  r = dat$r
-  x1 = auxilliary[[1]]; x2 = auxilliary[[2]]; auxilliary.y = auxilliary[[3]];
-  if(!is.null(x1)) x1 = as.matrix(x1)
-  if(!is.null(x2)) x2 = as.matrix(x2)
-
-  weighted.m = x2[, ncol(x2)]
-
-  model.x1 = NULL; model.x2 = NULL;
-  if(!is.null(model.x1.names)) model.x1 = as.matrix(dat[model.x1.names])
-  if(!is.null(model.x2.names)) model.x2 = as.matrix(dat[model.x2.names])
-
-  N = length(r)
-  discrete.dim = 0
-  if(!is.null(x1)) for(j in 1:ncol(x1)) discrete.dim = discrete.dim + length(unique(x1[,j]))
-  discrete.dim = ifelse(discrete.dim == 0, 0, discrete.dim - ncol(x1) + 1) # to avoid collinearity
-  continous.dim = ifelse(!is.null(x2), ncol(x2), 0)
-  auxilliary.dim = discrete.dim + continous.dim + 1
-
-  mnar = ifelse(is.null(model.y), 0, 1)
-  model.discrete.dim = ifelse(is.null(model.x1), 0, ncol(model.x1))
-  model.continous.dim = ifelse(is.null(model.x2), 0, ncol(model.x2))
-  param.num = c(model.discrete.dim, model.continous.dim)
-
-  M = 1+mnar+sum(param.num)+1
-  init = rep(0.5, M)
-
-  d = NULL
-  if(!is.null(x1)){
-    x1 =  as.data.frame(x1)
-    for(j in 1:ncol(x1)) x1[, j] = as.factor(x1[, j])
-    d = model.matrix(lm(rep(1, N)~., data =  x1))
-  }
-
-  g = function(theta){
-    g.m = matrix(NA, auxilliary.dim, N)
-    rw = r*w(theta[1:(M-1)], model.y, cbind(model.x1, model.x2), N)
-    if(discrete.dim > 0){
-      for(l in 1:discrete.dim){g.m[l,] = t(d)[l,]*(rw-1)}
+# Function to separate continuous and discrete variable 
+separate_variable_types <- function(x) {
+  
+  # Initialize empty lists to store continuous and discrete columns
+  x1 <- list()
+  x2 <- list()
+  
+  col_names = colnames(x)
+  x1_names = c()
+  x2_names = c()
+  
+  # Iterate through each column in the matrix 'x'
+  for (i in 1:ncol(x)) {
+    column <- x[, i]
+    
+    # Check if the column is numeric
+    if (is.numeric(column)) {
+      # If the column has more than 10 unique values, it's treated as continuous
+      if (length(unique(column)) > 10) {
+        x2[[colnames(x)[i]]] <- column
+        x2_names = c(x2_names, col_names[i])
+      } else {
+        x1[[colnames(x)[i]]] <- column
+        x1_names = c(x1_names, col_names[i])
+      }
+    } else {
+      # For non-numeric columns, treat them as discrete
+      x1[[colnames(x)[i]]] <- column
+      x1_names = c(x1_names, col_names[i])
     }
-    if(continous.dim > 0){
-      for(l in (discrete.dim+1):(discrete.dim+continous.dim)) g.m[l,] = t(as.matrix(x2))[l-discrete.dim,]*(rw-1)
-    }
-    g.m[auxilliary.dim,] = rw*(y-theta[M])-(rw-1)*weighted.m
-    return(g.m)
   }
-
-  G = function(g.m){
-    return(matrix(apply(g.m, 1, mean), auxilliary.dim, 1))
-  }
-
-  W = function(g.m){
-    return(solve(g.m%*%t(g.m)/N))
-  }
-
-  # Gamma = function(theta){
-  #   gamma = array(NA, dim = c(auxilliary.dim, M, N))
-  #   r_w.prime = r*w.prime(theta[1:(M-1)], model.y, cbind(model.x1, model.x2), N)
-  #   if(discrete.dim > 0){
-  #     for(l in 1:discrete.dim){
-  #       gamma[l,1,] = t(d)[l,]*r_w.prime
-  #       if(mnar == 1) gamma[l,2,] = t(d)[l,]*r_w.prime*model.y
-  #       if(model.discrete.dim > 0){
-  #         for(c in (1+mnar+1):(1+mnar+param.num[1])){
-  #           gamma[l,c,] = t(d)[l,]*r_w.prime*t(as.matrix(model.x1))[c-(1+mnar),]
-  #         }
-  #       }
-  #       if(model.continous.dim > 0){
-  #         for(c in (1+mnar+param.num[1]+1):(1+mnar+sum(param.num))){
-  #           gamma[l,c,] = t(d)[l,]*r_w.prime*t(as.matrix(model.x2))[c-(1+mnar+param.num[1]),]
-  #         }
-  #       }
-  #     }
-  #   }
-  #   if(continous.dim > 0){
-  #     for(l in (discrete.dim+1):(discrete.dim+continous.dim)){
-  #       gamma[l,1,] = t(as.matrix(x2))[l-discrete.dim,]*r_w.prime
-  #       if(mnar == 1) gamma[l,2,] = t(as.matrix(x2))[l-discrete.dim,]*r_w.prime*model.y
-  #       if(model.discrete.dim >0){
-  #         for(c in (1+mnar+1):(1+mnar+param.num[1])){
-  #           gamma[l,c,] = t(as.matrix(x2))[l-discrete.dim,]*r_w.prime*t(as.matrix(model.x1))[c-(1+mnar),]
-  #         }
-  #       }
-  #       if(model.continous.dim > 0){
-  #         for(c in (1+mnar+param.num[1]+1):(1+mnar+sum(param.num))){
-  #           gamma[l,c,] = t(as.matrix(x2))[l-discrete.dim,]*r_w.prime*t(as.matrix(model.x2))[c-(1+mnar+param.num[1]),]
-  #         }
-  #       }
-  #     }
-  #   }
-  #   gamma[auxilliary.dim, 1:(1+mnar), ] = t(cbind(rep(1, length(auxilliary.y)), model.y)*as.vector(r_w.prime*auxilliary.y))
-  #   if(length(model.x1.names)+length(model.x2.names) > 0){
-  #     gamma[auxilliary.dim, (1+mnar+1):(M-1), ] = t(cbind(model.x1, model.x2)*as.vector(r_w.prime*auxilliary.y))
-  #   }
-  #   gamma[-auxilliary.dim, M, ] = 0
-  #   gamma[auxilliary.dim, M, ] = -1
-  #   return(apply(gamma, c(1, 2), mean))
-  # }
-
-  Gamma = function(theta){
-    Gamma.hat = array(NA, dim = c(auxilliary.dim, N, M))
-    for(l in 1:auxilliary.dim){
-      Gamma.hat[l,,] = jacobian(function(theta.v) g(theta.v)[l,], theta)
-    }
-    return(apply(Gamma.hat, c(1, 3), mean))
-  }
-
-  obj = function(theta){
-    g.m = g(theta)
-    G.hat = G(g.m)
-    value = t(G.hat)%*%G.hat
-    return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
-  }
-
-  theta.m = matrix(init, M)
-  conv.err = 10^8
-  t = 1
-
-  while (conv.err > 10^(-8) & t < 1000){
-    opt = optim(theta.m[,t], obj, method = "L-BFGS-B")
-    theta.m = cbind(theta.m, opt$par)
-    g.m = g(theta.m[,t+1]); W.hat = W(g.m);
-    obj = function(theta){
-      g.m = g(theta); G.hat = G(g.m);
-      value = t(G.hat)%*%W.hat%*%G.hat
-      return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
-    }
-    conv.err = max(abs(theta.m[,t+1]-theta.m[,t]))
-    t = t + 1
-  }
-
-  theta.hat = theta.m[, t]
-  Gamma.hat = Gamma(theta.hat)
-  g.m = g(theta.hat); W.hat = W(g.m);
-  cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/N
-  se = sqrt(diag(cov.hat))
-
-  return(list(sol.path = theta.m, theta.hat = theta.hat, cov.hat = cov.hat,
-              se = se, lower = theta.hat-qnorm(0.975)*se, upper = theta.hat+qnorm(0.975)*se,
-              g.m = g.m, GammaW = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat,
-              model = propensity, w.prime = w.prime, model.x.names = c(model.x1.names, model.x2.names), h = t(cbind(d, x2))))
+  
+  # Convert the lists to matrices (if you want matrices, otherwise keep them as lists)
+  x1 <- as.data.frame(x1)
+  x2 <- as.data.frame(x2)
+  
+  # Return the results
+  return(list(x1 = x1, x2 = x2, x1_names = x1_names, x2_names = x2_names))
 }
 
-Wang2014.1 = function(auxilliary = list(x1, x2), model.y, model.x1.names, model.x2.names, w, w.prime, init = NULL){
-  propensity = function(y, x, theta, L) 1/w(theta, y, x, L)
-  r = dat$r
+WangShaoKim2014 = function(formula, h_x, w, data, init = NULL){
+  # Parse the formula
+  result = parse_formula(formula)
+  r = data[result$r]
+  y = data[result$y]
+  x = data[result$x]
+  
+  n = nrow(data)
+  
+  # result = separate_variable_types(x)
+  # model_x1 = result$x1
+  # model_x2 = result$x2
+  # model_x1_names = result$x1_names
+  # model_x2_names = result$x2_names
+  
+  result = separate_variable_types(h_x)
+  h_x1 = result$x1
+  h_x2 = result$x2
+  
+  propensity = function(y, x, alpha, L) 1/w(alpha, y, x, L)
 
-  x1 = auxilliary[[1]]; x2 = auxilliary[[2]];
-  if(!is.null(x1)) x1 = as.matrix(x1)
-  if(!is.null(x2)) x2 = as.matrix(x2)
+  # h_x1 = h[[1]]; h_x2 = h[[2]];
+  # if(!is.null(x1)) x1 = as.matrix(x1)
+  # if(!is.null(x2)) x2 = as.matrix(x2)
+  # 
+  # model_x1 = NULL; model_x2 = NULL;
+  # if(!is.null(model_x1_names)) model_x1 = as.matrix(dat[model_x1_names])
+  # if(!is.null(model_x2_names)) model_x2 = as.matrix(dat[model_x2_names])
 
-  model.x1 = NULL; model.x2 = NULL;
-  if(!is.null(model.x1.names)) model.x1 = as.matrix(dat[model.x1.names])
-  if(!is.null(model.x2.names)) model.x2 = as.matrix(dat[model.x2.names])
-
-  N = length(r)
-  discrete.dim = 0
-  if(!is.null(x1)) for(j in 1:ncol(x1)) discrete.dim = discrete.dim + length(unique(x1[,j]))
-  discrete.dim = ifelse(discrete.dim == 0, 0, discrete.dim - ncol(x1) + 1) # to avoid collinearity
-  continous.dim = ifelse(!is.null(x2), ncol(x2), 0)
-  auxilliary.dim = discrete.dim + continous.dim
-
-  mnar = ifelse(is.null(model.y), 0, 1)
-  model.discrete.dim = ifelse(is.null(model.x1), 0, ncol(model.x1))
-  model.continous.dim = ifelse(is.null(model.x2), 0, ncol(model.x2))
-  param.num = c(model.discrete.dim, model.continous.dim)
-
-  M = 1+mnar+length(model.x1.names) + length(model.x2.names)
-  if(is.null(init)) init = rep(0, M)
+  is.mnar = ifelse(ncol(y) == 0, 0, 1)
+  alpha_dim = 1 + is.mnar + ncol(x)
 
   d = NULL
-  if(!is.null(x1)){
-    x1 =  as.data.frame(x1)
-    for(j in 1:ncol(x1)) x1[, j] = as.factor(x1[, j])
-    d = model.matrix(lm(rep(1, N)~., data =  x1))
+  if(ncol(h_x1) > 0){
+    for(j in 1:ncol(h_x1)) h_x1[, j] = as.factor(h_x1[, j])
+    d = model.matrix(lm(rep(1, n)~., data =  h_x1))
   }
-  # x1 = as.numeric(as.matrix(x1, ncol(x1)))
-
-  g = function(theta){
-    g.m = matrix(NA, auxilliary.dim, N)
-    rw = r*w(theta, model.y, cbind(model.x1, model.x2), N)
-    if(discrete.dim > 0){
-      for(l in 1:discrete.dim){g.m[l,] = t(d)[l,]*(rw-1)}
+  
+  discrete_dim = ncol(d)
+  continuous_dim = ncol(h_x2)
+  h_dim = discrete_dim + continuous_dim
+  
+  r = as.matrix(r)
+  y = as.matrix(y)
+  x = as.matrix(x)
+  
+  g = function(alpha){
+    g.matrix = matrix(NA, n, h_dim)
+    rw = r*w(alpha, y, x, n)
+    if(discrete_dim > 0){
+      for(l in 1:discrete_dim){g.matrix[, l] = d[, l]*(rw-1)}
     }
-    if(continous.dim > 0){
-      for(l in (discrete.dim+1):(discrete.dim+continous.dim)) g.m[l,] = t(as.matrix(x2))[l-discrete.dim,]*(rw-1)
+    if(continuous_dim > 0){
+      for(l in (discrete_dim+1):(discrete_dim+continuous_dim)) g.matrix[, l] = as.matrix(h_x2)[, l-discrete_dim]*(rw-1)
     }
-    return(g.m)
+    return(g.matrix)
   }
 
-  G = function(g.m){
-    return(matrix(apply(g.m, 1, mean), auxilliary.dim, 1))
+  G = function(g.matrix){
+    return(matrix(apply(g.matrix, 2, mean), h_dim, 1))
   }
 
-  W = function(g.m){
-    return(solve(g.m%*%t(g.m)/N))
+  W = function(g.matrix){
+    return(solve(t(g.matrix)%*%g.matrix/n))
   }
 
-  Gamma = function(theta){
-    gamma = array(NA, dim = c(auxilliary.dim, M, N))
-    r_w.prime = r*w.prime(theta, model.y, cbind(model.x1, model.x2), N)
-    if(discrete.dim > 0){
-      for(l in 1:discrete.dim){
-        gamma[l,1,] = t(d)[l,]*r_w.prime
-        if(mnar == 1) gamma[l,2,] = t(d)[l,]*r_w.prime*model.y
-        if(model.discrete.dim > 0){
-          for(c in (1+mnar+1):(1+mnar+param.num[1])){
-            gamma[l,c,] = t(d)[l,]*r_w.prime*t(as.matrix(model.x1))[c-(1+mnar),]
-          }
-        }
-        if(model.continous.dim > 0){
-          for(c in (1+mnar+param.num[1]+1):(1+mnar+sum(param.num))){
-            gamma[l,c,] = t(d)[l,]*r_w.prime*t(as.matrix(model.x2))[c-(1+mnar+param.num[1]),]
-          }
-        }
-      }
+  Gamma = function(alpha){
+    Gamma.arr = array(NA, dim = c(h_dim, n, alpha_dim))
+    for(l in 1:h_dim){
+      Gamma.arr[l,,] = jacobian(function(alpha) g(alpha)[, l], alpha)
     }
-    if(continous.dim > 0){
-      for(l in (discrete.dim+1):(discrete.dim+continous.dim)){
-        gamma[l,1,] = t(as.matrix(x2))[l-discrete.dim,]*r_w.prime
-        if(mnar == 1) gamma[l,2,] = t(as.matrix(x2))[l-discrete.dim,]*r_w.prime*model.y
-        if(model.discrete.dim >0){
-          for(c in (1+mnar+1):(1+mnar+param.num[1])){
-            gamma[l,c,] = t(as.matrix(x2))[l-discrete.dim,]*r_w.prime*t(as.matrix(model.x1))[c-(1+mnar),]
-          }
-        }
-        if(model.continous.dim > 0){
-          for(c in (1+mnar+param.num[1]+1):(1+mnar+sum(param.num))){
-            gamma[l,c,] = t(as.matrix(x2))[l-discrete.dim,]*r_w.prime*t(as.matrix(model.x2))[c-(1+mnar+param.num[1]),]
-          }
-        }
-      }
-    }
-    return(apply(gamma, c(1, 2), mean))
+    return(apply(Gamma.arr, c(1, 3), mean))
   }
 
-  obj = function(theta){
-    g.m = g(theta)
-    G.hat = G(g.m)
+  obj = function(alpha){
+    g.matrix = g(alpha)
+    G.hat = G(g.matrix)
     value = t(G.hat)%*%G.hat
     return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
   }
-
-  # theta.m = matrix(rep(0, (1+1+p)), (1+1+p))
-  theta.m = matrix(init, M)
-  # theta.m = matrix(cc.miss(y, u, r, w, (1+1+p)), (1+1+p))
-  conv.err = 10^8
+  
+  if(is.null(init)) init = rep(0, alpha_dim)
+  alpha_sol_path = matrix(init, alpha_dim)
+  conv_err = 10^8
   t = 1
 
-  while (conv.err > 10^(-8) & t < 1000){
-    opt = optim(theta.m[,t], obj, method = "L-BFGS-B")
-    theta.m = cbind(theta.m, opt$par)
-    g.m = g(theta.m[,t+1]); W.hat = W(g.m);
-    obj = function(theta){
-      g.m = g(theta); G.hat = G(g.m);
+  while (conv_err > 10^(-8) & t < 1000){
+    opt = optim(alpha_sol_path[,t], obj, method = "L-BFGS-B")
+    alpha_sol_path = cbind(alpha_sol_path, opt$par)
+    g.matrix = g(alpha_sol_path[,t+1]); W.hat = W(g.matrix);
+    obj = function(alpha){
+      g.matrix = g(alpha); G.hat = G(g.matrix);
       value = t(G.hat)%*%W.hat%*%G.hat
       return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
     }
-    conv.err = max(abs(theta.m[,t+1]-theta.m[,t]))
+    conv_err = max(abs(alpha_sol_path[,t+1]-alpha_sol_path[,t]))
     t = t + 1
   }
 
-  theta.hat = theta.m[, t]
-  Gamma.hat = Gamma(theta.hat)
-  g.m = g(theta.hat); W.hat = W(g.m);
-  S = var(t(g.m))
+  alpha.hat = alpha_sol_path[, t]
+  Gamma.hat = Gamma(alpha.hat)
+  g.matrix = g(alpha.hat); W.hat = W(g.matrix);
+  S = var(g.matrix)
   # cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/N
-  cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat%*%S%*%W.hat%*%Gamma.hat%*%solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/N
+  cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat%*%S%*%W.hat%*%Gamma.hat%*%solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/n
   se = sqrt(diag(cov.hat))
 
-  return(list(sol.path = theta.m, theta.hat = theta.hat, cov.hat = cov.hat,
-              se = se, lower = theta.hat-qnorm(0.975)*se, upper = theta.hat+qnorm(0.975)*se,
-              g.m = g.m, GammaW = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat,
-              model = propensity, w.prime = w.prime, model.x.names = c(model.x1.names, model.x2.names), h = t(cbind(d, x2))))
+  return(list(sol.path = alpha_sol_path, alpha.hat = alpha.hat, cov.hat = cov.hat,
+              se = se, lower = alpha.hat-qnorm(0.975)*se, upper = alpha.hat+qnorm(0.975)*se,
+              g.matrix = g.matrix, K = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat,
+              model = propensity, model.x.names = c(model_x1_names, model_x2_names), h_x = t(cbind(d, h_x2))))
 }
 
-Wang2014.2 = function(auxilliary, model.y, model.x1.names, model.x2.names, w, w.prime){
-  propensity = function(y, x, theta, L) 1/w(theta, y, x, L)
-
-  r = dat$r
-  x1 = auxilliary[[1]]; x2 = auxilliary[[2]]; auxilliary.y = auxilliary[[3]]; auxilliary.m0 = auxilliary[[4]];
-  auxilliary.y[r == 0] = auxilliary.m0[r == 0]
-  if(!is.null(x1)) x1 = as.matrix(x1)
-  if(!is.null(x2)) x2 = as.matrix(x2)
-  model.x1 = NULL; model.x2 = NULL;
-  if(!is.null(model.x1.names)) model.x1 = as.matrix(dat[model.x1.names])
-  if(!is.null(model.x2.names)) model.x2 = as.matrix(dat[model.x2.names])
-
-  N = length(r)
-  discrete.dim = 0
-  if(!is.null(x1)) for(j in 1:ncol(x1)) discrete.dim = discrete.dim + length(unique(x1[,j]))
-  discrete.dim = ifelse(discrete.dim == 0, 0, discrete.dim - ncol(x1) + 1) # to avoid collinearity
-  continous.dim = ifelse(!is.null(x2), ncol(x2), 0)
-  auxilliary.dim = discrete.dim + continous.dim + 1
-
-  mnar = ifelse(is.null(model.y), 0, 1)
-  model.discrete.dim = ifelse(is.null(model.x1), 0, ncol(model.x1))
-  model.continous.dim = ifelse(is.null(model.x2), 0, ncol(model.x2))
-  param.num = c(model.discrete.dim, model.continous.dim)
-
-  M = 1+mnar+sum(param.num)
-  init = rep(0.5, M)
-
-  d = NULL
-  if(!is.null(x1)){
-    x1 =  as.data.frame(x1)
-    for(j in 1:ncol(x1)) x1[, j] = as.factor(x1[, j])
-    d = model.matrix(lm(rep(1, N)~., data =  x1))
-  }
-
-
-  g = function(theta){
-    g.m = matrix(NA, auxilliary.dim, N)
-    rw = r*w(theta, model.y, cbind(model.x1, model.x2), N)
-    if(discrete.dim > 0){
-      for(l in 1:discrete.dim){g.m[l,] = t(d)[l,]*(rw-1)}
-    }
-    if(continous.dim > 0){
-      for(l in (discrete.dim+1):(discrete.dim+continous.dim)) g.m[l,] = t(as.matrix(x2))[l-discrete.dim,]*(rw-1)
-    }
-    g.m[auxilliary.dim,] = auxilliary.y*(rw-1)
-    return(g.m)
-  }
-
-  G = function(g.m){
-    return(matrix(apply(g.m, 1, mean), auxilliary.dim, 1))
-  }
-
-  W = function(g.m){
-    return(solve(g.m%*%t(g.m)/N))
-  }
-
-  # Gamma = function(theta){
-  #   gamma = array(NA, dim = c(auxilliary.dim, M, N))
-  #   r_w.prime = r*w.prime(theta[1:(M-1)], model.y, cbind(model.x1, model.x2), N)
-  #   if(discrete.dim > 0){
-  #     for(l in 1:discrete.dim){
-  #       gamma[l,1,] = t(d)[l,]*r_w.prime
-  #       if(mnar == 1) gamma[l,2,] = t(d)[l,]*r_w.prime*model.y
-  #       if(model.discrete.dim > 0){
-  #         for(c in (1+mnar+1):(1+mnar+param.num[1])){
-  #           gamma[l,c,] = t(d)[l,]*r_w.prime*t(as.matrix(model.x1))[c-(1+mnar),]
-  #         }
-  #       }
-  #       if(model.continous.dim > 0){
-  #         for(c in (1+mnar+param.num[1]+1):(1+mnar+sum(param.num))){
-  #           gamma[l,c,] = t(d)[l,]*r_w.prime*t(as.matrix(model.x2))[c-(1+mnar+param.num[1]),]
-  #         }
-  #       }
-  #     }
-  #   }
-  #   if(continous.dim > 0){
-  #     for(l in (discrete.dim+1):(discrete.dim+continous.dim)){
-  #       gamma[l,1,] = t(as.matrix(x2))[l-discrete.dim,]*r_w.prime
-  #       if(mnar == 1) gamma[l,2,] = t(as.matrix(x2))[l-discrete.dim,]*r_w.prime*model.y
-  #       if(model.discrete.dim >0){
-  #         for(c in (1+mnar+1):(1+mnar+param.num[1])){
-  #           gamma[l,c,] = t(as.matrix(x2))[l-discrete.dim,]*r_w.prime*t(as.matrix(model.x1))[c-(1+mnar),]
-  #         }
-  #       }
-  #       if(model.continous.dim > 0){
-  #         for(c in (1+mnar+param.num[1]+1):(1+mnar+sum(param.num))){
-  #           gamma[l,c,] = t(as.matrix(x2))[l-discrete.dim,]*r_w.prime*t(as.matrix(model.x2))[c-(1+mnar+param.num[1]),]
-  #         }
-  #       }
-  #     }
-  #   }
-  #   gamma[auxilliary.dim, 1:(1+mnar), ] = t(cbind(1, model.y)*as.vector(r_w.prime*auxilliary.y))
-  #   if(length(model.x1.names)+length(model.x2.names) > 0){
-  #     gamma[auxilliary.dim, (1+mnar+1):(M-1), ] = t(cbind(model.x1, model.x2)*as.vector(r_w.prime*auxilliary.y))
-  #   }
-  #   gamma[-auxilliary.dim, M, ] = 0
-  #   gamma[auxilliary.dim, M, ] = -1
-  #   return(apply(gamma, c(1, 2), mean))
-  # }
-
-  # Gamma(theta)
-  #
-  Gamma = function(theta){
-    Gamma.hat = array(NA, dim = c(auxilliary.dim, N, M))
-    for(l in 1:auxilliary.dim){
-      Gamma.hat[l,,] = jacobian(function(theta.v) g(theta.v)[l,], theta)
-    }
-    return(apply(Gamma.hat, c(1, 3), mean))
-  }
-
-  obj = function(theta){
-    g.m = g(theta)
-    G.hat = G(g.m)
-    value = t(G.hat)%*%G.hat
-    return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
-  }
-
-  theta.m = matrix(init, M)
-  conv.err = 10^8
-  t = 1
-
-  while (conv.err > 10^(-8) & t < 1000){
-    opt = optim(theta.m[,t], obj, method = "L-BFGS-B")
-    theta.m = cbind(theta.m, opt$par)
-    g.m = g(theta.m[,t+1]); W.hat = W(g.m);
-    obj = function(theta){
-      g.m = g(theta); G.hat = G(g.m);
-      value = t(G.hat)%*%W.hat%*%G.hat
-      return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
-    }
-    conv.err = max(abs(theta.m[,t+1]-theta.m[,t]))
-    t = t + 1
-  }
-
-  theta.hat = theta.m[, t]
-  Gamma.hat = Gamma(theta.hat)
-  g.m = g(theta.hat); W.hat = W(g.m);
-  cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/N
-  se = sqrt(diag(cov.hat))
-
-  return(list(sol.path = theta.m, theta.hat = theta.hat, cov.hat = cov.hat,
-              se = se, lower = theta.hat-qnorm(0.975)*se, upper = theta.hat+qnorm(0.975)*se,
-              g.m = g.m, GammaW = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat,
-              model = propensity, w.prime = w.prime, model.x.names = c(model.x1.names, model.x2.names), h = t(cbind(d, x2))))
+Chuang2023.1.1 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 2)
+  
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+  
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2)  1/(1+exp(-0.2+0.1*y+0.1*u1+0.1*u2))
+  
+  y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
+  mean(y)
+  
+  r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
+  mean(r)
+  
+  mean(y[r == 1]); mean(y[r == 0]);
+  
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
 }
 
-# Wang2014.2 = function(h.opt, model.x = list(y, u1, u2), r, w, w.prime, init){
-#   propensity = function(y, u1, u2, theta, L) 1/w(theta, y, u1, u2, L)
-#
-#   y = model.x[[1]]; model.u1 = model.x[[2]]; model.u2 = model.x[[3]];
-#
-#   n = length(r)
-#   M = length(init)
-#
-#   mnar = ifelse(is.null(y), 0, 1)
-#   model.p1 = ifelse(is.null(model.u1), 0, ncol(as.matrix(model.u1))); model.p2 = ifelse(is.null(model.u2), 0, ncol(as.matrix(model.u2)));
-#   param.num = c(model.p1, model.p2)
-#
-#   g = function(theta){
-#     propensity.fit = as.vector(propensity(y, model.u1, model.u2, theta[1:M], n))
-#     g.m = t((r/propensity.fit-1)*h.opt)
-#     return(g.m)
-#   }
-#
-#   G = function(g.m){
-#     return(matrix(apply(g.m, 1, mean), M, 1))
-#   }
-#
-#   W = function(g.m){
-#     return(solve(g.m%*%t(g.m)/n))
-#   }
-#
-#   Gamma = function(theta){
-#     gamma = array(NA, dim = c(M, M, n))
-#     for(i in 1:M){
-#       gamma[i,,] = t(jacobian(function(theta.v) g(theta.v)[i,], theta))
-#     }
-#     return(apply(gamma, c(1, 2), mean))
-#   }
-#
-#   obj = function(theta){
-#     g.m = g(theta)
-#     G.hat = G(g.m)
-#     value = t(G.hat)%*%G.hat
-#     return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
-#   }
-#
-#   # theta.m = matrix(rep(0, (1+1+p)), (1+1+p))
-#   theta.m = matrix(init, (1+mnar+sum(param.num)))
-#   # theta.m = matrix(cc.miss(y, u, r, w, (1+1+p)), (1+1+p))
-#   conv.err = 10^8
-#   t = 1
-#
-#   while (conv.err > 10^(-8) & t < 1000){
-#     opt = optim(theta.m[,t], obj, method = "Nelder-Mead")
-#     theta.m = cbind(theta.m, opt$par)
-#     g.m = g(theta.m[,t+1]); W.hat = W(g.m);
-#     obj = function(theta){
-#       g.m = g(theta); G.hat = G(g.m);
-#       value = t(G.hat)%*%W.hat%*%G.hat
-#       return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
-#     }
-#     conv.err = max(abs(theta.m[,t+1]-theta.m[,t]))
-#     t = t + 1
-#   }
-#
-#   theta.hat = theta.m[, t]
-#   Gamma.hat = Gamma(theta.hat)
-#   g.m = g(theta.hat); W.hat = W(g.m);
-#   cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/n
-#   se = sqrt(diag(cov.hat))
-#
-#   return(list(sol.path = theta.m, theta.hat = theta.hat, cov.hat = cov.hat,
-#               se = se, lower = theta.hat-qnorm(0.975)*se, upper = theta.hat+qnorm(0.975)*se,
-#               g.m = g.m, GammaW = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat,
-#               model = propensity, w.prime = w.prime, model.x = model.x))
-# }
+data = Chuang2023.1.1(1000)
+y = data$y
+u1 = data$u1
+u2 = data$u2
+z1 = data$z1
+z2 = data$z2
 
+J = 3
+dat = data
 
-# Wang2014.2 = function(model.x = list(y, u1, u2), r, w, w.prime, init){
-#   propensity = function(y, u1, u2, theta, L) 1/w(theta, y, u1, u2, L)
-#
-#   y = model.x[[1]]; model.u1 = model.x[[2]]; model.u2 = model.x[[3]];
-#
-#   n = length(r)
-#   M = length(init)
-#
-#   mnar = ifelse(is.null(y), 0, 1)
-#   model.p1 = ifelse(is.null(model.u1), 0, ncol(as.matrix(model.u1))); model.p2 = ifelse(is.null(model.u2), 0, ncol(as.matrix(model.u2)));
-#   param.num = c(model.p1, model.p2)
-#
-#   g = function(theta){
-#     propensity.fit = as.vector(propensity(y, model.u1, model.u2, theta[1:M], n))
-#     propensity.prime = jacobian(function(theta.v) propensity(y, model.u1, model.u2, theta.v, n), theta[1:M])
-#
-#     g.m = t((r/propensity.fit-1)*(propensity.prime/(1-propensity.fit)))
-#     return(g.m)
-#   }
-#
-#   G = function(g.m){
-#     return(matrix(apply(g.m, 1, mean), M, 1))
-#   }
-#
-#   W = function(g.m){
-#     return(solve(g.m%*%t(g.m)/n))
-#   }
-#
-#   Gamma = function(theta){
-#     gamma = array(NA, dim = c(M, M, n))
-#     for(i in 1:M){
-#       gamma[i,,] = t(jacobian(function(theta.v) g(theta.v)[i,], theta))
-#     }
-#     return(apply(gamma, c(1, 2), mean))
-#   }
-#
-#   obj = function(theta){
-#     g.m = g(theta)
-#     G.hat = G(g.m)
-#     value = t(G.hat)%*%G.hat
-#     return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
-#   }
-#
-#   # theta.m = matrix(rep(0, (1+1+p)), (1+1+p))
-#   theta.m = matrix(init, (1+mnar+sum(param.num)))
-#   # theta.m = matrix(cc.miss(y, u, r, w, (1+1+p)), (1+1+p))
-#   conv.err = 10^8
-#   t = 1
-#
-#   while (conv.err > 10^(-8) & t < 1000){
-#     opt = optim(theta.m[,t], obj, method = "Nelder-Mead")
-#     theta.m = cbind(theta.m, opt$par)
-#     g.m = g(theta.m[,t+1]); W.hat = W(g.m);
-#     obj = function(theta){
-#       g.m = g(theta); G.hat = G(g.m);
-#       value = t(G.hat)%*%W.hat%*%G.hat
-#       return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
-#     }
-#     conv.err = max(abs(theta.m[,t+1]-theta.m[,t]))
-#     t = t + 1
-#   }
-#
-#   theta.hat = theta.m[, t]
-#   Gamma.hat = Gamma(theta.hat)
-#   g.m = g(theta.hat); W.hat = W(g.m);
-#   cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/n
-#   se = sqrt(diag(cov.hat))
-#
-#   return(list(sol.path = theta.m, theta.hat = theta.hat, cov.hat = cov.hat,
-#               se = se, lower = theta.hat-qnorm(0.975)*se, upper = theta.hat+qnorm(0.975)*se,
-#               g.m = g.m, GammaW = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat, model = propensity))
-# }
+h.list = list(function(u1, u2, z1, z2) list(cbind(as.factor(u1), as.factor(z1)), cbind(u2, z2)),
+              function(u1, u2, z1, z2) list(cbind(as.factor(u1), as.factor(z1)), cbind(z2)),
+              function(u1, u2, z1, z2) list(cbind(as.factor(z1)), cbind(u2, z2)))
 
-cc.miss = function(y, u, r, w, d){
-  l = function(theta) -sum(log((1/w(theta, y, u))^r))
-  theta.cc = nlminb(rep(0, d), l)$par
-  return(theta.cc)
-}
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y,
+                            model.x1.names = c("u1"),
+                            model.x2.names =c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y,
+                            model.x1.names = c("u1"),
+                            model.x2.names = NULL),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y,
+                            model.x1.names = NULL,
+                            model.x2.names = c("u2")))
+pi.fit.list = list()
+
+start = Sys.time()
+pi.fit.list[[3]] = Wang2014.1(auxilliary = h.list[[3]](u1, u2, z1, z2),
+                              model.y = propensity.list[[3]]$model.y(y),
+                              model.x1.names = propensity.list[[3]]$model.x1.names,
+                              model.x2.names = propensity.list[[3]]$model.x2.names,
+                              w = propensity.list[[3]]$w, w.prime = propensity.list[[3]]$w.prime)
+pi.fit.list[[3]]$theta.hat
+pi.fit.list[[3]]$se
+Sys.time() - start
+
+formula = r ~ o(y) +  u2
+h_x = data[c("u2", "z1", "z2")]
+
+start = Sys.time()
+pi.fit.list[[3]] = WangShaoKim2014(formula, h_x, w = propensity.list[[3]]$w, data)
+pi.fit.list[[3]]$alpha.hat
+pi.fit.list[[3]]$se
+Sys.time() - start
