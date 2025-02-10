@@ -2,7 +2,7 @@ library(stringr)             # Load the package
 library(numDeriv)
 library(R6)
 
-MyLinearModel <- R6Class("MyLinearModel",
+WangShaoKim2014 <- R6Class("WangShaoKim2014",
                          public = list(
                            formula = NULL,
                            data = NULL,
@@ -111,12 +111,13 @@ separate_variable_types <- function(x) {
   return(list(x1 = x1, x2 = x2, x1_names = x1_names, x2_names = x2_names))
 }
 
-WangShaoKim2014 = function(formula, h_x, w, data, init = NULL){
+WangShaoKim2014 = function(formula, h_x, inv_link, data, init = NULL){
   # Parse the formula
   result = parse_formula(formula)
   r = data[result$r]
   y = data[result$y]
   x = data[result$x]
+  model.x.names = colnames(x)
   
   n = nrow(data)
   
@@ -130,7 +131,10 @@ WangShaoKim2014 = function(formula, h_x, w, data, init = NULL){
   h_x1 = result$x1
   h_x2 = result$x2
   
-  propensity = function(y, x, alpha, L) 1/w(alpha, y, x, L)
+  model = function(x, y, alpha){
+    inv_link(cbind(rep(1, n), y, x)%*%alpha)
+  }
+  w = function(x, y, alpha) 1/model(x, y, alpha)
 
   # h_x1 = h[[1]]; h_x2 = h[[2]];
   # if(!is.null(x1)) x1 = as.matrix(x1)
@@ -156,15 +160,17 @@ WangShaoKim2014 = function(formula, h_x, w, data, init = NULL){
   r = as.matrix(r)
   y = as.matrix(y)
   x = as.matrix(x)
+  h_x1 = as.matrix(h_x1)
+  h_x2 = as.matrix(h_x2)
   
   g = function(alpha){
     g.matrix = matrix(NA, n, h_dim)
-    rw = r*w(alpha, y, x, n)
+    rw = r*w(x, y, alpha)
     if(discrete_dim > 0){
       for(l in 1:discrete_dim){g.matrix[, l] = d[, l]*(rw-1)}
     }
     if(continuous_dim > 0){
-      for(l in (discrete_dim+1):(discrete_dim+continuous_dim)) g.matrix[, l] = as.matrix(h_x2)[, l-discrete_dim]*(rw-1)
+      for(l in (discrete_dim+1):(discrete_dim+continuous_dim)) g.matrix[, l] = h_x2[, l-discrete_dim]*(rw-1)
     }
     return(g.matrix)
   }
@@ -211,17 +217,29 @@ WangShaoKim2014 = function(formula, h_x, w, data, init = NULL){
   }
 
   alpha.hat = alpha_sol_path[, t]
+  fitted_values = model(x, y, alpha.hat)
   Gamma.hat = Gamma(alpha.hat)
-  g.matrix = g(alpha.hat); W.hat = W(g.matrix);
+  g.matrix = g(alpha.hat)
+  W.hat = W(g.matrix)
   S = var(g.matrix)
   # cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/N
   cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat%*%S%*%W.hat%*%Gamma.hat%*%solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/n
   se = sqrt(diag(cov.hat))
-
-  return(list(sol.path = alpha_sol_path, alpha.hat = alpha.hat, cov.hat = cov.hat,
-              se = se, lower = alpha.hat-qnorm(0.975)*se, upper = alpha.hat+qnorm(0.975)*se,
-              g.matrix = g.matrix, K = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat,
-              model = propensity, model.x.names = c(model_x1_names, model_x2_names), h_x = t(cbind(d, h_x2))))
+  
+  results = list(coefficients = alpha.hat, 
+                 fitted.values = fitted_values,
+                 sol.path = alpha_sol_path, 
+                 cov.hat = cov.hat,
+                 se = se, 
+                 lower = alpha.hat-qnorm(0.975)*se,
+                 upper = alpha.hat+qnorm(0.975)*se,
+                 g.matrix = g.matrix,
+                 K = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat,
+                 model = model,
+                 model.x.names = model.x.names,
+                 h_x = cbind(d, h_x2))
+  
+  return(results)
 }
 
 Chuang2023.1.1 = function(n){
@@ -247,6 +265,7 @@ Chuang2023.1.1 = function(n){
 }
 
 data = Chuang2023.1.1(1000)
+r = data$r
 y = data$y
 u1 = data$u1
 u2 = data$u2
@@ -275,23 +294,33 @@ propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), 
                             model.y = function(y) y,
                             model.x1.names = NULL,
                             model.x2.names = c("u2")))
-pi.fit.list = list()
 
 start = Sys.time()
-pi.fit.list[[3]] = Wang2014.1(auxilliary = h.list[[3]](u1, u2, z1, z2),
-                              model.y = propensity.list[[3]]$model.y(y),
-                              model.x1.names = propensity.list[[3]]$model.x1.names,
-                              model.x2.names = propensity.list[[3]]$model.x2.names,
-                              w = propensity.list[[3]]$w, w.prime = propensity.list[[3]]$w.prime)
-pi.fit.list[[3]]$theta.hat
-pi.fit.list[[3]]$se
+pi.fit.list = list()
+for(j in 1:J){
+  pi.fit.list[[j]] = Wang2014.1(auxilliary = h.list[[j]](u1, u2, z1, z2),
+                                model.y = propensity.list[[j]]$model.y(y),
+                                model.x1.names = propensity.list[[j]]$model.x1.names,
+                                model.x2.names = propensity.list[[j]]$model.x2.names,
+                                w = propensity.list[[j]]$w, w.prime = propensity.list[[j]]$w.prime)
+}
+pi.fit.list[[1]]$theta.hat
+pi.fit.list[[1]]$se
+auxilliary = list(cbind(as.factor(u1)), cbind(u2), y)
 Sys.time() - start
 
-formula = r ~ o(y) +  u2
-h_x = data[c("u2", "z1", "z2")]
+formula.list = list(r ~ o(y) + u1 + u2, r ~ o(y) + u1, r ~ o(y) + u2)
+h_x.list = list(
+  c("u1", "u2", "z1", "z2"), c("u1", "z1", "z2"), c("u2", "z1", "z2")
+)
+inv_link = function(eta) 1/(1+exp(eta))
 
 start = Sys.time()
-pi.fit.list[[3]] = WangShaoKim2014(formula, h_x, w = propensity.list[[3]]$w, data)
-pi.fit.list[[3]]$alpha.hat
-pi.fit.list[[3]]$se
+ps_fit.list = list()
+for(j in 1:J){
+  ps_fit.list[[j]] = WangShaoKim2014(formula.list[[j]], data[h_x.list[[j]]], inv_link, data)
+}
+ps_fit.list[[1]]$coefficients
+ps_fit.list[[1]]$se
+h_x = data[c("u1", "u2")]
 Sys.time() - start
