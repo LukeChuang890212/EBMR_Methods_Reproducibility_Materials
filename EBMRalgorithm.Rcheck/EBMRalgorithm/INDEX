@@ -1,0 +1,5 @@
+EBMRAlgorithm           EBMRAlgorithm Class
+EBMR_IPW                Compute the proposed Inverse Probability
+                        Weighting (IPW) Estimator
+WangShaoKim2014         Wang, Shao, and Kim (2014) Method for
+                        Propensity Score Estimation

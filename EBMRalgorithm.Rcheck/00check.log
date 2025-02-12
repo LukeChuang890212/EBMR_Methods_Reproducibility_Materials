@@ -1,0 +1,96 @@
+* using log directory 'C:/Users/stat-pc/Desktop/NTHU_Research/EBMR_Methods_Reproducibility_Materials/EBMRalgorithm.Rcheck'
+* using R version 4.4.2 (2024-10-31 ucrt)
+* using platform: x86_64-w64-mingw32
+* R was compiled by
+    gcc.exe (GCC) 13.3.0
+    GNU Fortran (GCC) 13.3.0
+* running under: Windows 10 x64 (build 19045)
+* using session charset: UTF-8
+* using options '--no-manual --as-cran'
+* checking for file 'EBMRalgorithm/DESCRIPTION' ... OK
+* checking extension type ... Package
+* this is package 'EBMRalgorithm' version '0.1.0'
+* package encoding: UTF-8
+* checking package namespace information ... OK
+* checking package dependencies ... OK
+* checking if this is a source package ... OK
+* checking if there is a namespace ... OK
+* checking for executable files ... OK
+* checking for hidden files and directories ... OK
+* checking for portable file names ... OK
+* checking serialization versions ... OK
+* checking whether package 'EBMRalgorithm' can be installed ... OK
+* checking installed package size ... OK
+* checking package directory ... OK
+* checking for future file timestamps ... NOTE
+unable to verify current time
+* checking DESCRIPTION meta-information ... WARNING
+Non-standard license specification:
+  What license is it under?
+Standardizable: FALSE
+* checking top-level files ... OK
+* checking for left-over files ... OK
+* checking index information ... OK
+* checking package subdirectories ... OK
+* checking code files for non-ASCII characters ... OK
+* checking R files for syntax errors ... OK
+* checking whether the package can be loaded ... OK
+* checking whether the package can be loaded with stated dependencies ... OK
+* checking whether the package can be unloaded cleanly ... OK
+* checking whether the namespace can be loaded with stated dependencies ... OK
+* checking whether the namespace can be unloaded cleanly ... OK
+* checking loading without being on the library search path ... OK
+* checking dependencies in R code ... NOTE
+Namespaces in Imports field not imported from:
+  'Matrix' 'R6' 'dplyr' 'numDeriv' 'stringr'
+  All declared Imports should be used.
+* checking S3 generic/method consistency ... OK
+* checking replacement functions ... OK
+* checking foreign function calls ... OK
+* checking R code for possible problems ... NOTE
+EBMR_IPW: no visible binding for global variable 'private'
+EBMR_IPW: no visible binding for global variable 'self'
+EBMR_IPW: no visible global function definition for 'jacobian'
+EBMR_IPW: no visible global function definition for '%>%'
+EBMR_IPW: no visible global function definition for 'bdiag'
+EBMR_IPW: no visible global function definition for 'var'
+WangShaoKim2014: no visible binding for global variable 'private'
+WangShaoKim2014: no visible binding for global variable 'self'
+WangShaoKim2014: no visible global function definition for
+  'model.matrix'
+WangShaoKim2014: no visible global function definition for 'lm'
+WangShaoKim2014 : Gamma: no visible global function definition for
+  'jacobian'
+WangShaoKim2014: no visible global function definition for 'optim'
+WangShaoKim2014: no visible global function definition for 'var'
+WangShaoKim2014: no visible global function definition for 'qnorm'
+estimate_nu: no visible binding for global variable 'private'
+estimate_nu: no visible global function definition for 'model.matrix'
+estimate_nu: no visible global function definition for 'lm'
+estimate_nu : Gamma: no visible global function definition for
+  'jacobian'
+estimate_nu: no visible global function definition for 'optim'
+estimate_nu: no visible global function definition for 'var'
+estimate_nu: no visible global function definition for 'qnorm'
+parse_formula: no visible global function definition for 'str_extract'
+Undefined global functions or variables:
+  %>% bdiag jacobian lm model.matrix optim private qnorm self
+  str_extract var
+Consider adding
+  importFrom("stats", "lm", "model.matrix", "optim", "qnorm", "var")
+to your NAMESPACE file.
+* checking Rd files ... NOTE
+prepare_Rd: estimate_nu.Rd:16-18: Dropping empty section \value
+* checking Rd metadata ... OK
+* checking Rd line widths ... OK
+* checking Rd cross-references ... OK
+* checking for missing documentation entries ... OK
+* checking for code/documentation mismatches ... OK
+* checking Rd \usage sections ... OK
+* checking Rd contents ... OK
+* checking for unstated dependencies in examples ... OK
+* checking examples ... OK
+* checking for non-standard things in the check directory ... OK
+* checking for detritus in the temp directory ... OK
+* DONE
+Status: 1 WARNING, 4 NOTEs
