@@ -91,6 +91,12 @@ simulate1 = function(alldata, alpha.true, true.pi.model, family, h.list, propens
 #  ---------- Test ----------------
 ###################################
 
+library(R6)  # Add this line to load R6
+library(stringr)
+library(Matrix)
+library(dplyr)
+library(numDeriv)
+
 Chuang2023.1.1 = function(n){
   z1 = rbinom(n, size = 1, prob = 0.3)
   z2 = rnorm(n, mean = 0, sd = 2)

@@ -48,7 +48,7 @@
 #'
 #' @name EBMRAlgorithm
 
-library(R6)  # Add this line to load R6
+library(R6)
 library(stringr)
 library(Matrix)
 library(dplyr)
