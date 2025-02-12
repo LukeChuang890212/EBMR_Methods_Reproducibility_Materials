@@ -2,10 +2,6 @@
 #'
 #' Implements the Wang, Shao, and Kim (2014) approach for estimating propensity score models in the presence of missing-not-at-random (MNAR) data.
 #'
-#' @import R6
-#' @import stringr
-#' @import Matrix
-#' @import dplyr
 #' @import numDeriv
 #'
 #' @param formula A formula specifying the relationship between the response and predictors.

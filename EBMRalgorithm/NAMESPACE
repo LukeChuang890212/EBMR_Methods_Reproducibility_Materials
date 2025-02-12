@@ -3,6 +3,5 @@
 export(EBMRAlgorithm)
 import(Matrix)
 import(R6)
-import(dplyr)
 import(numDeriv)
 import(stringr)
