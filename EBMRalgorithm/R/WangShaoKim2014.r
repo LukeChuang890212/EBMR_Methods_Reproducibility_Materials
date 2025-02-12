@@ -2,6 +2,8 @@
 #'
 #' Implements the Wang, Shao, and Kim (2014) approach for estimating propensity score models in the presence of missing-not-at-random (MNAR) data.
 #'
+#' @import numDeriv
+#'
 #' @param formula A formula specifying the relationship between the response and predictors.
 #' @param h_x_names A character vector of variable names to be balanced.
 #' @param inv_link An inverse link function applied to the linear predictor.

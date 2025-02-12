@@ -1,0 +1,1857 @@
+---
+title: "Simulation of the proposed method"
+author: "Name:莊明儒 &nbsp; Student ID:111024513"
+header-includes:
+- \usepackage{xeCJK}
+- \setCJKmainfont{標楷體}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage{xcolor}
+- \usepackage{float}
+output:
+  bookdown::pdf_document2:
+    latex_engine: xelatex
+    toc: no
+---
+
+```{r setup, include=FALSE}
+options(knitr.kable.NA = '')
+knitr::opts_chunk$set(echo = FALSE, fig.height = 4, fig.width = 6, fig.align = "center")
+
+# library(glogis)
+
+library(MASS)
+library(abind)
+library(Matrix)
+
+library(tidyverse)
+# library(kableExtra)
+
+library(numDeriv)
+library(sandwich)
+library(randomForest)
+# library(rootSolve)
+# library(cubature)
+# library(nlme)
+
+# library(ggplot2)
+# library(ggpubr)
+
+library(pracma)
+library(foreach)
+library(doParallel)
+library(doSNOW)
+
+library(vioplot)
+```
+
+# Data Generation
+
+```{r}
+source("DataGeneration_SM.r")
+source("Wang2014_12.r")
+# source("Han2018_2.r")
+# source("KimYu2012.r")
+# source("ZhaoMa2022.r")
+source("ChuangChao2023_SM.r")
+```
+
+```{r, eval = FALSE}
+start = Sys.time()
+
+cores = detectCores()
+cl <- makeCluster(cores-2)
+registerDoParallel(cl)
+
+pb = txtProgressBar(max = n.sim, style = 3)
+progress <- function(n) setTxtProgressBar(pb, n)
+opts = list(progress = progress)
+parallel_packages = c()
+  
+dat <- foreach(i=1:n.sim,.combine = 'rbind', .options.snow = opts, .packages = parallel_packages)%dopar%{
+   Chuang2023.4.2.mild2(n = 300)
+}
+close(pb)
+
+print(Sys.time()-start)
+
+saveRDS(dat, "ChuangData_SM/ChuangData_SM4.2.mild2_300.RDS")
+```
+
+```{r}
+n.sim = 1000
+N = 1000
+```
+
+# misspecification assessment
+
+```{r}
+plot.misspecification = function(alldata, alpha.true, miss.true.pi.model, propensity.list, N, save.file = NULL){
+  source("Wang2014_12.r", local = TRUE)
+  source("ChuangChao2023_SM.r", local = TRUE)
+  
+  dat = alldata[1:N,]
+    # dat = Chuang2023.1.1(n = N)
+    
+  y = dat$y
+  u1 = dat$u1
+  u2 = dat$u2
+  z1 = dat$z1
+  z2 = dat$z2
+  r = dat$r
+  
+  n = sum(r)
+  J = length(propensity.list)
+  
+  true.pi = miss.true.pi.model(y, u1, u2, r, N, alpha.true)
+  auxilliary = list(cbind(as.factor(u1), as.factor(z1)), cbind(u2, z2), y)
+  
+  ################################################################################
+  # Fit working propensity score models
+  ################################################################################
+  pi.fit.list = list()
+  for(j in 1:J){
+    # auxilliary = list(data.frame(u1 = as.factor(u1),
+    #                              z1 = as.factor(z1))[unique(c(propensity.list[[j]]$model.x1.names, "z1"))],
+    #                   data.frame(u2 = u2,
+    #                              z2 = z2)[unique(c(propensity.list[[j]]$model.x2.names, "z2"))], y)
+    pi.fit.list[[j]] = Wang2014.1(auxilliary = auxilliary,
+                                  model.y = propensity.list[[j]]$model.y(y),
+                                  model.x1.names = propensity.list[[j]]$model.x1.names,
+                                  model.x2.names = propensity.list[[j]]$model.x2.names,
+                                  w = propensity.list[[j]]$w, w.prime = propensity.list[[j]]$w.prime)
+  }
+  
+  pi.list = lapply(pi.fit.list, function(pi.fit) pi.fit$model)
+  alpha.list = lapply(pi.fit.list, function(pi.fit) pi.fit$theta.hat)
+  pi.m = matrix(NA, N, J)
+  pi.m[r == 1, ] = get.pi.m(pi.fit.list, pi.list, alpha.list, nonrespondent = FALSE)
+  pi.m[r == 0, ] = get.pi.m(pi.fit.list, pi.list, alpha.list, nonrespondent = TRUE)
+  
+  if(!is.null(save.file)){
+    png(save.file)
+    # boxplot(pi.m/as.vector(true.pi)[r == 1], names = c(expression(pi^1), expression(pi^2), expression(pi^3)),
+    #         ylab = "magnitude of misspecification")
+    # Prepare data for the violin plot
+    data <- split(as.vector(pi.m) / as.vector(true.pi), 
+                  rep(1:ncol(pi.m), each = nrow(pi.m)))
+    
+    par(mar = c(5, 6, 4, 2) + 0.1)
+    # Create the violin plot with fixed names
+    vioplot(data[[1]], data[[2]], data[[3]], 
+        names = c("1", "2", "3"), 
+        col = "lightgrey", xaxt = "n")
+
+    # Add custom axis labels using expression()
+    axis(1, at = 1:3, labels = c(expression(pi^1), expression(pi^2), expression(pi^3)))
+    title(ylab = "Magnitude of Misspecification", line = 3) # Move label further left
+
+    abline(h = 1, col = 2, lwd = 2)
+    dev.off()
+  }
+}
+```
+
+# Simulator
+
+```{r}
+simulate1 = function(alldata, alpha.true, true.pi.model, family, h.list, propensity.list, N, save.file = NULL){
+  source("DataGeneration_SM.r", local = TRUE)
+  source("Wang2014_12.r", local = TRUE)
+  source("ChuangChao2023_SM.r", local = TRUE)
+  # source("Chuang2024_SM.r", local = TRUE)
+  # source("KimYu2012.r", local = TRUE)
+  # source("Morikawa2021.r", local = TRUE)
+  # source("Han2018_2.r", local = TRUE)
+  # source("ZhaoMa2022.r", local = TRUE)
+  
+  true.mu = mean(alldata$y)
+  
+  cores = detectCores()
+  cl = makeCluster(cores - 4) ## number of clusters
+  registerDoSNOW(cl)
+  
+  pb = txtProgressBar(max = n.sim, style = 3)
+  progress <- function(n) setTxtProgressBar(pb, n)
+  opts = list(progress = progress)
+  parallel_packages = c("pracma", "tidyverse", "Matrix", "MASS", "sandwich", "randomForest")
+  
+  start = Sys.time()
+  sim.res = foreach(i= 1:n.sim, .combine = 'cbind', .options.snow = opts, .packages = parallel_packages) %dopar% {
+  tryCatch({
+    dat = alldata[((i-1)*N+1):(i*N),]
+    # dat = Chuang2023.1.1(n = N)
+    
+    y = dat$y
+    u1 = dat$u1
+    u2 = dat$u2
+    z1 = dat$z1
+    z2 = dat$z2
+    r = dat$r
+    
+    n = sum(r)
+    J = length(propensity.list)
+    
+    true.pi = true.pi.model(y, u1, u2, r, N, alpha.true)
+    
+    # pi.model.index = 1:model.num
+    # if(situation == 2 || situation == 4) pi.model.index = 2:(model.num + 1)
+    
+    # auxilliary = list(cbind(as.factor(u1), as.factor(z1)), cbind(u2, z2), y)
+      
+    ################################################################################
+    # Fit working propensity score models
+    ################################################################################
+    pi.fit.list = list()
+    for(j in 1:J){
+      # auxilliary = list(data.frame(u1 = as.factor(u1)[unique(c(propensity.list[[j]]$model.x1.names, "z1"))],
+      #                              z1 = as.factor(z1)),
+      #                   data.frame(u2 = u2,
+      #                              z2 = z2)[unique(c(c("u2", "z2")[c("u2", "z2") %in% propensity.list[[j]]$model.x2.names], "z2"))], y)
+      
+      pi.fit.list[[j]] = Wang2014.1(auxilliary = h.list[[j]](u1, u2, z1, z2),
+                                    model.y = propensity.list[[j]]$model.y(y),
+                                    model.x1.names = propensity.list[[j]]$model.x1.names,
+                                    model.x2.names = propensity.list[[j]]$model.x2.names,
+                                    w = propensity.list[[j]]$w, w.prime = propensity.list[[j]]$w.prime)
+    }
+    pi.fit.list[[1]]$theta.hat
+    pi.fit.list[[1]]$se
+    ################################################################################
+    
+    # auxilliary = list(cbind(as.factor(u1), as.factor(z1)), cbind(u2, z2), y)
+    auxilliary = list(cbind(as.factor(u1)), cbind(u2), y)
+    
+    ################################################################################
+    # The method of Chuang & Chao (2023)
+    ################################################################################
+    est.res1 = ChuangChao2023(pi.fit.list, auxilliary, family, ortho = TRUE, true.pi)
+    est1 =  unlist(est.res1[1:4])
+    ################################################################################
+    
+    ################################################################################
+    # The method of Kim & Yu (2012)
+    ################################################################################
+    # mu.KimYu = mu.Morikawa = NA
+    # if(situation == 1 & model.num == 0){
+    #   gamma = alpha.true[2]
+    #   mu.KimYu = KimYu2012(gamma, y, u1, u2, z1, z2, r)
+    #   
+    #   w  = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta)
+    #   w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta)
+    #   pi.x1.names = c("u1"); pi.x2.names = c("u2");
+    #   outcome.formula = outcome.formula.list[[1]]
+    #   mu.Morikawa = Morikawa2021(dat, w, w.prime, pi.x1.names, pi.x2.names, 
+    #                               outcome.formula, is.f1 = TRUE, family)$theta.hat
+    # }
+    ################################################################################
+
+    ################################################################################
+    # The method of Han (2018)
+    ################################################################################
+    # mu.Han1 = Han2018(est.res1$outcome.list, est.res1$pi.fit.list, family)$mu.hat
+    # mu.Han2 = Han2018(est.res2$outcome.list, est.res2$pi.fit.list, family)$mu.hat
+    # mu.Han3 = Han2018(est.res3$outcome.list, est.res3$pi.fit.list, family)$mu.hat
+    ################################################################################
+ 
+    c(est1, 
+      unlist(lapply(pi.fit.list, function(pi.fit) pi.fit$theta.hat)),
+      unlist(lapply(pi.fit.list, function(pi.fit) pi.fit$se)), 
+      est.res1$w.pi,
+      est.res1$nu,
+      est.res1$imbalance)    
+    }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
+  }
+  close(pb)
+  print(Sys.time()-start)
+  
+  if(!is.null(save.file)){
+    if(file.exists(save.file)){
+      sim.res.tmp = sim.res
+      source(save.file)
+      sim.res = cbind(sim.res, sim.res.tmp)
+    }
+    
+    dump("sim.res", save.file)
+  }
+  
+  cat("\n", "Before removing the outliers", "\n")
+  print(rbind(apply(sim.res, 1, mean, na.rm = TRUE), apply(sim.res, 1, sd, na.rm = TRUE))); cat("\n");
+  cat("After removing the outliers", "\n")
+  print(rbind(apply(sim.res, 1, function(v) if(!all(is.na(v))) mean(rm.extreme(na.omit(v))) else NA),
+              apply(sim.res, 1, function(v) if(!all(is.na(v))) sd(rm.extreme(na.omit(v))) else NA)))
+  cat("\n", "Number of replicates:", ncol(sim.res), "/", 
+      "Number of outliers removed:",
+      apply(sim.res, 1, function(v) if(!any(is.na(v))) ncol(sim.res)-length(rm.extreme(na.omit(v))) else 0),
+      "\n\n")
+  
+  for(j in 1){
+    cp = rep(NA, 2)
+    for(i in 1:2){
+      ci = cbind(sim.res[4*(j-1)+i,]-1.96*sim.res[4*(j-1)+2+i,],
+                 sim.res[4*(j-1)+i,]+1.96*sim.res[4*(j-1)+2+i,])
+      cp[i] = mean(na.omit(apply(ci, 1, function(v) ifelse(v[1] < true.mu & v[2] > true.mu, 1, 0))))
+    }
+    names(cp) = c("IPW.CP", "IPW.true.CP")
+    print(cp)
+  }
+  
+  gc()
+}
+```
+
+```{r}
+simulate2 = function(alldata, alpha.true, true.pi.model, model.num, family, exp.tilt, situation, N, save.file = NULL){
+  print(paste("situation:", situation, "/", "N:", N, "/", "# of models:", model.num))  
+  
+  source("DataGeneration_SM.r", local = TRUE)
+  source("Wang2014_12.r", local = TRUE)
+  source("ChuangChao2023_SM.r", local = TRUE)
+  # source("KimYu2012.r", local = TRUE)
+  # source("Morikawa2021.r", local = TRUE)
+  # source("Han2018_2.r", local = TRUE)
+  # source("ZhaoMa2022.r", local = TRUE)
+  
+  cores = detectCores()
+  cl = makeCluster(cores - 4) ## number of clusters
+  registerDoSNOW(cl)
+  
+  pb = txtProgressBar(max = n.sim, style = 3)
+  progress <- function(n) setTxtProgressBar(pb, n)
+  opts = list(progress = progress)
+  parallel_packages = c("pracma", "tidyverse", "Matrix", "MASS", "sandwich", "randomForest")
+  
+  start = Sys.time()
+  sim.res = foreach(i= 1:n.sim, .combine = 'cbind', .options.snow = opts, .packages = parallel_packages) %dopar% {
+  tryCatch({
+    dat = alldata[((i-1)*N+1):(i*N),]
+    # dat = Chuang2023.1.1(n = N)
+    # 
+    y = dat$y
+    u1 = dat$u1
+    u2 = dat$u2
+    z1 = dat$z1
+    z2 = dat$z2
+    r = dat$r
+    
+    n = sum(r)
+    
+    true.pi = true.pi.model(y, u1, u2, r, N, alpha.true)
+    J = model.num
+    full.pi.m = matrix(NA, N, J)
+    for(j in 1:J){
+      full.pi.m[, j] = exp.tilt[[j]](y, u1, u2, N)*true.pi
+    }
+    pi.m = as.matrix(full.pi.m[r == 1,])
+    
+    auxilliary = list(cbind(as.factor(u1), as.factor(z1)), cbind(u2,  z2), y)
+    
+    ################################################################################
+    # Compress the propensity score models
+    ################################################################################
+    w.pi.fit = find.w.pi(auxilliary, pi.m, r, ortho = FALSE, init = rep(1/J, J))
+    w.pi = w.pi.fit$theta.hat
+    w.pi = as.matrix((w.pi^2)/as.numeric(t(w.pi)%*%w.pi))
+    compressed.pi = rep(1, N)
+    compressed.pi[r == 1] = pi.m%*%w.pi
+    ################################################################################
+  
+    ################################################################################
+    # calculate norm.w.pi.adj, beta.pi.iid ... (for estimating the ASE)
+    ################################################################################
+    norm.adj = function(w){
+      (diag(2*w)*sum(w^2)-2*(w^2)%*%t(w))/(sum(w^2)^2)
+    }
+    norm.w.pi.adj = 0; if(length(w.pi) > 1) norm.w.pi.adj = norm.adj(w.pi.fit$theta.hat)
+  
+    beta.pi.iid = -w.pi.fit$GammaW%*%w.pi.fit$g.m
+    ################################################################################
+  
+    ################################################################################
+    # IPW estimator for the population mean mu
+    ################################################################################
+    mu.IPW = mean(r/compressed.pi*y)
+    mu.IPW.true = NULL
+  
+    if(!is.null(true.pi)){
+      mu.IPW.true = mean(r/true.pi*y)
+    }
+    ################################################################################
+  
+    ################################################################################
+    # Estimate the asymptotic variance of IPW
+    ################################################################################
+    ipw.beta = apply(-r*y/(compressed.pi^2)*(full.pi.m%*%norm.w.pi.adj), 2, mean)
+  
+    mu.IPW.iid = as.vector(r/compressed.pi*y+ipw.beta%*%beta.pi.iid)
+    se.IPW = sqrt(var(mu.IPW.iid)/N)
+  
+    mu.IPW.true.iid = as.vector(r/true.pi*y)
+    se.IPW.true = sqrt(var(mu.IPW.true.iid)/N)
+    ################################################################################
+    
+    ################################################################################
+    # The method of Kim & Yu (2012)
+    ################################################################################
+    mu.KimYu = mu.Morikawa = NA
+    # if(situation == 1 & model.num == 0){
+      # gamma = alpha.true[2]
+      # mu.KimYu = KimYu2012(gamma, y, u1, u2, z1, z2, r)
+      
+      # w  = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta)
+      # w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta)
+      # pi.x1.names = c("u1"); pi.x2.names = c("u2");
+      # outcome.formula = outcome.formula.list[[1]]
+      # mu.Morikawa = Morikawa2021(dat, w, w.prime, pi.x1.names, pi.x2.names, 
+      #                            outcome.formula, is.f1 = TRUE, family)$theta.hat
+    # }
+    ################################################################################
+
+    ################################################################################
+    # The method of Han (2018)
+    ################################################################################
+    # mu.Han1 = Han2018(est.res1$outcome.list, est.res1$pi.fit.list, family)$mu.hat
+    # mu.Han2 = Han2018(est.res2$outcome.list, est.res2$pi.fit.list, family)$mu.hat
+    # mu.Han3 = Han2018(est.res3$outcome.list, est.res3$pi.fit.list, family)$mu.hat
+    ################################################################################
+ 
+    c(mu.IPW, mu.IPW.true, se.IPW, se.IPW.true, w.pi)    
+    }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
+  }
+  close(pb)
+  print(Sys.time()-start)
+  
+  if(!is.null(save.file)){
+    if(file.exists(save.file)){
+      sim.res.tmp = sim.res
+      source(save.file)
+      sim.res = cbind(sim.res, sim.res.tmp)
+    }
+    
+    dump("sim.res", save.file)
+  }
+  
+ cat("\n", "Before removing the outliers", "\n")
+  print(rbind(apply(sim.res, 1, mean, na.rm = TRUE), apply(sim.res, 1, sd, na.rm = TRUE))); cat("\n");
+  cat("After removing the outliers", "\n")
+  print(rbind(apply(sim.res, 1, function(v) if(!all(is.na(v))) mean(rm.extreme(na.omit(v))) else NA),
+              apply(sim.res, 1, function(v) if(!all(is.na(v))) sd(rm.extreme(na.omit(v))) else NA)))
+  cat("\n", "Number of replicates:", ncol(sim.res), "/", 
+      "Number of outliers removed:",
+      apply(sim.res, 1, function(v) if(!any(is.na(v))) ncol(sim.res)-length(rm.extreme(na.omit(v))) else 0),
+      "\n\n")
+  
+  for(j in 1){
+    cp = rep(NA, 2)
+    for(i in 1:2){
+      ci = cbind(sim.res[4*(j-1)+i,]-1.96*sim.res[4*(j-1)+2+i,],
+                 sim.res[4*(j-1)+i,]+1.96*sim.res[4*(j-1)+2+i,])
+      cp[i] = mean(na.omit(apply(ci, 1, function(v) ifelse(v[1] < true.mu & v[2] > true.mu, 1, 0))))
+    }
+    names(cp) = c("IPW.CP", "IPW.true.CP")
+    print(cp)
+  }
+  
+  gc()
+}
+```
+
+# Setting 1-1
+
+## Algorithm 
+
+```{r}
+ChuangData_SM1.1 = readRDS("ChuangData_SM/ChuangData_SM1.1_2000.RDS")
+true.mu = mean(ChuangData_SM1.1$y)
+```
+
+```{r}
+alpha.true = c(-0.2, 0.1, 0.1, 0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names =c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = c("u2")))
+for(N in c(1000, 300)){
+  for(model.num in 2:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.1", "_", model.set, "_", N, "_new3.RData"), collapse = "")
+      simulate1(ChuangData_SM1.1, alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N)
+    }
+  }
+}
+```
+
+```{r}
+alpha.true = c(-0.2, 0.1, 0.1, 0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names =c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y , x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("u2", "u2^2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("u2")))
+for(N in c(1000, 300)){
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.1-2", "_", model.set, "_", N, "_new3.RData"), collapse = "")
+      ChuangData_SM1.1$`u2^2` = ChuangData_SM1.1$u2^2
+      simulate1(ChuangData_SM1.1, alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+# Setting 1-1-mild
+
+## Algorithm 
+
+```{r}
+ChuangData_SM1.1.mild_1000 = readRDS("ChuangData_SM/ChuangData_SM1.1.mild_1000.RDS")
+ChuangData_SM1.1.mild_300 = readRDS("ChuangData_SM/ChuangData_SM1.1.mild_300.RDS")
+mean(ChuangData_SM1.1.mild_1000$r)
+mean(ChuangData_SM1.1.mild_300$r)
+true.mu = mean(ChuangData_SM1.1.mild_1000$y)
+data.list = list(ChuangData_SM1.1.mild_1000, ChuangData_SM1.1.mild_300)
+```
+
+```{r}
+alpha.true = c(-0.1, -0.1, 0.1, 0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*(-y-u1-u2))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("z2")))
+N.v = c(1000)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.1.mild-1", "_", model.set, "_", N, "_new7.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+```{r}
+plot.misspecification(alldata, alpha.true, true.pi.model, propensity.list,
+                      N = 10^5, 
+                      save.file = "ChuangResults_SM/Graphs/ChuangChao2023_ChuangData1.1.mild-1.png")
+```
+
+```{r}
+alpha.true = c(-0.1, -0.1, 0.1, 0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*(-y-u1-u2))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = c("u2", "z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1", "z1"),
+                            model.x2.names = c("z2")))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.1.mild-2", "_", model.set, "_", N, "_new7.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+```{r}
+plot.misspecification(alldata, alpha.true, true.pi.model, propensity.list,
+                      N = 10^4, 
+                      save.file = "ChuangResults_SM/Graphs/ChuangChao2023_ChuangData1.1.mild-2.png")
+```
+
+# Setting 1-2
+
+## Algorithm 
+
+```{r}
+ChuangData_SM1.2 = readRDS("ChuangData_SM/ChuangData_SM1.2_2000.RDS")
+true.mu = mean(ChuangData_SM1.2$y)
+```
+
+```{r}
+alpha.true = c(-1.1, 0.1, 0.1, 0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names =c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = c("u2")))
+for(N in c(1000, 300)){
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.2", "_", model.set, "_", N, "_new3.RData"), collapse = "")
+      simulate1(ChuangData_SM1.2, alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N,
+                save.file)
+    }
+  }
+}
+```
+
+# Setting 1-2-mild
+
+## Algorithm 
+
+```{r}
+ChuangData_SM1.2.mild_1000 = readRDS("ChuangData_SM/ChuangData_SM1.2.mild_1000.RDS")
+ChuangData_SM1.2.mild_300 = readRDS("ChuangData_SM/ChuangData_SM1.2.mild_300.RDS")
+mean(ChuangData_SM1.2.mild_1000$r)
+mean(ChuangData_SM1.2.mild_300$r)
+true.mu = mean(ChuangData_SM1.2.mild_1000$y)
+data.list = list(ChuangData_SM1.2.mild_1000, ChuangData_SM1.2.mild_300)
+```
+
+```{r}
+alpha.true = c(-1.1, 0.1, 0.1, 0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*(-y-u1-u2))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("z2")))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.2.mild-1", "_", model.set, "_", N, "_new7.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+```{r}
+plot.misspecification(ChuangData_SM1.2.mild_1000, alpha.true, true.pi.model, propensity.list,
+                      N = 10^4, 
+                      save.file = "ChuangResults_SM/Graphs/ChuangChao2023_ChuangData1.2.mild-1.png")
+```
+
+```{r}
+alpha.true = c(-1.1, 0.1, 0.1, 0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*(-y-u1-u2))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = c("u2", "z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1", "z1"),
+                            model.x2.names = c("z2")))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.2.mild-2", "_", model.set, "_", N, "_new7.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+```{r}
+plot.misspecification(ChuangData_SM1.2.mild_1000, alpha.true, true.pi.model, propensity.list,
+                      N = 10^4, 
+                      save.file = "ChuangResults_SM/Graphs/ChuangChao2023_ChuangData1.2.mild-2.png")
+```
+
+# Setting 1-3
+
+## Algorithm 
+
+```{r}
+ChuangData_SM1.3 = readRDS("ChuangData_SM/ChuangData_SM1.3_2000.RDS")
+true.mu = mean(ChuangData_SM1.3$y)
+```
+
+```{r}
+alpha.true = c(-0.2, 0.04, 0.2, 0.2)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names =c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = NULL))
+for(N in c(1000, 300)){
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.3", "_", model.set, "_", N, "_new7.RData"), collapse = "")
+      simulate1(ChuangData_SM1.3, alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N,
+                save.file)
+    }
+  }
+}
+```
+
+# Setting 1-3-mild
+
+## Algorithm 
+
+```{r}
+ChuangData_SM1.3.mild_1000 = readRDS("ChuangData_SM/ChuangData_SM1.3.mild_1000.RDS")
+ChuangData_SM1.3.mild_300 = readRDS("ChuangData_SM/ChuangData_SM1.3.mild_300.RDS")
+mean(ChuangData_SM1.3.mild_1000$r)
+mean(ChuangData_SM1.3.mild_300$r)
+true.mu = mean(ChuangData_SM1.3.mild_1000$y)
+data.list = list(ChuangData_SM1.3.mild_1000, ChuangData_SM1.3.mild_300)
+```
+
+```{r}
+alpha.true = c(-0.1, -0.1, 0.1, 0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*(-y-u1-u2))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("z2")))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.3.mild-1", "_", model.set, "_", N, "_new7.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+```{r}
+plot.misspecification(ChuangData_SM1.3.mild_1000, alpha.true, true.pi.model, propensity.list,
+                      N = 10^5, 
+                      save.file = "ChuangResults_SM/Graphs/ChuangChao2023_ChuangData1.3.mild-1.png")
+```
+
+```{r}
+alpha.true = c(-0.1, -0.1, 0.1, 0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*(-y-u1-u2))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = c("u2", "z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1", "z1"),
+                            model.x2.names = c("z2")))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.3.mild-2", "_", model.set, "_", N, "_new7.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+```{r}
+plot.misspecification(ChuangData_SM1.3.mild_1000, alpha.true, true.pi.model, propensity.list,
+                      N = 10^4, 
+                      save.file = "ChuangResults_SM/Graphs/ChuangChao2023_ChuangData1.3.mild-2.png")
+```
+
+# Setting 1-4
+
+## Algorithm 
+
+```{r}
+ChuangData_SM1.4 = readRDS("ChuangData_SM/ChuangData_SM1.4_2000.RDS")
+true.mu = mean(ChuangData_SM1.4$y)
+```
+
+```{r}
+alpha.true = c(-0.5, -0.2, -0.5, -0.5)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names =c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = NULL))
+for(N in c(1000, 300)){
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.4", "_", model.set, "_", N, "_new7.RData"), collapse = "")
+      simulate1(ChuangData_SM1.4, alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N,
+                save.file)
+    }
+  }
+}
+```
+
+# Setting 1-4-mild
+
+## Algorithm 
+
+```{r}
+ChuangData_SM1.4.mild_1000 = readRDS("ChuangData_SM/ChuangData_SM1.4.mild_1000.RDS")
+ChuangData_SM1.4.mild_300 = readRDS("ChuangData_SM/ChuangData_SM1.4.mild_300.RDS")
+mean(ChuangData_SM1.4.mild_1000$r)
+mean(ChuangData_SM1.4.mild_300$r)
+true.mu = mean(ChuangData_SM1.4.mild_1000$y)
+data.list = list(ChuangData_SM1.4.mild_1000, ChuangData_SM1.4.mild_300)
+```
+
+```{r}
+alpha.true = c(-0.7, -0.5, -0.5, -0.5)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*(-y-u1-u2))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("z2")))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.4.mild-1", "_", model.set, "_", N, "_new7.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+```{r}
+plot.misspecification(ChuangData_SM1.4.mild_1000, alpha.true, true.pi.model, propensity.list,
+                      N = 10^4, 
+                      save.file = "ChuangResults_SM/Graphs/ChuangChao2023_ChuangData1.4.mild-1.png")
+```
+
+```{r}
+alpha.true = c(-0.7, -0.5, -0.5, -0.5)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*(-y-u1-u2))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = c("u2", "z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1", "z1"),
+                            model.x2.names = c("z2")))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.4.mild-2", "_", model.set, "_", N, "_new7.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+```{r}
+plot.misspecification(ChuangData_SM1.4.mild_1000, alpha.true, true.pi.model, propensity.list,
+                      N = 10^4, 
+                      save.file = "ChuangResults_SM/Graphs/ChuangChao2023_ChuangData1.4.mild-2.png")
+```
+
+# Setting 1-5
+
+## Algorithm 
+
+```{r}
+ChuangData_SM1.5 = readRDS("ChuangData_SM/ChuangData_SM1.5_1000.RDS")
+true.mu = mean(ChuangData_SM1.5$y)
+```
+
+```{r}
+alpha.true = c(0.2, -0.05, -0.2, 0.2)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names =c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = NULL))
+for(N in c(1000, 300)){
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.5", "_", model.set, "_", N, "_new16.RData"), collapse = "")
+      simulate1(ChuangData_SM1.5, alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+# Setting 1-5-mild
+
+## Algorithm 
+
+```{r}
+ChuangData_SM1.5.mild_1000 = readRDS("ChuangData_SM/ChuangData_SM1.5.mild_1000.RDS")
+ChuangData_SM1.5.mild_300 = readRDS("ChuangData_SM/ChuangData_SM1.5.mild_300.RDS")
+mean(ChuangData_SM1.5.mild_1000$r)
+mean(ChuangData_SM1.5.mild_300$r)
+true.mu = mean(ChuangData_SM1.5.mild_1000$y)
+data.list = list(ChuangData_SM1.5.mild_1000, ChuangData_SM1.5.mild_300)
+```
+
+```{r}
+alpha.true = c(0.1, -0.05, -0.2, 0.2)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names =c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = NULL))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.5.mild-nested", "_", model.set, "_", N, "_new7.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+# Setting 1-6
+
+## Algorithm 
+
+```{r}
+ChuangData_SM1.6 = readRDS("ChuangData_SM/ChuangData_SM1.6_1000.RDS")
+true.mu = mean(ChuangData_SM1.6$y)
+```
+
+```{r}
+alpha.true = c(-0.4, -0.2, -0.5, -0.5)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names =c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = NULL))
+for(N in c(1000, 300)){
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.6", "_", model.set, "_", N, "_new17.RData"), collapse = "")
+      simulate1(ChuangData_SM1.6, alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+# Setting 1-6-mild
+
+## Algorithm 
+
+```{r}
+ChuangData_SM1.6.mild_1000 = readRDS("ChuangData_SM/ChuangData_SM1.6.mild_1000.RDS")
+ChuangData_SM1.6.mild_300 = readRDS("ChuangData_SM/ChuangData_SM1.6.mild_300.RDS")
+mean(ChuangData_SM1.6.mild_1000$r)
+mean(ChuangData_SM1.6.mild_300$r)
+true.mu = mean(ChuangData_SM1.6.mild_1000$y)
+data.list = list(ChuangData_SM1.6.mild_1000, ChuangData_SM1.6.mild_300)
+```
+
+```{r}
+alpha.true = c(-1, -0.5, -1, -0.5)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names =c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = NULL))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData1.6.mild-nested", "_", model.set, "_", N, "_new7.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+# Setting 2-1
+
+## Algorithm 
+
+```{r}
+ChuangData_SM2.1 = readRDS("ChuangData_SM/ChuangData_SM2.1_2000.RDS")
+true.mu = mean(ChuangData_SM2.1$y)
+```
+
+```{r}
+alpha.true = c(-0.1, 0.5, -0.5, -0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("u2", "z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1", "z1"),
+                            model.x2.names = NULL))
+for(N in c(1000, 300)){
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData2.1", "_", model.set, "_", N, "_new9.RData"), collapse = "")
+      simulate1(ChuangData_SM2.1, alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N,
+                save.file)
+    }
+  }
+}
+```
+
+# Setting 2-1-mild
+
+## Algorithm 
+
+```{r}
+ChuangData_SM2.1.mild_1000 = readRDS("ChuangData_SM/ChuangData_SM2.1.mild_1000.RDS")
+ChuangData_SM2.1.mild_300 = readRDS("ChuangData_SM/ChuangData_SM2.1.mild_300.RDS")
+mean(ChuangData_SM2.1.mild_1000$r)
+mean(ChuangData_SM2.1.mild_300$r)
+true.mu = mean(ChuangData_SM2.1.mild_1000$y)
+data.list = list(ChuangData_SM2.1.mild_1000, ChuangData_SM2.1.mild_300)
+```
+
+```{r}
+alpha.true = c(-0.1, 0.5, -0.5, -0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*(-y-u1-u2))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("z2")))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData2.1.mild-1", "_", model.set, "_", N, "_new8.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+```{r}
+plot.misspecification(ChuangData_SM2.1.mild_1000, alpha.true, true.pi.model, propensity.list,
+                      N = 10^4, 
+                      save.file = "ChuangResults_SM/Graphs/ChuangChao2023_ChuangData2.1.mild-1.png")
+```
+
+```{r}
+alpha.true = c(-0.1, 0.5, -0.5, -0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*(-y-u1-u2))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = c("u2", "z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1", "z1"),
+                            model.x2.names = c("z2")))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData2.1.mild-2", "_", model.set, "_", N, "_new8.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+```{r}
+plot.misspecification(ChuangData_SM2.1.mild_1000, alpha.true, true.pi.model, propensity.list,
+                      N = 10^4, 
+                      save.file = "ChuangResults_SM/Graphs/ChuangChao2023_ChuangData2.1.mild-2.png")
+```
+
+# Setting 2-2
+
+## Algorithm 
+
+```{r}
+ChuangData_SM2.2 = readRDS("ChuangData_SM/ChuangData_SM2.2_2000.RDS")
+true.mu = mean(ChuangData_SM2.2$y)
+```
+
+```{r}
+alpha.true = c(-0.8, 0.5, -0.5, -0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("u2", "z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1", "z1"),
+                            model.x2.names = NULL))
+for(N in c(1000, 300)){
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData2.2", "_", model.set, "_", N, "_new9.RData"), collapse = "")
+      simulate1(ChuangData_SM2.2, alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N,
+                save.file)
+    }
+  }
+}
+```
+
+# Setting 2-2-mild
+
+## Algorithm 
+
+```{r}
+ChuangData_SM2.2.mild_1000 = readRDS("ChuangData_SM/ChuangData_SM2.2.mild_1000.RDS")
+ChuangData_SM2.2.mild_300 = readRDS("ChuangData_SM/ChuangData_SM2.2.mild_300.RDS")
+mean(ChuangData_SM2.2.mild_1000$r)
+mean(ChuangData_SM2.2.mild_300$r)
+true.mu = mean(ChuangData_SM2.2.mild_1000$y)
+data.list = list(ChuangData_SM2.2.mild_1000, ChuangData_SM2.2.mild_300)
+```
+
+```{r}
+alpha.true = c(-0.6, -0.5, -0.5, -0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*(-y-u1-u2))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("z2")))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData2.2.mild-1", "_", model.set, "_", N, "_new8.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+```{r}
+plot.misspecification(ChuangData_SM2.2.mild_1000, alpha.true, true.pi.model, propensity.list,
+                      N = 10^4, 
+                      save.file = "ChuangResults_SM/Graphs/ChuangChao2023_ChuangData2.2.mild-1.png")
+```
+
+```{r}
+alpha.true = c(-0.6, -0.5, -0.5, -0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*(-y-u1-u2))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = c("u2", "z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1", "z1"),
+                            model.x2.names = c("z2")))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData2.2.mild-2", "_", model.set, "_", N, "_new8.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+```{r}
+plot.misspecification(ChuangData_SM2.2.mild_1000, alpha.true, true.pi.model, propensity.list,
+                      N = 10^4, 
+                      save.file = "ChuangResults_SM/Graphs/ChuangChao2023_ChuangData2.2.mild-2.png")
+```
+
+# Setting 2-3
+
+## Algorithm 
+
+```{r}
+ChuangData_SM2.3 = readRDS("ChuangData_SM/ChuangData_SM2.3_2000.RDS")
+true.mu = mean(ChuangData_SM2.3$y)
+```
+
+```{r}
+alpha.true = c(-0.1, 0.8, -0.3, -0.3)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names =c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = NULL))
+for(N in c(1000, 300)){
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData2.3", "_", model.set, "_", N, "_new9.RData"), collapse = "")
+      simulate1(ChuangData_SM2.3, alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N,
+                save.file)
+    }
+  }
+}
+```
+
+# Setting 2-3-mild
+
+## Algorithm 
+
+```{r}
+ChuangData_SM2.3.mild_1000 = readRDS("ChuangData_SM/ChuangData_SM2.3.mild_1000.RDS")
+ChuangData_SM2.3.mild_300 = readRDS("ChuangData_SM/ChuangData_SM2.3.mild_300.RDS")
+mean(ChuangData_SM2.3.mild_1000$r)
+mean(ChuangData_SM2.3.mild_300$r)
+true.mu = mean(ChuangData_SM2.3.mild_1000$y)
+data.list = list(ChuangData_SM2.3.mild_1000, ChuangData_SM2.3.mild_300)
+```
+
+```{r}
+alpha.true = c(-0.2, 0.8, -0.3, -0.3)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*(-y-u1-u2))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("z2")))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData2.3.mild-1", "_", model.set, "_", N, "_new8.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+```{r}
+plot.misspecification(ChuangData_SM2.3.mild_1000, alpha.true, true.pi.model, propensity.list,
+                      N = 10^4, 
+                      save.file = "ChuangResults_SM/Graphs/ChuangChao2023_ChuangData2.3.mild-1.png")
+```
+
+```{r}
+alpha.true = c(-0.2, 0.8, -0.3, -0.3)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*(-y-u1-u2))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = c("u2", "z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                            model.y = function(y) NULL, 
+                            model.x1.names = c("u1", "z1"),
+                            model.x2.names = c("z2")))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData2.3.mild-2", "_", model.set, "_", N, "_new8.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+```{r}
+plot.misspecification(ChuangData_SM2.3.mild_1000, alpha.true, true.pi.model, propensity.list,
+                      N = 10^4, 
+                      save.file = "ChuangResults_SM/Graphs/ChuangChao2023_ChuangData2.3.mild-2.png")
+```
+
+# Setting 2-4
+
+## Algorithm 
+
+```{r}
+ChuangData_SM2.4 = readRDS("ChuangData_SM/ChuangData_SM2.4_2000.RDS")
+true.mu = mean(ChuangData_SM2.4$y)
+```
+
+```{r}
+alpha.true = c(-0.3, -0.8, -0.5, -0.3)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names =c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = NULL))
+for(N in c(1000, 300)){
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData2.4", "_", model.set, "_", N, "_new9.RData"), collapse = "")
+      simulate1(ChuangData_SM2.4, alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N,
+                save.file)
+    }
+  }
+}
+```
+
+# Setting 2-4-mild
+
+## Algorithm 
+
+```{r}
+ChuangData_SM2.4 = readRDS("ChuangData_SM/ChuangData_SM2.4_2000.RDS")
+true.mu = mean(ChuangData_SM2.4$y)
+```
+
+```{r}
+alpha.true = c(0.5, -0.5, -0.5, -0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+exp.tilt.list = list(list(function(y, u1, u2, N) exp((N^(-1/1))*(y+u1+u2)),
+                          function(y, u1, u2, N) exp((N^(-1/5))*(y-u1-u2)),
+                          function(y, u1, u2, N) exp((N^(-1/7))*(-y+u1-u2))),
+                     list(function(y, u1, u2, N) exp((N^(-1/5))*(y+u1+u2)),
+                          function(y, u1, u2, N) exp((N^(-1/7))*(y-u1-u2))))
+for(N in c(3000, 1000, 300)){
+  for(situation in 1:2){
+    for(model.num in 1:length(exp.tilt.list[[situation]])){
+      save.file = paste("ChuangResults_SM/ChuangChao2023_Situation", situation, "-", model.num,
+                        "_ChuangData2.4.mild_", N, "_new6.RData", sep = "")
+      simulate2(ChuangData_SM2.4, alpha.true, true.pi.model, model.num, "gaussian", exp.tilt.list[[situation]], situation, N, save.file)
+    }
+  }
+}
+```
+
+```{r}
+alpha.true = c(0.5, -0.5, -0.5, Aㄇ-0.1)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+exp.tilt.list = list(list(function(y, u1, u2, N) exp((N^(-1/1))*(y+u1+u2)),
+                          function(y, u1, u2, N) exp((N^(-1/3))*(y-u1-u2)),
+                          function(y, u1, u2, N) exp((N^(-1/5))*(-y+u1-u2))),
+                     list(function(y, u1, u2, N) exp((N^(-1/3))*(y+u1+u2)),
+                          function(y, u1, u2, N) exp((N^(-1/5))*(y-u1-u2))))
+for(N in c(3000, 1000, 300)){
+  for(situation in 1:2){
+    for(model.num in 1:length(exp.tilt.list[[situation]])){
+      save.file = paste("ChuangResults_SM/ChuangChao2023_Situation", situation, "-", model.num, "-2", 
+                        "_ChuangData2.4.mild_", N, "_new6.RData", sep = "")
+      simulate2(ChuangData_SM2.4, alpha.true, true.pi.model, model.num, "gaussian", exp.tilt.list[[situation]], situation, N, save.file)
+    }
+  }
+}
+```
+
+# Setting 2-5
+
+## Algorithm 
+
+```{r}
+ChuangData_SM2.5 = readRDS("ChuangData_SM/ChuangData_SM2.5_1000.RDS")
+true.mu = mean(ChuangData_SM2.5$y)
+```
+
+```{r}
+alpha.true = c(-0.1, 0.1, 0.1, -0.2)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = NULL),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = NULL))
+for(N in c(300, 1000)){
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData2.5", "_", model.set, "_", N, "_new17.RData"), collapse = "")
+      simulate1(ChuangData_SM2.5, alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N,
+                save.file)
+    }
+  }
+}
+```
+
+# Setting 2-5-mild
+
+## Algorithm 
+
+```{r}
+ChuangData_SM2.5.mild_1000 = readRDS("ChuangData_SM/ChuangData_SM2.5.mild_1000.RDS")
+ChuangData_SM2.5.mild_300 = readRDS("ChuangData_SM/ChuangData_SM2.5.mild_300.RDS")
+mean(ChuangData_SM2.5.mild_1000$r)
+mean(ChuangData_SM2.5.mild_300$r)
+true.mu = mean(ChuangData_SM2.5.mild_1000$y)
+data.list = list(ChuangData_SM2.5.mild_1000, ChuangData_SM2.5.mild_300)
+```
+
+```{r}
+alpha.true = c(-0.2, 0.1, 0.1, -0.2)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names =c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = NULL))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData2.5.mild-nested", "_", model.set, "_", N, "_new7.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```
+
+# Setting 2-6
+
+## Algorithm 
+
+```{r}
+ChuangData_SM2.6 = readRDS("ChuangData_SM/ChuangData_SM2.6_1000.RDS")
+true.mu = mean(ChuangData_SM2.6$y)
+```
+
+```{r}
+alpha.true = c(-0.5, -0.2, -0.5, -0.2)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names = c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("z1"),
+                            model.x2.names = NULL),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = NULL))
+for(N in c(300, 1000)){
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData2.6", "_", model.set, "_", N, "_new17.RData"), collapse = "")
+      simulate1(ChuangData_SM2.6, alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N,
+                save.file)
+    }
+  }
+}
+```
+
+# Setting 2-6-mild
+
+## Algorithm 
+
+```{r}
+ChuangData_SM2.6.mild_1000 = readRDS("ChuangData_SM/ChuangData_SM2.6.mild_1000.RDS")
+ChuangData_SM2.6.mild_300 = readRDS("ChuangData_SM/ChuangData_SM2.6.mild_300.RDS")
+mean(ChuangData_SM2.6.mild_1000$r)
+mean(ChuangData_SM2.6.mild_300$r)
+true.mu = mean(ChuangData_SM2.6.mild_1000$y)
+data.list = list(ChuangData_SM2.6.mild_1000, ChuangData_SM2.6.mild_300)
+```
+
+```{r}
+alpha.true = c(-0.6, -0.2, -0.6, -0.2)
+true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+propensity.list = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = c("u1"),
+                            model.x2.names =c("u2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = c("z2")),
+                       list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta),
+                            w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                            model.y = function(y) y, 
+                            model.x1.names = NULL,
+                            model.x2.names = NULL))
+N.v = c(1000, 300)
+for(j in 1:length(N.v)){
+  N = N.v[j]
+  for(model.num in 1:3){
+    model.sets = combn(3, model.num)
+    for(i in 1:ncol(model.sets)){
+      model.set = model.sets[, i]
+      print(paste("model set:", paste0(model.set, collapse = ""), "/", "N:", N)) 
+      save.file = paste0(c("ChuangResults_SM/ChuangChao2023_ChuangData2.6.mild-nested", "_", model.set, "_", N, "_new7.RData"), collapse = "")
+      simulate1(data.list[[j]], alpha.true, true.pi.model, "gaussian", propensity.list[model.set], N, save.file)
+    }
+  }
+}
+```

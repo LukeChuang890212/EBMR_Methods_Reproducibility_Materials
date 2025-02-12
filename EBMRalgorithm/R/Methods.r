@@ -2,6 +2,9 @@
 #'
 #' This method estimates the coefficients \eqn{\nu} using an Generalized Method of Moments (GMM) procedure.
 #'
+#' @import Matrix
+#' @import numDeriv
+#'
 #' @param ps.matrix A matrix of propensity scores for each observation and model.
 #' @param h_x A matrix of covariates, which includes both continuous and discrete variables.
 #' @param init (optional) A vector of initial values for the optimization. Default is \eqn{\bf{0}}.

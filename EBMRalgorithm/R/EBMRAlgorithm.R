@@ -6,6 +6,8 @@
 #' This class allows users to perform propensity score fitting and estimation
 #' for the specified data and propensity score specifications.
 #'
+#' @import R6
+#'
 #' @section Public Methods:
 #' The following methods are available in the EBMRAlgorithm class:
 #'

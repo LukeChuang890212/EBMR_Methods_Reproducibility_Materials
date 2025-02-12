@@ -4,6 +4,8 @@
 #' the response indicator variable (`r`), the variable inside `o()`,
 #' and the remaining predictor variables.
 #'
+#' @import stringr
+#'
 #' @param formula A formula specifying the model structure (e.g., `r ~ x1 + o(y) + x2`),
 #' where the missing outcome variables should be placed inside `o()`.
 #'
