@@ -1,3 +1,5 @@
+devtools::install_github("LukeChuang890212/EBMR_Methods_Reproducibility_Materials/EBMRalgorithm")
+library(EBMRalgorithm)
 simulate1 = function(alldata, alpha.true, true.pi.model, family, h.list, propensity.list, N, save.file = NULL){
   source("DataGeneration_SM.r", local = TRUE)
   source("Wang2014_12.r", local = TRUE)
@@ -7,69 +9,69 @@ simulate1 = function(alldata, alpha.true, true.pi.model, family, h.list, propens
   # source("Morikawa2021.r", local = TRUE)
   # source("Han2018_2.r", local = TRUE)
   # source("ZhaoMa2022.r", local = TRUE)
-  
+
   true.mu = mean(alldata$y)
-  
+
   cores = detectCores()
   cl = makeCluster(cores - 4) ## number of clusters
   registerDoSNOW(cl)
-  
+
   pb = txtProgressBar(max = n.sim, style = 3)
   progress <- function(n) setTxtProgressBar(pb, n)
   opts = list(progress = progress)
   parallel_packages = c("pracma", "tidyverse", "Matrix", "MASS", "sandwich", "randomForest")
-  
+
   start = Sys.time()
   sim.res = foreach(i= 1:n.sim, .combine = 'cbind', .options.snow = opts, .packages = parallel_packages) %dopar% {
     tryCatch({
       dat = alldata[((i-1)*N+1):(i*N),]
       # dat = Chuang2023.1.1(n = N)
-      
+
       y = dat$y
       u1 = dat$u1
       u2 = dat$u2
       z1 = dat$z1
       z2 = dat$z2
       r = dat$r
-      
+
       n = sum(r)
       J = length(propensity.list)
-      
+
       true.pi = true.pi.model(y, u1, u2, r, N, alpha.true)
-      
-      
-      
-      c(est1, 
+
+
+
+      c(est1,
         unlist(lapply(pi.fit.list, function(pi.fit) pi.fit$theta.hat)),
-        unlist(lapply(pi.fit.list, function(pi.fit) pi.fit$se)), 
+        unlist(lapply(pi.fit.list, function(pi.fit) pi.fit$se)),
         est.res1$w.pi,
         est.res1$nu,
-        est.res1$imbalance)    
+        est.res1$imbalance)
     }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
   }
   close(pb)
   print(Sys.time()-start)
-  
+
   if(!is.null(save.file)){
     if(file.exists(save.file)){
       sim.res.tmp = sim.res
       source(save.file)
       sim.res = cbind(sim.res, sim.res.tmp)
     }
-    
+
     dump("sim.res", save.file)
   }
-  
+
   cat("\n", "Before removing the outliers", "\n")
   print(rbind(apply(sim.res, 1, mean, na.rm = TRUE), apply(sim.res, 1, sd, na.rm = TRUE))); cat("\n");
   cat("After removing the outliers", "\n")
   print(rbind(apply(sim.res, 1, function(v) if(!all(is.na(v))) mean(rm.extreme(na.omit(v))) else NA),
               apply(sim.res, 1, function(v) if(!all(is.na(v))) sd(rm.extreme(na.omit(v))) else NA)))
-  cat("\n", "Number of replicates:", ncol(sim.res), "/", 
+  cat("\n", "Number of replicates:", ncol(sim.res), "/",
       "Number of outliers removed:",
       apply(sim.res, 1, function(v) if(!any(is.na(v))) ncol(sim.res)-length(rm.extreme(na.omit(v))) else 0),
       "\n\n")
-  
+
   for(j in 1){
     cp = rep(NA, 2)
     for(i in 1:2){
@@ -80,7 +82,7 @@ simulate1 = function(alldata, alpha.true, true.pi.model, family, h.list, propens
     names(cp) = c("IPW.CP", "IPW.true.CP")
     print(cp)
   }
-  
+
   gc()
 }
 
