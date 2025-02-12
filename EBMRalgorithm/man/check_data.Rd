@@ -12,11 +12,11 @@ check_data(y_names, data)
 \item{data}{A data frame containing the data.}
 }
 \value{
-A data frame with response indicator column `r`.
+A data frame with response indicator column \code{r}.
 }
 \description{
-This method checks if the outcome variable has missing values and creates a response indicator column (`r`) if necessary.
-If the outcome variable does not have missing values, it checks if the response indicator column (`r`) already exists.
+This method checks if the outcome variable has missing values and creates a response indicator column (\code{r}) if necessary.
+If the outcome variable does not have missing values, it checks if the response indicator column (\code{r}) already exists.
 }
 \examples{
 \dontrun{

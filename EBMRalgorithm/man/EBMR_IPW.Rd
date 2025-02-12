@@ -15,14 +15,14 @@ will also be computed using the true propensity scores.}
 \value{
 A list containing the following elements:
 \describe{
-  \item{\code{mu_ipw}}{The IPW estimator for the population mean \eqn{\mu_0} using estimated propensity scores.}
-  \item{\code{mu_ipw.true}}{The IPW estimator using the true propensity scores (if provided).}
-  \item{\code{se_ipw}}{The standard error of the IPW estimator using estimated propensity scores.}
-  \item{\code{se_ipw.true}}{The standard error of the IPW estimator using true propensity scores (if provided).}
-  \item{\code{ps.matrix}}{The matrix of estimated propensity scores for each observation and model.}
-  \item{\code{nu.hat}}{The estimated coefficients \eqn{\nu} from the ensemble method.}
-  \item{\code{w.hat}}{The estimated weights for the propensity score models.}
-  \item{\code{imbalance}}{A measure of imbalance provided by the ensemble propensity scores.}
+\item{\code{mu_ipw}}{The IPW estimator for the population mean \eqn{\mu_0} using estimated propensity scores.}
+\item{\code{mu_ipw.true}}{The IPW estimator using the true propensity scores (if provided).}
+\item{\code{se_ipw}}{The standard error of the IPW estimator using estimated propensity scores.}
+\item{\code{se_ipw.true}}{The standard error of the IPW estimator using true propensity scores (if provided).}
+\item{\code{ps.matrix}}{The matrix of estimated propensity scores for each observation and model.}
+\item{\code{nu.hat}}{The estimated coefficients \eqn{\nu} from the ensemble method.}
+\item{\code{w.hat}}{The estimated weights for the propensity score models.}
+\item{\code{imbalance}}{A measure of imbalance provided by the ensemble propensity scores.}
 }
 }
 \description{

@@ -14,7 +14,18 @@ estimate_nu(ps.matrix, h_x, init = NULL)
 \item{init}{(optional) A vector of initial values for the optimization. Default is \eqn{\bf{0}}.}
 }
 \value{
-
+A list containing the following elements:
+\describe{
+\item{\code{coefficients}}{The estimated coefficients \eqn{\nu}.}
+\item{\code{sol.path}}{Solution path for \eqn{\nu} across iterations.}
+\item{\code{cov.hat}}{Estimated covariance matrix for \eqn{\nu}.}
+\item{\code{se}}{Standard errors of the estimated coefficients.}
+\item{\code{lower}}{Lower bound of the 95\% confidence interval for \eqn{\nu}.}
+\item{\code{upper}}{Upper bound of the 95\% confidence interval for \eqn{\nu}.}
+\item{\code{g.matrix}}{Matrix of moment conditions used in the estimation.}
+\item{\code{K}}{Matrix related to the influence function.}
+\item{\code{h_x}}{Matrix of covariates to be balanced.}
+}
 }
 \description{
 This method estimates the coefficients \eqn{\nu} using an Generalized Method of Moments (GMM) procedure.

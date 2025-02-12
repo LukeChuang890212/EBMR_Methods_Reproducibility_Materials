@@ -4,7 +4,7 @@
 \alias{EBMRAlgorithm}
 \title{EBMRAlgorithm Class}
 \description{
-The `EBMRAlgorithm` class provides an implementation for estimating
+The \code{EBMRAlgorithm} class provides an implementation for estimating
 the coefficients in a propensity score model and related functionalities
 based on the ensemble method for inverse probability weighting (IPW).
 This class allows users to perform propensity score fitting and estimation
@@ -30,10 +30,10 @@ quantities for the estimator, including the estimator when the true propensity s
 \section{Private Fields}{
 
 \describe{
-  \item{\code{r}}{The response indicator.}
-  \item{\code{y}}{The outcome variable(s) used in the model.}
-  \item{\code{n}}{The number of observations.}
-  \item{\code{ps_fit.list}}{List of fitted propensity score models.}
+\item{\code{r}}{The response indicator.}
+\item{\code{y}}{The outcome variable(s) used in the model.}
+\item{\code{n}}{The number of observations.}
+\item{\code{ps_fit.list}}{List of fitted propensity score models.}
 }
 }
 

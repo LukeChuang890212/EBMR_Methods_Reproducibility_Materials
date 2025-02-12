@@ -12,10 +12,10 @@ separate_variable_types(x)
 \value{
 A list containing:
 \describe{
-  \item{\code{x1}}{A data frame with the discrete variables.}
-  \item{\code{x2}}{A data frame with the continuous variables.}
-  \item{\code{x1_names}}{A character vector with the names of the discrete variables.}
-  \item{\code{x2_names}}{A character vector with the names of the continuous variables.}
+\item{\code{x1}}{A data frame with the discrete variables.}
+\item{\code{x2}}{A data frame with the continuous variables.}
+\item{\code{x1_names}}{A character vector with the names of the discrete variables.}
+\item{\code{x2_names}}{A character vector with the names of the continuous variables.}
 }
 }
 \description{
@@ -26,11 +26,11 @@ while discrete variables are either non-numeric or numeric columns with fewer th
 \details{
 The function separates variables into two categories:
 \itemize{
-  \item Continuous variables: Numeric variables with more than 10 unique values.
-  \item Discrete variables: Non-numeric variables or numeric variables with 10 or fewer unique values.
+\item Continuous variables: Numeric variables with more than 10 unique values.
+\item Discrete variables: Non-numeric variables or numeric variables with 10 or fewer unique values.
 }
-The function returns the separated variables in two data frames: one for continuous variables (`x2`)
-and one for discrete variables (`x1`), along with the corresponding names of these variables.
+The function returns the separated variables in two data frames: one for continuous variables (\code{x2})
+and one for discrete variables (\code{x1}), along with the corresponding names of these variables.
 }
 \examples{
 \dontrun{

@@ -13,10 +13,25 @@ WangShaoKim2014(formula, h_x_names, inv_link, init = NULL)
 
 \item{inv_link}{An inverse link function applied to the linear predictor.}
 
-\item{init}{(Optional) A numeric vector specifying the initial values for the model parameters. Defaults to `NULL`.}
+\item{init}{(Optional) A numeric vector specifying the initial values for the model parameters. Defaults to \code{NULL}.}
 }
 \value{
-
+A list containing the following elements:
+\describe{
+\item{\code{coefficients}}{Estimated model coefficients.}
+\item{\code{fitted.values}}{Predicted propensity scores.}
+\item{\code{sol.path}}{Solution path of parameter estimates across iterations.}
+\item{\code{cov.hat}}{Estimated covariance matrix of the coefficients.}
+\item{\code{se}}{Standard errors of the estimated coefficients.}
+\item{\code{lower}}{Lower bound of the 95\% confidence intervals.}
+\item{\code{upper}}{Upper bound of the 95\% confidence intervals.}
+\item{\code{g.matrix}}{Matrix of moment conditions used in the estimation.}
+\item{\code{K}}{Matrix related to the influence function.}
+\item{\code{model}}{The propensity score model function.}
+\item{\code{is.mnar}}{Logical indicator of whether the outcome is missing-not-at-random.}
+\item{\code{model_x_names}}{Names of the predictor variables used in the model.}
+\item{\code{h_x}}{Matrix of covariates to be balanced.}
+}
 }
 \description{
 Implements the Wang, Shao, and Kim (2014) approach for estimating propensity score models in the presence of missing-not-at-random (MNAR) data.
