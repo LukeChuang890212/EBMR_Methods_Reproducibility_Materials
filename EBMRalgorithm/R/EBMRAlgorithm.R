@@ -79,8 +79,8 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                          inv_link = ps_specifications$inv_link
                          self$ps_fit.list[[j]] = self$WangShaoKim2014(formula, h_x_names, inv_link)
                        }
-                       print(private$ps_fit.list[[3]]$coefficients)
-                       print(private$ps_fit.list[[3]]$se)
+                       print(self$ps_fit.list[[3]]$coefficients)
+                       print(self$ps_fit.list[[3]]$se)
                      },
 
                      # public fields (variables)
