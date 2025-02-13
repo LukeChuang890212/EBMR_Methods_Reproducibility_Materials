@@ -63,8 +63,7 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                    public = list(
                      # Public fields (variables)
                      data = NULL,
-                     ps.matrix = NULL,
-                     nu_sol_path = NULL,
+                     ps_fit.list = list(),
 
                      # Constructor to initialize fields
                      initialize = function(y_names, ps_specifications, data) {
@@ -78,7 +77,7 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                          formula = ps_specifications$formula.list[[j]]
                          h_x_names = ps_specifications$h_x_names.list[[j]]
                          inv_link = ps_specifications$inv_link
-                         private$ps_fit.list[[j]] = self$WangShaoKim2014(formula, h_x_names, inv_link)
+                         self$ps_fit.list[[j]] = self$WangShaoKim2014(formula, h_x_names, inv_link)
                        }
                        print(private$ps_fit.list[[3]]$coefficients)
                        print(private$ps_fit.list[[3]]$se)
@@ -94,7 +93,6 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                      r = NULL,
                      y = NULL,
                      n = NULL,
-                     ps_fit.list = list(),
 
                      # private methods
                      check_data = check_data,

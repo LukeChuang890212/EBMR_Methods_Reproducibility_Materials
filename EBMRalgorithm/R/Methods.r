@@ -171,11 +171,11 @@ EBMR_IPW = function(h_x_names, true_ps = NULL) {
   ################################################################################
   # Collect the propensity score models
   ################################################################################
-  J = length(private$ps_fit.list)
-  ps_model.list = lapply(private$ps_fit.list, function(ps_fit) ps_fit$model)
-  alpha.list = lapply(private$ps_fit.list, function(ps_fit) ps_fit$coefficients)
+  J = length(self$ps_fit.list)
+  ps_model.list = lapply(self$ps_fit.list, function(ps_fit) ps_fit$model)
+  alpha.list = lapply(self$ps_fit.list, function(ps_fit) ps_fit$coefficients)
   alpha_dim = unlist(lapply(alpha.list, length))
-  ps.matrix = do.call(cbind, lapply(private$ps_fit.list, function(ps_fit) ps_fit$fitted.values))
+  ps.matrix = do.call(cbind, lapply(self$ps_fit.list, function(ps_fit) ps_fit$fitted.values))
   ################################################################################
 
   ################################################################################
@@ -193,7 +193,7 @@ EBMR_IPW = function(h_x_names, true_ps = NULL) {
   ################################################################################
   dot_pi = matrix(NA, n, sum(alpha_dim))
   for(j in 1:J){
-    x = as.matrix(self$data[private$ps_fit.list[[j]]$model_x_names])
+    x = as.matrix(self$data[self$ps_fit.list[[j]]$model_x_names])
     dot_pi[, (sum(alpha_dim[0:(j-1)])+1):sum(alpha_dim[1:j])] = jacobian(function(alpha) ps_model.list[[j]](x, y, alpha), alpha.list[[j]])
   }
   E_dot_g = -(t(dot_pi)*rep(w.hat, alpha_dim))%*%(ensemble_fit$h_x*as.vector(r*((ensemble_ps)^(-2))))/n
@@ -206,8 +206,8 @@ EBMR_IPW = function(h_x_names, true_ps = NULL) {
   H_alpha.w = apply(t((t(dot_pi)*rep(w.hat, alpha_dim)))*as.vector(r*y*((ensemble_ps)^(-2))), 2, mean)
   w.H_nu = apply(ps.matrix%*%t(dot_W_nu_hat)*as.vector(r*y*((ensemble_ps)^(-2))), 2, mean)
 
-  K_alpha = c(lapply(private$ps_fit.list, function(ps_fit) ps_fit$K)) %>% bdiag()
-  g_all = do.call(rbind, lapply(private$ps_fit.list, function(ps_fit) t(ps_fit$g.matrix)))
+  K_alpha = c(lapply(self$ps_fit.list, function(ps_fit) ps_fit$K)) %>% bdiag()
+  g_all = do.call(rbind, lapply(self$ps_fit.list, function(ps_fit) t(ps_fit$g.matrix)))
   K_nu = ensemble_fit$K
   g = t(ensemble_fit$g.matrix)
   ################################################################################
@@ -345,15 +345,15 @@ EBMR_IPW = function(h_x_names, true_ps = NULL) {
 #   return(results)
 # }
 
-# EBMR_IPW = function(private$ps_fit.list, h_x, true_ps = NULL){
+# EBMR_IPW = function(self$ps_fit.list, h_x, true_ps = NULL){
 #   ################################################################################
 #   # Collect the propensity score models
 #   ################################################################################
-#   J = length(private$ps_fit.list)
-#   ps_model.list = lapply(private$ps_fit.list, function(ps_fit) ps_fit$model)
-#   alpha.list = lapply(private$ps_fit.list, function(ps_fit) ps_fit$coefficients)
+#   J = length(self$ps_fit.list)
+#   ps_model.list = lapply(self$ps_fit.list, function(ps_fit) ps_fit$model)
+#   alpha.list = lapply(self$ps_fit.list, function(ps_fit) ps_fit$coefficients)
 #   alpha_dim = unlist(lapply(alpha.list, length))
-#   ps.matrix = do.call(cbind, lapply(private$ps_fit.list, function(ps_fit) ps_fit$fitted.values))
+#   ps.matrix = do.call(cbind, lapply(self$ps_fit.list, function(ps_fit) ps_fit$fitted.values))
 #   ################################################################################
 #
 #   ################################################################################
@@ -371,7 +371,7 @@ EBMR_IPW = function(h_x_names, true_ps = NULL) {
 #   ################################################################################
 #   dot_pi = matrix(NA, n, sum(alpha_dim))
 #   for(j in 1:J){
-#     x = as.matrix(data[private$ps_fit.list[[j]]$model_x_names])
+#     x = as.matrix(data[self$ps_fit.list[[j]]$model_x_names])
 #     dot_pi[, (sum(alpha_dim[0:(j-1)])+1):sum(alpha_dim[1:j])] = jacobian(function(alpha) ps_model.list[[j]](x, y, alpha), alpha.list[[j]])
 #   }
 #   E_dot_g = -(t(dot_pi)*rep(w.hat, alpha_dim))%*%(ensemble_fit$h_x*as.vector(r*((ensemble_ps)^(-2))))/n
@@ -384,8 +384,8 @@ EBMR_IPW = function(h_x_names, true_ps = NULL) {
 #   H_alpha.w = apply(t((t(dot_pi)*rep(w.hat, alpha_dim)))*as.vector(r*y*((ensemble_ps)^(-2))), 2, mean)
 #   w.H_nu = apply(ps.matrix%*%t(dot_W_nu_hat)*as.vector(r*y*((ensemble_ps)^(-2))), 2, mean)
 #
-#   K_alpha = c(lapply(private$ps_fit.list, function(ps_fit) ps_fit$K)) %>% bdiag()
-#   g_all = do.call(rbind, lapply(private$ps_fit.list, function(ps_fit) t(ps_fit$g.matrix)))
+#   K_alpha = c(lapply(self$ps_fit.list, function(ps_fit) ps_fit$K)) %>% bdiag()
+#   g_all = do.call(rbind, lapply(self$ps_fit.list, function(ps_fit) t(ps_fit$g.matrix)))
 #   K_nu = ensemble_fit$K
 #   g = t(ensemble_fit$g.matrix)
 #   ################################################################################
