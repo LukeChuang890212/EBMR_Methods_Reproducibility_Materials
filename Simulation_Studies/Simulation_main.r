@@ -101,7 +101,7 @@ misspecified_model_alpha.true.list = list(
 )
 
 #------------------------------------------------------------------------------#
-#  Scenario 1, 2 ----
+#  Run the simulations for Scenario 1, 2 ----
 #------------------------------------------------------------------------------#
 full_ps_specifications = list(
   formula.list = list(
@@ -118,7 +118,7 @@ full_ps_specifications = list(
 )
 
 ##  Scenario 1 ----
-sim_all_settings_with_all_missing_mechanisms(scenario = 1,
+simulate_all_settings_with_all_missing_rates(scenario = 1,
                                              full_ps_specifications,
                                              n.vector.list$correct_model,
                                              correct_model_all_data_file.list,
@@ -126,7 +126,7 @@ sim_all_settings_with_all_missing_mechanisms(scenario = 1,
                                              version = 43)
 
 ##  Scenario 2 ----
-sim_all_settings_with_all_missing_mechanisms(scenario = 2,
+simulate_all_settings_with_all_missing_rates(scenario = 2,
                                              full_ps_specifications,
                                              n.vector.list$misspecified_model,
                                              misspecified_model_all_data_file.list,
@@ -134,7 +134,7 @@ sim_all_settings_with_all_missing_mechanisms(scenario = 2,
                                              version = 43)
 
 #------------------------------------------------------------------------------#
-# Scenario 3, 4 ----
+# Run the simulations for Scenario 3, 4 ----
 #------------------------------------------------------------------------------#
 full_ps_specifications = list(
   formula.list = list(
@@ -151,7 +151,7 @@ full_ps_specifications = list(
 )
 
 ##  Scenario 3 ----
-sim_all_settings_with_all_missing_mechanisms(scenario = 3,
+simulate_all_settings_with_all_missing_rates(scenario = 3,
                                              full_ps_specifications,
                                              n.vector.list$correct_model,
                                              correct_model_all_data_file.list,
@@ -159,7 +159,7 @@ sim_all_settings_with_all_missing_mechanisms(scenario = 3,
                                              version = 38)
 
 ##  Scenario 4 ----
-sim_all_settings_with_all_missing_mechanisms(scenario = 4,
+simulate_all_settings_with_all_missing_rates(scenario = 4,
                                              full_ps_specifications,
                                              n.vector.list$misspecified_model,
                                              misspecified_model_all_data_file.list,
@@ -167,7 +167,7 @@ sim_all_settings_with_all_missing_mechanisms(scenario = 4,
                                              version = 38)
 
 #------------------------------------------------------------------------------#
-# Scenario 5, 6 ----
+# Run the simulations for Scenario 5, 6 ----
 #------------------------------------------------------------------------------#
 full_ps_specifications = list(
   formula.list = list(
@@ -184,7 +184,7 @@ full_ps_specifications = list(
 )
 
 ##  Scenario 5 ----
-sim_all_settings_with_all_missing_mechanisms(scenario = 5,
+simulate_all_settings_with_all_missing_rates(scenario = 5,
                                              full_ps_specifications,
                                              n.vector.list$correct_model,
                                              correct_model_all_data_file.list,
@@ -192,12 +192,182 @@ sim_all_settings_with_all_missing_mechanisms(scenario = 5,
                                              version = 45)
 
 ##  Scenario 6 ----
-sim_all_settings_with_all_missing_mechanisms(scenario = 6,
+simulate_all_settings_with_all_missing_rates(scenario = 6,
                                              full_ps_specifications,
                                              n.vector.list$misspecified_model,
                                              misspecified_model_all_data_file.list,
                                              misspecified_model_alpha.true.list,
                                              version = 45)
+
+#------------------------------------------------------------------------------#
+# Display the simulation results ----
+#------------------------------------------------------------------------------#
+
+rm.extreme = function(v){
+  v = na.omit(v)
+  lower = quantile(v, 0.25) - 1.5*IQR(v)
+  upper = quantile(v, 0.75) + 1.5*IQR(v)
+  print(paste(sum(v < lower | v > upper), length(v)))
+  v = v[v >= lower & v <= upper]
+  return(v)
+}
+
+summarize_results = function(sim_result, pe_index, ese_index, mu.true, rm.extreme){
+  est = rep(NA, length(pe_index))
+  for(i in 1:length(pe_index)){
+    est[i] = mean(rm.extreme(sim_result[pe_index[i],]))
+  }
+  esd = rep(NA, length(pe_index))
+  for(i in 1:length(pe_index)){
+    esd[i] = sd(rm.extreme(sim_result[pe_index[i],]))
+  }
+  
+  bias = est - mu.true
+  mse = round(bias^2+esd^2, 4)
+  bias = round(bias, 4)
+  mse = round(mse, 4)
+  esd = round(esd, 4)
+  
+  ase = sim_result[ese_index,]
+  cp = se.cp = rep(NA, length(ese_index))
+  for(k in 1:length(ese_index)){
+    ci = cbind(sim_result[pe_index[k],]-1.96*ase, sim_result[pe_index[k],]+1.96*ase)
+    coverage = apply(ci, 1,
+                     function(interval) ifelse(mu.true >= interval[1] & mu.true <= interval[2], 1, 0))
+    cp[k] = mean(na.omit(coverage)) 
+    se.cp[k] = sd(na.omit(coverage)) 
+  }
+  ase = round(mean(ase), 4)
+  cp = round(cp, 4) 
+  
+  return(c(bias, esd, ase, mse, cp))
+}
+
+summarize_all_model_combinations_and_sample_sizes = function(setting, 
+                                                             scenario, 
+                                                             J,
+                                                             missing_rate,
+                                                             n.vector, 
+                                                             replicate_num, 
+                                                             mu.true,
+                                                             version){
+  
+  result = matrix(NA, 8*length(n.vector),  5)
+  j = 1
+  for(n in n.vector){
+    for(model_num in 1:J){
+      model_combinations = combn(J, model_num)
+      for(i in 1:ncol(model_combinations)){
+        # print(c(model_num, i))
+        model_set = model_combinations[, i]
+        read_file = paste0(c("Simulation_Results/EBMR_IPW_", setting, "-", missing_rate, "-scenario", scenario, "_", model_set, "_n", n, "_replicate", replicate_num, "_", version, ".RDS"), collapse = "")
+        sim_result = readRDS(read_file)
+        
+        is.ipw_result = model_num == 1 & i == 1
+        pe_index = ifelse(is.ipw_result, 2, 1)
+        ese_index = ifelse(is.ipw_result, 4, 3)
+        
+        result[j, ] = summary.sim(sim_result, pe_index, ese_index, mu.true)
+        j = j + 1
+      }
+    }
+  }
+  return(result)
+}
+
+summarize_all_settings_with_all_missing_rates = function(scenario,
+                                                         J,
+                                                         n.vector,
+                                                         all_data_file.list,
+                                                         version){
+  settings = c("setting1", "setting2")
+  missing_rates = c("miss50", "miss30")
+  for(setting in settings){
+    results_with_all_missing_rates = matrix(NA, 8*length(n.vector), 5*length(missing_rates))
+    mu.true = mean(readRDS(all_data_file.list[[setting]][[1]][[1]])$y)
+    for(i in 1:length((missing_rates))){
+      results_with_all_missing_rates[, ((i-1)*5+1):((i-1)*5+5)] = summarize_all_model_combinations_and_sample_sizes(
+        setting = setting,
+        scenario = scenario,
+        J = J,
+        missing_rate = missing_rates[i],
+        n.vector = n.vector,
+        replicate_num = replicate_num,
+        mu.true = mu.true,
+        version = version
+      )
+    }
+    estimator_names= rep(c("$\\hat{\\mu}_\\text{IPW}$",
+                           "$\\hat{\\mu}_{100}$", "$\\hat{\\mu}_{010}$", "$\\hat{\\mu}_{001}$",
+                           "$\\hat{\\mu}_{110}$", "$\\hat{\\mu}_{101}$", "$\\hat{\\mu}_{011}$",
+                           "$\\hat{\\mu}_{111}$"), length(n.vector))
+    
+    results_with_all_missing_rates = cbind(estimator_names, as.data.frame(results_with_all_missing_rates)) %>% 
+      as.data.frame
+    colnames(res) = c("", rep(c("Bias", "ESD", "ESE", "MSE", "CP"), length(missing_rates)))
+    
+    kable(results_with_all_missing_rates, align = "c", booktabs = TRUE, escape = FALSE, linesep = "") %>%
+      kable_styling(full_width = FALSE, latex_options = c("hold_position")) %>%
+      add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5)) 
+  }
+}
+
+summarize_all_settings_with_all_missing_rates(scenario = 6,
+                                              J = length(full_ps_specifications),
+                                              n.vector.list$misspecified_model,
+                                              correct_model_all_data_file.list,
+                                              correct_model_alpha.true.list,
+                                              version = 45)
+
+# ChunagData_SM1.3 = readRDS("ChuangData_SM/ChuangData_SM1.3_2000.RDS")
+# ChunagData_SM1.4 = readRDS("ChuangData_SM/ChuangData_SM1.4_2000.RDS")
+# mu.true = c(mean(ChunagData_SM1.3$y), mean(ChunagData_SM1.4$y))
+# 
+# sim.dats = c("ChuangData1.3-nested", "ChuangData1.4-nested")
+# 
+# N.v = c(300, 1000)
+# vers= rep("51", 8)
+# 
+# res = matrix(NA, 8*length(N.v), 5*length(sim.dats))
+# for(l in 1:length(sim.dats)){
+#   data = sim.dats[l]
+#   result = matrix(NA, 8*length(N.v),  5)
+#   m = 1
+#   for(j in 1:length(N.v)){
+#     N = N.v[j]
+#     for(model_num in 1:3){
+#       model_sets = combn(3, model_num)
+#       for(i in 1:ncol(model_sets)){
+#         # print(c(model_num, i))
+#         model_set = model_sets[, i]
+#         sim_result = source(paste0(c("ChuangResults_SM/ChuangChao2023_", data, "_", model_set, "_", N,  "_", vers[i] ,".RData"), collapse = ""))[[1]]
+#         
+#         if(model_num == 1 & i == 1){
+#           pe_index = 2
+#           ese_index = 4
+#           result[m, ] = summary.sim(sim_result, pe_index, ese_index, mu.true[l])
+#           m = m + 1
+#         }
+#         
+#         pe_index = 1
+#         ese_index = 3
+#         result[m, ] = summary.sim(sim_result, pe_index, ese_index, mu.true[l])
+#         m = m + 1
+#       }
+#     }
+#   }
+#   res[, ((l-1)*5+1):((l-1)*5+5)] = result
+# }
+# 
+# estimator_names= rep(c("$\\hat{\\mu}_\\text{IPW}$", "$\\hat{\\mu}_{100}$", "$\\hat{\\mu}_{010}$", "$\\hat{\\mu}_{001}$",
+#                  "$\\hat{\\mu}_{110}$", "$\\hat{\\mu}_{101}$", "$\\hat{\\mu}_{011}$",
+#                  "$\\hat{\\mu}_{111}$"), length(N.v))
+# res = cbind(estimator_names, as.data.frame(res)) %>% as.data.frame
+# colnames(res) = c("", rep(c("Bias", "ESD", "ASE", "MSE", "CP"), length(sim.dats)))
+# 
+# kable(res, align = "c", booktabs = TRUE, escape = FALSE, linesep = "") %>%
+#   kable_styling(full_width = FALSE, latex_options = c("hold_position")) %>%
+#   add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5)) 
 
 
 

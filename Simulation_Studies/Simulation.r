@@ -1,4 +1,4 @@
-simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, replicate_num, save.file = NULL){
+simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, replicate_num, save_file = NULL){
   # source("Data_Generation.r", local = TRUE)
   library(EBMRalgorithm)
   library(parallel)
@@ -39,13 +39,13 @@ simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, r
   close(pb)
   print(Sys.time()-start)
 
-  if(!is.null(save.file)){
-    if(file.exists(save.file)){
+  if(!is.null(save_file)){
+    if(file.exists(save_file)){
       sim_result_temp = sim_result
-      sim_result = readRDS(save.file)
+      sim_result = readRDS(save_file)
       sim_result = cbind(sim_result, sim_result_temp)
     }
-    saveRDS("sim_result", save.file)
+    saveRDS("sim_result", save_file)
   }
 
   cat("\n", "Before removing the outliers", "\n")
@@ -85,7 +85,7 @@ simulate_all_model_combinations_and_sample_sizes = function(
   all_data$r[is.na(all_data$r)] = 1
   # plot.misspecification(dat, alpha.true, miss.ps_model.true, propensity.list,
   #                       N = 10^4,
-  #                       save.file = paste0(c("ChuangResults_SM_Graphs/ChuangChao2023_",save_root, "_", n.vector[1], "_", version, ".png"), collapse = ""))
+  #                       save_file = paste0(c("ChuangResults_SM_Graphs/ChuangChao2023_",save_root, "_", n.vector[1], "_", version, ".png"), collapse = ""))
 
   J = length(full_ps_specifications)
   for(n in n.vector){
@@ -93,28 +93,28 @@ simulate_all_model_combinations_and_sample_sizes = function(
       model_combinations = combn(J, model_num)
       for(i in 1:ncol(model_combinations)){
         model_set = model_combinations[, i]
-        save.file = paste0(c("Simulation_Results/EBMR_IPW_", setting, "-", missing_rate, "-scenario", scenario, "_", model_set, "_n", n, "_replicate", replicate_num, "_", version, ".RDS"), collapse = "")
-        print(paste("model set:", paste0(model_set, collapse = ""), "/", "file:", save.file))
+        save_file = paste0(c("Simulation_Results/EBMR_IPW_", setting, "-", missing_rate, "-scenario", scenario, "_", model_set, "_n", n, "_replicate", replicate_num, "_", version, ".RDS"), collapse = "")
+        print(paste("model set:", paste0(model_set, collapse = ""), "/", "file:", save_file))
         ps_specifications <- list(
           formula.list = full_ps_specifications$formula.list[model_set],
           h_x_names.list = full_ps_specifications$h_x_names.list[model_set],
           inv_link = full_ps_specifications$inv_link
         )
-        simulate(all_data, ps_model.true, alpha.true, ps_specifications, n, replicate_num, save.file)
+        simulate(all_data, ps_model.true, alpha.true, ps_specifications, n, replicate_num, save_file)
       }
     }
   }
 }
 
-sim_all_settings_with_all_missing_mechanisms = function(scenario,
+simulate_all_settings_with_all_missing_rates = function(scenario,
                                                         full_ps_specifications,
                                                         n.vector.list,
                                                         all_data_file.list,
                                                         alpha.true.list,
                                                         version){
   for(setting in c("setting1", "setting2")){
-      for(missing_rate in c("miss50", "miss30")){
-        for(i in 1:length(all_data_file.list[[setting]][[missing_rate]])){
+    for(missing_rate in c("miss50", "miss30")){
+      for(i in 1:length(all_data_file.list[[setting]][[missing_rate]])){
         simulate_all_model_combinations_and_sample_sizes(
           setting = setting,
           scenario = scenario,
