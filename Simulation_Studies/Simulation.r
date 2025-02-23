@@ -45,7 +45,7 @@ simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, r
       sim_result = readRDS(save_file)
       sim_result = cbind(sim_result, sim_result_temp)
     }
-    saveRDS("sim_result", save_file)
+    saveRDS(sim_result, save_file)
   }
 
   cat("\n", "Before removing the outliers", "\n")

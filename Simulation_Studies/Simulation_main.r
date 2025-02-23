@@ -212,35 +212,38 @@ rm.extreme = function(v){
   return(v)
 }
 
-summarize_results = function(sim_result, pe_index, ese_index, mu.true, rm.extreme){
-  est = rep(NA, length(pe_index))
+summarize_results = function(sim_result, pe_index, ese_index, mu.true, is.original){
+  process_sim_replicates = switch(is.original,
+         `TRUE` = function(v) v,
+         `FALSE` = rm.extreme)
+  pe = rep(NA, length(pe_index))
   for(i in 1:length(pe_index)){
-    est[i] = mean(rm.extreme(sim_result[pe_index[i],]))
+    pe[i] = mean(process_sim_replicates(sim_result[pe_index[i],]))
   }
   esd = rep(NA, length(pe_index))
   for(i in 1:length(pe_index)){
-    esd[i] = sd(rm.extreme(sim_result[pe_index[i],]))
+    esd[i] = sd(process_sim_replicates(sim_result[pe_index[i],]))
   }
   
-  bias = est - mu.true
+  bias = pe - mu.true
   mse = round(bias^2+esd^2, 4)
   bias = round(bias, 4)
   mse = round(mse, 4)
   esd = round(esd, 4)
   
-  ase = sim_result[ese_index,]
-  cp = se.cp = rep(NA, length(ese_index))
+  ese = sim_result[ese_index,]
+  cp = rep(NA, length(ese_index))
   for(k in 1:length(ese_index)){
-    ci = cbind(sim_result[pe_index[k],]-1.96*ase, sim_result[pe_index[k],]+1.96*ase)
+    ci = cbind(sim_result[pe_index[k],]-1.96*ese, sim_result[pe_index[k],]+1.96*ese)
     coverage = apply(ci, 1,
                      function(interval) ifelse(mu.true >= interval[1] & mu.true <= interval[2], 1, 0))
     cp[k] = mean(na.omit(coverage)) 
-    se.cp[k] = sd(na.omit(coverage)) 
+    # se.cp[k] = sd(na.omit(coverage)) 
   }
-  ase = round(mean(ase), 4)
+  ese = round(mean(ese), 4)
   cp = round(cp, 4) 
   
-  return(c(bias, esd, ase, mse, cp))
+  return(c(bias, esd, ese, mse, cp))
 }
 
 summarize_all_model_combinations_and_sample_sizes = function(setting, 
@@ -250,7 +253,8 @@ summarize_all_model_combinations_and_sample_sizes = function(setting,
                                                              n.vector, 
                                                              replicate_num, 
                                                              mu.true,
-                                                             version){
+                                                             version,
+                                                             is.original){
   
   result = matrix(NA, 8*length(n.vector),  5)
   j = 1
@@ -267,7 +271,7 @@ summarize_all_model_combinations_and_sample_sizes = function(setting,
         pe_index = ifelse(is.ipw_result, 2, 1)
         ese_index = ifelse(is.ipw_result, 4, 3)
         
-        result[j, ] = summary.sim(sim_result, pe_index, ese_index, mu.true)
+        result[j, ] = summarize_results(sim_result, pe_index, ese_index, mu.true, is.original)
         j = j + 1
       }
     }
@@ -279,7 +283,8 @@ summarize_all_settings_with_all_missing_rates = function(scenario,
                                                          J,
                                                          n.vector,
                                                          all_data_file.list,
-                                                         version){
+                                                         version,
+                                                         is.original = TRUE){
   settings = c("setting1", "setting2")
   missing_rates = c("miss50", "miss30")
   for(setting in settings){
@@ -294,6 +299,7 @@ summarize_all_settings_with_all_missing_rates = function(scenario,
         n.vector = n.vector,
         replicate_num = replicate_num,
         mu.true = mu.true,
+        is.original,
         version = version
       )
     }
@@ -306,9 +312,10 @@ summarize_all_settings_with_all_missing_rates = function(scenario,
       as.data.frame
     colnames(res) = c("", rep(c("Bias", "ESD", "ESE", "MSE", "CP"), length(missing_rates)))
     
-    kable(results_with_all_missing_rates, align = "c", booktabs = TRUE, escape = FALSE, linesep = "") %>%
-      kable_styling(full_width = FALSE, latex_options = c("hold_position")) %>%
-      add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5)) 
+    print(results_with_all_missing_rates)
+    # kable(results_with_all_missing_rates, align = "c", booktabs = TRUE, escape = FALSE, linesep = "") %>%
+    #   kable_styling(full_width = FALSE, latex_options = c("hold_position")) %>%
+    #   add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5)) 
   }
 }
 
@@ -316,7 +323,6 @@ summarize_all_settings_with_all_missing_rates(scenario = 6,
                                               J = length(full_ps_specifications),
                                               n.vector.list$misspecified_model,
                                               correct_model_all_data_file.list,
-                                              correct_model_alpha.true.list,
                                               version = 45)
 
 # ChunagData_SM1.3 = readRDS("ChuangData_SM/ChuangData_SM1.3_2000.RDS")
