@@ -85,7 +85,8 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
 
                      # public fields (variables)
                      WangShaoKim2014 = WangShaoKim2014,
-                     EBMR_IPW = EBMR_IPW
+                     EBMR_IPW = EBMR_IPW,
+                     EBMR_IPW_with_locally_misspecified_model = EBMR_IPW_with_locally_misspecified_model
                    ),
 
                    private = list(
