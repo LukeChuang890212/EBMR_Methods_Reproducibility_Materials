@@ -423,20 +423,20 @@ text(c(1, 3, 9, 14:15, 17:18, 19),  all_results$upper_bound[c(1, 3, 9, 14:15, 17
 ### Estimation
 
 ```{r}
-exp_tilt = function(y, x) exp(xi*as.matrix(cbind(y))%*%rep(1, ncol(cbind(y))))
+possibly_true_ps.vector = c(3, 3)
 exp_tilt_x_names = NULL
+xi.vector.list = list(
+  xi.vector0 = seq(0, nrow(dat[dat$health == 0, ])^(-1/2), length.out = 30),
+  xi.vector1 = seq(0, nrow(dat[dat$health == 1, ])^(-1/2), length.out = 30)
+)
 ```
 
 ```{r}
-possibly_true_ps.vector = c(3, 3)
-xi.vector = seq(0, n^(-0.5), length.out = 30)
-# res = matrix(NA, length(xi.vector), 2)
-# m = 1
-for(xi in xi.v){
-  all_estimates = matrix(NA, length(health), 2)
-  for(k in 1:length(health)){
-    subdat = dat[dat$health == health[k], ]
-    subdat = dat[dat$health == health[k], ]
+for(k in 1:length(health)){
+  subdat = dat[dat$health == health[k], ]
+  xi.vector = xi.vector.list[[k]]
+  for(xi in xi.vector){
+    print(c(xi, k))
       
     full_ps_specifications = full_ps_specifications.list[[k]]
     ps_specifications <- list(
@@ -449,204 +449,54 @@ for(xi in xi.v){
                              data = subdat)
     result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report"))
     
-    sa_result = EBMR_IPW_with_locally_misspecified_model(
+    exp_tilt = function(y, x) exp(xi*as.matrix(cbind(y))%*%rep(1, ncol(cbind(y))))
+    sa_result = ebmr$EBMR_IPW_with_locally_misspecified_model(
       ps.matrix = result$ps.matrix,
       perturb_ps = possibly_true_ps.vector[k],
       exp_tilt = exp_tilt,
       exp_tilt_x_names = exp_tilt_x_names
     )
     save_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", 1:3, "_mild", round(xi, 3), "_OR.RDS"), collapse = "")
-    # saveRDS(sa_result, save_file)
-    # print(sa_result$w.hat)
-    # all_estimates[k, ] = unlist(sa_result[1:2])
+    saveRDS(sa_result, save_file)
   }
-  # effect = odds_ratio(all_estimates[1, 1], all_estimates[2, 1])
-  # Sigma = matrix(c(all_estimates[1, 2]^2, 0, 0, all_estimates[2, 2]^2), 2,2)
-  # se = sqrt(delta_method(all_estimates[1, 1], all_estimates[2, 1])%*%Sigma%*%delta_method(all_estimates[1, 1], all_estimates[2, 1]))
-  # all_results[m, ] = c(effect, se)
-  # m = m + 1
 }
 ```
 
+### Results
+
 ```{r}
-health = 0:1
-subset_names = c("health0", "health1")
-
-# odds_ratio = function(x, y) y/x
-# delta_method = function(x, y) c(-y/x^2, 1/x)
-
-odds_ratio = function(x, y) (y/(1-y))/(x/(1-x))
-delta_method = function(x, y) c(-(y/(1-y))/((x/(1-x))^2)*((1/x^2)/((1/x-1)^2)), 
-                                ((1/y^2)/((1/y-1)^2))/(x/(1-x)))
-
-possibly_true_ps = c(3, 3)
-zeta.v = seq(-0.5, -0.05, length.out = 30)
-xi.v = N^(zeta.v)
-xi.v = seq(0, N^(-0.05), length.out = 30)
-xi.v = seq(0, N^(-0.5), length.out = 30)
-res = matrix(NA, length(xi.v), 2)
+all_results = matrix(NA, 30, 2)
 m = 1
-for(xi in xi.v){
-  est = matrix(NA, length(health), 2)
+for(i in 1:30){
+  all_estimates = matrix(NA, length(health), 2)
   for(k in 1:length(health)){
-    sa_result = readRDS(paste0(c("MHDResults/MNAR_est_", subset_names[k], "_", 1:3, "_mild", round(xi, 3), "_OR5.RDS"), collapse = ""))
-    print(sa_result$w.pi)
-    est[k, ] = unlist(mild.est.all_results[c(1, 2)])
+    xi = xi.vector.list[[k]][i]
+    read_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", 1:3, "_mild", round(xi, 3), "_OR.RDS"), collapse = "")
+    sa_result = readRDS(read_file)
+    print(sa_result$w.hat)
+    all_estimates[k, ] = unlist(sa_result[1:2])
   }
-  effect = odds_ratio(est[1, 1], est[2, 1])
-  Sigma = matrix(c(est[1, 2]^2, 0, 0, est[2, 2]^2), 2,2)
-  se = sqrt(delta_method(est[1, 1], est[2, 1])%*%Sigma%*%delta_method(est[1, 1], est[2, 1]))
+  effect = odds_ratio(all_estimates[1, 1], all_estimates[2, 1])
+  Sigma = matrix(c(all_estimates[1, 2]^2, 0, 0, all_estimates[2, 2]^2), 2, 2)
+  se = sqrt(delta_method(all_estimates[1, 1], all_estimates[2, 1])%*%Sigma%*%delta_method(all_estimates[1, 1], all_estimates[2, 1]))
   all_results[m, ] = c(effect, se)
   m = m + 1
 }
 
+range(all_results[, 1])
+
 # Create the plot
-plot(cbind(xi.v, all_results[, 1]), type = "o",
+plot(cbind(1:30, all_results[, 1]), type = "o",
      xlab = expression(xi), 
      ylab = "",  # Remove default ylab to add custom label
      las = 1)  # Ensure axis labels are horizontal
 
 # Add the y-axis label manually with horizontal rotation
 mtext(expression(hat(theta)), side = 2, line = 3, at = mean(par("usr")[3:4]), cex = 1, las = 1)
-points(zeta.v, all_results[, 1], pch = 16)
+points(1:30, all_results[, 1], pch = 16)
 abline(h = 1, lwd = 2)
 ```
 
-### Results
-
-```{r}
-# boot_result = readRDS("MHDResults/MNAR_est_boot_health_effect_OR2.RDS")
-# par(mfrow = c(2, 4))
-# for(i in 1:nrow(boot_result)) hist(boot_result[i, ])
-```
-
-```{r}
-boot_se_ipw = boot_CI =  boot_se_ipw.mean = boot_se_ipw.CI = rep(NA, 20)
-m = 1
-for(model_num in 1:3){
-  model_combinations = combn(3, model_num)
-  for(i in 1:ncol(model_combinations)){
-    print(c(model_num, i))
-    model_set0 = model_combinations[, i]
-    boot_result0 = readRDS(paste0(c("MHDResults/MNAR_boot_est_", subset_names[1], "_", model_set0, "_mild_OR13.RDS"), collapse = ""))
-    boot_result = matrix(NA, length(health)*2, ncol(boot_result0))
-    boot_result[1, ] = boot_result0[1, ]
-    boot_result[3, ] = boot_result0[2, ]
-    for(j in 1:ncol(model_combinations)){
-      model_set1 = model_combinations[, j]
-      boot_result1 = readRDS(paste0(c("MHDResults/MNAR_boot_est_", subset_names[2], "_", model_set1, "_mild_OR13.RDS"), collapse = ""))
-      boot_result[2, ] = boot_result1[1, ]
-      boot_result[4, ] = boot_result1[2, ]
-      
-      boot_mu_ipw = apply(boot_result[1:2, ], 1, function(v) mean(rm.extreme(v)))
-      boot_var_ipw = apply(boot_result[1:2, ], 1, function(v) var(rm.extreme(v)))
-      boot_se_ipw[m] = sqrt(delta_method(boot_mu_ipw[1], boot_mu_ipw[2])^2%*%boot_var_ipw)
-
-      m = m + 1
-    }
-  }
-}
-boot_result[1,] = boot_result0[3, ]
-boot_result[2,] = boot_result1[3, ]
-boot_mu_ipw = apply(boot_result[1:2, 1:1000], 1, function(v) mean(rm.extreme(v)))
-boot_var_ipw = apply(boot_result[1:2, 1:1000], 1, function(v) var(rm.extreme(v)))
-boot_se_ipw[20] = sqrt(delta_method(boot_mu_ipw[1], boot_mu_ipw[2])^2%*%boot_var_ipw)
-```
-
-```{r}
-res = res.tmp
-res = cbind(res, boot_se_ipw)
-res = as.data.frame(all_results)
-res = cbind(round(all_results, 4),
-            apply(cbind(all_results[, 1] - qnorm(0.975)*all_results[, 2], all_results[, 1] + qnorm(0.975)*all_results[, 2]), 1, 
-                  function(v) paste0("[", round(v[1], 4) , ", ", round(v[2], 4), "]")))
-
-rownames(all_results) = c("$\\hat{\\theta}_{100}^{100}$", "$\\hat{\\theta}_{100}^{010}$", "$\\hat{\\theta}_{100}^{001}$",
-                  "$\\hat{\\theta}_{010}^{100}$", "$\\hat{\\theta}_{010}^{010}$", "$\\hat{\\theta}_{010}^{001}$",
-                  "$\\hat{\\theta}_{001}^{100}$", "$\\hat{\\theta}_{001}^{010}$", "$\\hat{\\theta}_{001}^{001}$",
-                  "$\\hat{\\theta}_{110}^{110}$", "$\\hat{\\theta}_{110}^{101}$", "$\\hat{\\theta}_{110}^{011}$",
-                  "$\\hat{\\theta}_{101}^{110}$", "$\\hat{\\theta}_{101}^{101}$", "$\\hat{\\theta}_{101}^{011}$",
-                  "$\\hat{\\theta}_{011}^{110}$", "$\\hat{\\theta}_{011}^{101}$", "$\\hat{\\theta}_{011}^{011}$",
-                  "$\\hat{\\theta}_{111}^{111}$", "$\\hat{\\theta}_\\text{CC}$")
-colnames(all_results) = c("PE", "SE", "Bootstrap SE", "$95\\%$ CI")
-kable(res, align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
-      caption = "") %>%
-  kable_styling(full_width = F, latex_options = c("hold_position")) %>%
-  row_spec(9, hline_after = T) %>%
-  row_spec(18, hline_after = T) %>%
-  row_spec(19, hline_after = T) 
-```
-
-```{r}
-res = all_results[-20, ]
-res$estimator <- 1:nrow(all_results)
-
-# Calculate the confidence intervals
-res$lower_bound <- res$PE - 1.96 * res$SE
-res$upper_bound <- res$PE + 1.96 * res$SE
-
-# Create the plot
-par(mgp = c(3, 2.8, 0), mar = c(5, 5, 4, 2) + 0.1)
-symbols = rep(NA, 19)
-symbols[setdiff(1:19, c(1, 10:11, 13:14, 19))] = 16
-symbols[c(1, 10:11, 13:14, 19)] = 17
-plot(res$estimator, res$PE, ylim = range(res$lower_bound, res$upper_bound),
-     xlab = "", ylab = "", pch = symbols, 
-     main = "", xaxt = "n", cex = 2, cex.axis = 1.8)
-
-abline(h = 1, col = "black",lty = 1, lwd = 4)
-# abline(h = res$PE[19], col = "darkgrey",lty = 3, lwd = 4)
-abline(v = 9.5, col = "darkgrey",lty = 2, lwd = 4)
-abline(v = 18.5, col = "darkgrey",lty = 2, lwd = 4)
-
-# arrows(res$estimator, res$lower_bound, res$estimator, res$upper_bound, 
-#        angle = 90, code = 3, length = 0.05, lwd = 4, col = "grey40")
-lines(res$estimator, res$PE, ylim = range(res$lower_bound, res$upper_bound), lwd = 5)
-# points(res$estimator[setdiff(1:19, c(1, 10:11, 13:14, 19))],
-#        res$PEsetdiff[setdiff(1:19, c(1, 10:11, 13:14, 19))], pch = 16)
-# points(res$estimator[c(1, 10:11, 13:14, 19)],
-#        res$PEsetdiff[c(1, 10:11, 13:14, 19)], pch = 3)
-axis(1, at = res$estimator,
-     labels = c(expression(hat(theta)["100"]^"100"), expression(hat(theta)["100"]^"010"), expression(hat(theta)["100"]^"001"),
-                expression(hat(theta)["010"]^"100"), expression(hat(theta)["010"]^"010"), expression(hat(theta)["010"]^"001"),
-                expression(hat(theta)["001"]^"100"), expression(hat(theta)["001"]^"010"), expression(hat(theta)["001"]^"001"),
-                expression(hat(theta)["110"]^"110"), expression(hat(theta)["110"]^"101"), expression(hat(theta)["110"]^"011"),
-                expression(hat(theta)["101"]^"110"), expression(hat(theta)["101"]^"101"), expression(hat(theta)["101"]^"011"),
-                expression(hat(theta)["011"]^"110"), expression(hat(theta)["011"]^"101"), expression(hat(theta)["011"]^"011"),
-                expression(hat(theta)["111"]^"111")), cex.axis = 2)
-# text(c(1, 10:11, 13:14, 19),  res$upper_bound[c(1, 10:11, 13:14, 19)] + 0.1, "*", cex=2, col="black")
-# rect(0.5, par("usr")[3], 9.5, par("usr")[4], col = rgb(1, 0, 0, 0.1), border = NA)
-# rect(9.5, par("usr")[3], 18.5, par("usr")[4], col = rgb(0, 0, 1, 0.1), border = NA)
-# rect(18.5, par("usr")[3], 19.5, par("usr")[4], col = rgb(0, 1, 0, 0.1), border = NA)
-```
-
-```{r, eval=FALSE}
-res = all_results[-8, ]
-res$estimator <- 1:nrow(all_results)
-
-boot.CI = t(apply(boot_result, 1, quantile, c(0.025, 0.975)))[1:7,]
-
-# Calculate the confidence intervals
-res$lower_bound <- boot.CI[, 1]
-res$upper_bound <- boot.CI[, 2]
-
-# Create the plot
-plot(res$estimator, res$PE, ylim = range(res$lower_bound, res$upper_bound),
-     xlab = "Estimator", ylab = "Estimate", pch = 16, 
-     main = "PE with 95% bootstrap CI", xaxt = "n")
-
-lines(res$estimator, res$PE, ylim = range(res$lower_bound, res$upper_bound), lwd = 2)
-arrows(res$estimator, res$lower_bound, res$estimator, res$upper_bound, 
-       angle = 90, code = 3, length = 0.05, lwd = 2)
-axis(1, at = res$estimator, 
-     labels = c(expression(hat(mu)["100"]), expression(hat(mu)["010"]), expression(hat(mu)["001"]),
-                   expression(hat(mu)["110"]), expression(hat(mu)["101"]), expression(hat(mu)["011"]),
-                   expression(hat(mu)["111"])))
-abline(h = 1, col = "red",lty = 2, lwd = 2)
-rect(0.5, par("usr")[3], 3.5, par("usr")[4], col = rgb(1, 0, 0, 0.1), border = NA)
-rect(3.5, par("usr")[3], 6.5, par("usr")[4], col = rgb(0, 0, 1, 0.1), border = NA)
-rect(6.5, par("usr")[3], 7.5, par("usr")[4], col = rgb(0, 1, 0, 0.1), border = NA)
-```
 
 
 
