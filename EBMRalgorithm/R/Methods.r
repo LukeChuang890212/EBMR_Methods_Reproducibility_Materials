@@ -235,13 +235,13 @@ EBMR_IPW = function(h_x_names, true_ps = NULL) {
   ################################################################################
 
   result = list(mu_ipw = mu_ipw,
-                 mu_ipw.true = mu_ipw.true,
-                 se_ipw = se_ipw,
-                 se_ipw.true = se_ipw.true,
-                 ps.matrix = ps.matrix,
-                 nu.hat = nu.hat,
-                 w.hat = w.hat,
-                 imbalance = sum(apply(ensemble_fit$g, 1, mean)^2)
+                mu_ipw.true = mu_ipw.true,
+                se_ipw = se_ipw,
+                se_ipw.true = se_ipw.true,
+                ps.matrix = ps.matrix,
+                nu.hat = nu.hat,
+                w.hat = w.hat,
+                imbalance = sum(apply(ensemble_fit$g, 1, mean)^2)
   )
 
   return(result)

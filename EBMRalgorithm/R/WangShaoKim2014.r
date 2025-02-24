@@ -83,8 +83,9 @@ WangShaoKim2014 = function(formula, h_x_names, inv_link, init = NULL) {
   r = as.matrix(r)
   y = as.matrix(y)
   x = as.matrix(x)
-  h_x1 = as.matrix(h_x1)
-  h_x2 = as.matrix(h_x2)
+  if(continuous_dim == 0) h_x2 = NULL
+  # h_x1 = as.matrix(h_x1)
+  # h_x2 = as.matrix(h_x2)
 
   model = function(x, y, alpha){
     if(!is.mnar) y = NULL

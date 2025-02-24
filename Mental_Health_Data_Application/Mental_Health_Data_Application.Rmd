@@ -1,0 +1,831 @@
+---
+title: "Mental Health Data Analysis"
+author: "Name:莊明儒 &nbsp; Student ID:111024513"
+header-includes:
+- \usepackage{xeCJK}
+- \setCJKmainfont{標楷體}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage{xcolor}
+- \usepackage{float}
+output:
+  bookdown::pdf_document2:
+    latex_engine: xelatex
+    toc: no
+---
+
+```{r setup, include=FALSE}
+options(knitr.kable.NA = '')
+knitr::opts_chunk$set(echo = FALSE, fig.height = 10, fig.width = 16, fig.align = "center")
+
+library(EBMRalgorithm)
+
+library(tidyverse)
+library(kableExtra)
+
+library(ggplot2)
+library(ggpubr)
+```
+
+# Read data
+
+```{r}
+source("Data_application.r")
+```
+
+```{r}
+original_data = read.csv("data_application.csv")
+percent = original_data$Percentage
+n = 2486
+class_n = round(n*percent/100)
+
+dat = matrix(NA, n, 5)
+for(i in 1:nrow(original_data)){
+  dat[((sum(class_n[0:(i-1)]))+1):sum(class_n[1:i]),] = matrix(rep(unlist(original_data[i,]), each = class_n[i]), class_n[i], 5)
+}
+dat = as.data.frame(dat[, -5])
+
+dat[dat == "Yes"] = 1
+dat[dat == "No"] = 0
+dat[dat == "Abnormal"] = 1
+dat[dat == "Normal"] = 0
+dat[dat == "Missing"] = NA
+colnames(dat) = c("father", "health", "teacher_report", "parent_report")
+dat$r = ifelse(is.na(dat$teacher_report), 0, 1)
+dat$father = as.numeric(dat$father)
+dat$health = as.numeric(dat$health)
+dat$teacher_report = as.numeric(dat$teacher_report)
+dat$parent_report = as.numeric(dat$parent_report)
+
+dat$teacher_report[dat$r == 0] = -1
+```
+
+# Data description:
+
+```{r}
+dim(dat)
+summary(dat)
+apply(dat, 2, function(v) sum(!is.na(v)))
+apply(dat, 2, function(v) sum(is.na(v))/length(v))
+```
+
+# Some primary analysis:
+
+```{r}
+n = nrow(dat)
+missing_rate = 1-mean(dat$r)
+mu.cc = mean(dat$teacher_report[dat$r == 1])
+se.cc = sd(dat$teacher_report[dat$r == 1])/sqrt(sum(r))
+```
+
+# Analysis with our proposed methods
+
+```{r}
+bootstrap = function(propensity.list, auxilliary.f, dat, family, B){
+  library(foreach)
+  library(doParallel)
+  library(doSNOW)
+  library(EBMRalgorithm)
+  
+  N = nrow(dat)
+  original.dat = dat
+  
+  cores = detectCores()
+  cl = makeCluster(cores - 2) ## number of clusters 
+  registerDoSNOW(cl)
+  
+  pb = txtProgressBar(max = B, style = 3)
+  progress <- function(n) setTxtProgressBar(pb, n)
+  opts = list(progress = progress)
+  parallel_packages = c("pracma", "tidyverse", "Matrix", "MASS", "sandwich")
+  
+  boot.res = foreach(i= 1:B, .combine = 'cbind', .options.snow = opts, .packages = parallel_packages) %dopar% {
+    tryCatch({
+      indices = sample(1:N, replace = TRUE)
+      dat = original.dat[indices,]
+      
+      y = dat$teacher_report
+      r = dat$r
+      
+      n = sum(dat$r == 1)
+      
+      auxilliary = auxilliary.f(dat)
+      
+      ################################################################################
+      # Fit working propensity score models
+      ################################################################################
+      pi.fit.list = list()
+      for(j in 1:length(propensity.list)){
+        pi.fit.list[[j]] = Wang2014.1(auxilliary = auxilliary,
+                                      model.y = propensity.list[[j]]$model.y(y),
+                                      model.x1.names = propensity.list[[j]]$model.x1.names,
+                                      model.x2.names = propensity.list[[j]]$model.x2.names,
+                                      w = propensity.list[[j]]$w, w.prime = propensity.list[[j]]$w.prime)
+      }
+      ################################################################################
+      
+      ################################################################################
+      # The method of Chuang & Chao (2023)
+      ################################################################################
+      est.res = ChuangChao2023(pi.fit.list, auxilliary = auxilliary, family)
+      est = unlist(est.res[1:4])
+      ################################################################################
+      
+      ################################################################################
+      # The method of Kim & Yu (2012)
+      ################################################################################
+      # mu.KimYu = NA
+      # if(situation == 1 & wrong.num == 0){
+      #   gamma = alpha.true[2]
+      #   mu.KimYu = KimYu2012(gamma, y, u1, u2, z1, z2, r)
+      # }
+      ################################################################################
+      
+      ################################################################################
+      # The method of Han (2018)
+      ################################################################################
+      # est.res = readRDS("y0_y1_est.RDS")
+      # mu.Han = Han2018(est.res$outcome.list, est.res$pi.fit.list, family)
+      ##################################
+      
+      c(mu.IPW = est[1], se.IPW = est[2], CC = mean(y[r == 1]))
+    }, error = function(e){print("ERROR :",conditionMessage(e), "\n")})
+  }
+  return(boot.res)
+}
+```
+
+```{r}
+rm.extreme = function(v){
+  z.score = scale(v)
+  v = v[abs(z.score) <= 3]
+  print(sum(abs(z.score) > 3))
+  return(v)
+}
+```
+
+```{r}
+show.alpha = function(est.res){
+  lapply(est.res$outcome.list, function(outcome.fit) print(round(summary(outcome.fit)$coef, 4)))
+  alpha.list = lapply(est.res$pi.fit.list, function(pi.fit) pi.fit$theta.hat)
+  alpha.se.list = lapply(est.res$pi.fit.list, function(pi.fit) pi.fit$se)
+  for(i in 1:length(alpha.list)){
+    alpha.list[[i]] = rbind(alpha.list[[i]], alpha.se.list[[i]]) 
+    p.value = (1-pnorm(abs(alpha.list[[i]][1,]/alpha.list[[i]][2,])))*2
+    alpha.list[[i]] = rbind(alpha.list[[i]], p.value)
+    rownames(alpha.list[[i]]) = c("Estimate", "SE", "p-value")
+  }
+  par(mfrow = c(1, 2))
+  boxplot(est.res$pi.m, ylim = c(0, 1))
+  boxplot(est.res$pi.m%*%est.res$w.pi, ylim = c(0, 1))
+  return(alpha.list)
+}
+```
+
+## Overall data
+
+```{r}
+boot = TRUE
+B = 500
+```
+
+### Code
+
+```{r}
+full_ps_specifications_for_p0 = list(
+  formula.list = list(
+    r ~ o(teacher_report),
+    r ~ father + parent_report,
+    r ~ o(teacher_report) + father
+  ),
+  h_x_names.list = list(
+    c("father", "parent_report"),
+    c("father", "parent_report"),
+    c("father", "parent_report")
+  ),
+  inv_link = function(eta) 1/(1+exp(eta))
+)
+
+full_ps_specifications_for_p1 = list(
+  formula.list = list(
+    r ~ o(teacher_report),
+    r ~ father,
+    r ~ o(teacher_report) + father
+  ),
+  h_x_names.list = list(
+    c("father", "parent_report"),
+    c("father", "parent_report"),
+    c("father", "parent_report")
+  ),
+  inv_link = function(eta) 1/(1+exp(eta))
+)
+
+
+full_ps_specifications.list = list(
+  full_ps_specifications_for_p0,
+  full_ps_specifications_for_p1
+)
+```
+
+```{r, eval = FALSE}
+health = 0:1
+subset_names = c("health0", "health1")
+
+odds_ratio = function(x, y) (y/(1-y))/(x/(1-x))
+delta_method = function(x, y) c(-(y/(1-y))/((x/(1-x))^2)*((1/x^2)/((1/x-1)^2)), 
+                                ((1/y^2)/((1/y-1)^2))/(x/(1-x)))
+
+################################################################################
+# Fit working propensity score models
+################################################################################
+res = matrix(NA, 8, 2)
+m = 1
+for(model_num in 1:3){
+  model_combinations = combn(3, model_num)
+  for(i in 1:ncol(model_combinations)){
+    model_set = model_combinations[, i]
+    est = matrix(NA, length(health), 2)
+    for(k in 1:length(health)){
+      print(c(model_num, i, k))
+      subdat = dat[dat$health == health[k], ]
+      
+      full_ps_specifications = full_ps_specifications.list[[k]]
+      ps_specifications <- list(
+          formula.list = full_ps_specifications$formula.list[model_set],
+          h_x_names.list = full_ps_specifications$h_x_names.list[model_set],
+          inv_link = full_ps_specifications$inv_link
+        )
+      ebmr = EBMRAlgorithm$new(y_names = "teacher_report",
+                               ps_specifications = ps_specifications,
+                               data = subdat)
+      result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report"))
+      estimates = unlist(result[1:4])
+      
+      save_file = paste0(c("MHDResults/MNAR_est_", subset_names[k], "_", model_set, "_OR5.RDS"), collapse = "")
+      saveRDS(result, save_file)
+      est[k, ] = unlist(result[1:4])
+    }
+    effect = odds_ratio(est[1, 1], est[2, 1])
+    Sigma = matrix(c(est[1, 2]^2, 0, 0, est[2, 2]^2), 2,2)
+    se = sqrt(delta_method(est[1, 1], est[2, 1])%*%Sigma%*%delta_method(est[1, 1], est[2, 1]))
+    res[m, ] = c(effect, se)
+    m = m + 1
+  }
+}
+################################################################################
+
+cc1 = original.dat$health == 1 & original.dat$r == 1
+cc0 = original.dat$health == 0 & original.dat$r == 1
+mu.cc1 = mean(original.dat[cc1, ]$y)
+se.cc1 = sd(original.dat[cc1, ]$y)/sqrt(sum(cc1))
+mu.cc0 = mean(original.dat[cc0, ]$y)
+se.cc0 = sd(original.dat[cc0, ]$y)/sqrt(sum(cc0))
+Sigma = matrix(c(se.cc0^2, 0, 0, se.cc1^2), 2,2)
+res[8, ] = c(odds_ratio(mu.cc0, mu.cc1),
+             sqrt(delta_method(mu.cc0, mu.cc1)%*%Sigma%*%delta_method(mu.cc0, mu.cc1)))
+```
+
+```{r}
+res = matrix(NA, 20, 2)
+m = 1
+for(model_num in 1:3){
+  model_combinations = combn(3, model_num)
+  for(i in 1:ncol(model_combinations)){
+    print(c(model_num, i))
+    est = matrix(NA, length(health), 2)
+    model_set0 = model_combinations[, i]
+    est.res0 = readRDS(paste0(c("MHDResults/MNAR_est_", subset_names[1], "_", model_set0, "_OR5.RDS"), collapse = ""))
+    est[1, ] = unlist(est.res0[1:3])
+    for(j in 1:ncol(model_combinations)){
+      model_set1 = model_combinations[, j]
+      est.res1 = readRDS(paste0(c("MHDResults/MNAR_est_", subset_names[2], "_", model_set1, "_OR5.RDS"), collapse = ""))
+      est[2, ] = unlist(est.res1[1:3])
+      effect = odds_ratio(est[1, 1], est[2, 1])
+      Sigma = matrix(c(est[1, 2]^2, 0, 0, est[2, 2]^2), 2,2)
+      se = sqrt(delta_method(est[1, 1], est[2, 1])%*%Sigma%*%delta_method(est[1, 1], est[2, 1]))
+      res[m, ] = c(effect, se)
+      m = m + 1
+    }
+  }
+}
+cc1 = original.dat$health == 1 & original.dat$r == 1
+cc0 = original.dat$health == 0 & original.dat$r == 1
+mu.cc1 = mean(original.dat[cc1, ]$y)
+se.cc1 = sd(original.dat[cc1, ]$y)/sqrt(sum(cc1))
+mu.cc0 = mean(original.dat[cc0, ]$y)
+se.cc0 = sd(original.dat[cc0, ]$y)/sqrt(sum(cc0))
+Sigma = matrix(c(se.cc0^2, 0, 0, se.cc1^2), 2,2)
+res[20, ] = c(odds_ratio(mu.cc0, mu.cc1),
+             sqrt(delta_method(mu.cc0, mu.cc1)%*%Sigma%*%delta_method(mu.cc0, mu.cc1)))
+res.tmp = res
+```
+
+```{r eval = FALSE}
+################################################################################
+# Bootstrap
+################################################################################
+for(model_num in 1:3){
+  model_combinations = combn(3, model_num)
+  for(i in 1:ncol(model_combinations)){
+    model_set = model_combinations[, i]
+    for(k in 1:2) {
+      print(c(model_num, i, k))
+      dat = original.dat[original.dat$health == health[k], ]
+      boot.res = bootstrap(propensity.list.list[[k]][model_set], auxilliary.f, dat, family, B)
+      save.file = paste0(c("MHDResults/MNAR_boot_est_", subset_names[k], "_", model_set, "_OR15.RDS"), collapse = "")
+      if(file.exists(save.file)){
+        boot.res = cbind(readRDS(save.file), boot.res)
+        saveRDS(boot.res, save.file)
+      }else{
+        saveRDS(boot.res, save.file)
+      }
+      print("")
+      print(apply(boot.res, 1, mean))
+      print(apply(boot.res, 1, sd))
+      gc()
+    }
+  }
+}
+################################################################################
+```
+
+### Results
+
+```{r}
+boot.res.se = boot.res.CI =  boot.res.se.mean = boot.res.se.CI = rep(NA, 20)
+m = 1
+for(model_num in 1:3){
+  model_combinations = combn(3, model_num)
+  for(i in 1:ncol(model_combinations)){
+    print(c(model_num, i))
+    model_set0 = model_combinations[, i]
+    boot.res0 = readRDS(paste0(c("MHDResults/MNAR_boot_est_", subset_names[1], "_", model_set0, "_OR15.RDS"), collapse = ""))
+    boot.res = matrix(NA, length(health)*2, ncol(boot.res0))
+    boot.res[1, ] = boot.res0[1, ]
+    boot.res[3, ] = boot.res0[2, ]
+    for(j in 1:ncol(model_combinations)){
+      model_set1 = model_combinations[, j]
+      boot.res1 = readRDS(paste0(c("MHDResults/MNAR_boot_est_", subset_names[2], "_", model_set1, "_OR15.RDS"), collapse = ""))
+      boot.res[2, ] = boot.res1[1, ]
+      boot.res[4, ] = boot.res1[2, ]
+      
+      # boot.effect = apply(boot.res[1:2, ], 2, function(v) odds_ratio(v[1], v[2]))
+      # boot.res.CI[m] = paste0(c("[", paste(round(quantile(boot.effect, c(0.025, 0.975)), 4), collapse = ", "),
+      #                              "]"), collapse =  "")
+      # boot.res.se[m] = sd(boot.effect)
+      boot.mu.hat = apply(boot.res[1:2, ], 1, function(v) mean(rm.extreme(v)))
+      boot.var = apply(boot.res[1:2, ], 1, function(v) var(rm.extreme(v)))
+      boot.res.se[m] = sqrt(delta_method(boot.mu.hat[1], boot.mu.hat[2])^2%*%boot.var)
+
+      # boot.se = sqrt(apply(boot.res, 2, function(v) delta_method(v[1], v[2])^2%*%c(v[3]^2, v[4]^2)))
+      # boot.res.se.mean[m] = round(mean(boot.se), 4)
+      # boot.res.se.CI[m] = paste0(c("[", paste(round(quantile(boot.se, c(0.025, 0.975)), 4), collapse = ", "),
+      #                              "]"), collapse =  "")
+      m = m + 1
+    }
+  }
+}
+boot.res[1,] = boot.res0[3, ]
+boot.res[2,] = boot.res1[3, ]
+# boot.effect = apply(boot.res, 2, function(v) odds_ratio(v[1], v[2]))
+# boot.res.se[20] = sd(boot.effect)
+boot.mu.hat = apply(boot.res[1:2, 1:B], 1, function(v) mean(rm.extreme(v)))
+boot.var = apply(boot.res[1:2, 1:B], 1, function(v) var(rm.extreme(v)))
+boot.res.se[20] = sqrt(delta_method(boot.mu.hat[1], boot.mu.hat[2])^2%*%boot.var)
+```
+
+```{r}
+res = res.tmp
+res = cbind(res, boot.res.se)
+res = as.data.frame(res)
+res = cbind(round(res, 3),
+            apply(cbind(res[, 1] - qnorm(0.975)*res[, 2], res[, 1] + qnorm(0.975)*res[, 2]), 1, 
+                  function(v) paste0("[", round(v[1], 3) , ", ", round(v[2], 3), "]")))
+
+rownames(res) = c("$\\hat{\\theta}_{100}^{100}$", "$\\hat{\\theta}_{100}^{010}$", "$\\hat{\\theta}_{100}^{001}$",
+                  "$\\hat{\\theta}_{010}^{100}$", "$\\hat{\\theta}_{010}^{010}$", "$\\hat{\\theta}_{010}^{001}$",
+                  "$\\hat{\\theta}_{001}^{100}$", "$\\hat{\\theta}_{001}^{010}$", "$\\hat{\\theta}_{001}^{001}$",
+                  "$\\hat{\\theta}_{110}^{110}$", "$\\hat{\\theta}_{110}^{101}$", "$\\hat{\\theta}_{110}^{011}$",
+                  "$\\hat{\\theta}_{101}^{110}$", "$\\hat{\\theta}_{101}^{101}$", "$\\hat{\\theta}_{101}^{011}$",
+                  "$\\hat{\\theta}_{011}^{110}$", "$\\hat{\\theta}_{011}^{101}$", "$\\hat{\\theta}_{011}^{011}$",
+                  "$\\hat{\\theta}_{111}^{111}$", "$\\hat{\\theta}_\\text{CC}$")
+colnames(res) = c("PE", "SE", "Bootstrap SE", "$95\\%$ CI")
+kable(res, align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
+      caption = "") %>%
+  kable_styling(full_width = F, latex_options = c("hold_position")) %>%
+  row_spec(9, hline_after = T) %>%
+  row_spec(18, hline_after = T) %>%
+  row_spec(19, hline_after = T) 
+```
+
+```{r}
+res = res[-20, ]
+res$estimator <- 1:nrow(res)
+
+# Calculate the confidence intervals
+res$lower_bound <- res$PE - 1.96 * res$SE
+res$upper_bound <- res$PE + 1.96 * res$SE
+
+# Create the plot
+par(mgp = c(3, 2.8, 0), mar = c(5, 5, 4, 2) + 0.1)
+plot(res$estimator, res$PE, ylim = range(res$lower_bound, res$upper_bound),
+     xlab = "", ylab = "", pch = symbols, 
+     main = "", xaxt = "n", cex = 2, cex.axis = 1.8)
+
+abline(h = 1, col = "black",lty = 1, lwd = 4)
+# abline(h = res$PE[19], col = "darkgrey",lty = 3, lwd = 4)
+abline(v = 9.5, col = "darkgrey",lty = 2, lwd = 4)
+abline(v = 18.5, col = "darkgrey",lty = 2, lwd = 4)
+
+arrows(res$estimator, res$lower_bound, res$estimator, res$upper_bound,
+       angle = 90, code = 3, length = 0.05, lwd = 4, col = "grey40")
+lines(res$estimator, res$PE, ylim = range(res$lower_bound, res$upper_bound), lwd = 5)
+# points(res$estimator[setdiff(1:19, c(9, 14:15, 17:19))],
+#        res$PEsetdiff[setdiff(1:19, c(9, 14:15, 17:19))], pch = 16)
+# points(res$estimator[c(9, 14:15, 17:19)],
+#        res$PEsetdiff[c(9, 14:15, 17:19)], pch = 11)
+symbols = rep(NA, 19)
+symbols[setdiff(1:19, c(9, 14:15, 17:19))] = 18
+symbols[c(9, 14:15, 17:19)] = 15
+
+axis(1, at = res$estimator,
+     labels = c(expression(hat(theta)["100"]^"100"), expression(hat(theta)["100"]^"010"), expression(hat(theta)["100"]^"001"),
+                expression(hat(theta)["010"]^"100"), expression(hat(theta)["010"]^"010"), expression(hat(theta)["010"]^"001"),
+                expression(hat(theta)["001"]^"100"), expression(hat(theta)["001"]^"010"), expression(hat(theta)["001"]^"001"),
+                expression(hat(theta)["110"]^"110"), expression(hat(theta)["110"]^"101"), expression(hat(theta)["110"]^"011"),
+                expression(hat(theta)["101"]^"110"), expression(hat(theta)["101"]^"101"), expression(hat(theta)["101"]^"011"),
+                expression(hat(theta)["011"]^"110"), expression(hat(theta)["011"]^"101"), expression(hat(theta)["011"]^"011"),
+                expression(hat(theta)["111"]^"111")), cex.axis = 2)
+text(c(1, 3, 9, 14:15, 17:18, 19),  res$upper_bound[c(1, 3, 9, 14:15, 17:18, 19)] + 0.05, "*", cex=2, col="black")
+# rect(0.5, par("usr")[3], 9.5, par("usr")[4], col = rgb(1, 0, 0, 0.1), border = NA)
+# rect(9.5, par("usr")[3], 18.5, par("usr")[4], col = rgb(0, 0, 1, 0.1), border = NA)
+# rect(18.5, par("usr")[3], 19.5, par("usr")[4], col = rgb(0, 1, 0, 0.1), border = NA)
+```
+
+```{r}
+res = res[-20, ]
+res$estimator <- 1:nrow(res)
+
+# Calculate the confidence intervals
+res$lower_bound <- res$PE - 1.96 * res$SE
+res$upper_bound <- res$PE + 1.96 * res$SE
+
+# Create the plot
+par(mgp = c(3, 2.8, 0), mar = c(5, 5, 4, 2) + 0.1)
+plot(res$estimator, res$PE, ylim = range(res$lower_bound, res$upper_bound),
+     xlab = "", ylab = "", pch = 16, 
+     main = "", xaxt = "n", cex = 2, cex.axis = 1.8)
+
+arrows(res$estimator, res$lower_bound, res$estimator, res$upper_bound, 
+       angle = 90, code = 3, length = 0.05, lwd = 4, col = "grey40")
+lines(res$estimator, res$PE, ylim = range(res$lower_bound, res$upper_bound), lwd = 5)
+points(res$estimator, res$PE, pch = 16)
+axis(1, at = res$estimator,
+     labels = c(expression(hat(theta)["100"]^"100"), expression(hat(theta)["100"]^"010"), expression(hat(theta)["100"]^"001"),
+                expression(hat(theta)["010"]^"100"), expression(hat(theta)["010"]^"010"), expression(hat(theta)["010"]^"001"),
+                expression(hat(theta)["001"]^"100"), expression(hat(theta)["001"]^"010"), expression(hat(theta)["001"]^"001"),
+                expression(hat(theta)["110"]^"110"), expression(hat(theta)["110"]^"101"), expression(hat(theta)["110"]^"011"),
+                expression(hat(theta)["101"]^"110"), expression(hat(theta)["101"]^"101"), expression(hat(theta)["101"]^"011"),
+                expression(hat(theta)["011"]^"110"), expression(hat(theta)["011"]^"101"), expression(hat(theta)["011"]^"011"),
+                expression(hat(theta)["111"]^"111")), cex.axis = 2)
+text(c(6, 11:12, 17:19),  res$upper_bound[c(6, 11:12, 17:19)] + 0.1, "*", cex=2, col="black")
+abline(h = 1, col = "black",lty = 1, lwd = 4)
+abline(v = 9.5, col = "darkgrey",lty = 2, lwd = 4)
+abline(v = 18.5, col = "darkgrey",lty = 2, lwd = 4)
+# rect(0.5, par("usr")[3], 9.5, par("usr")[4], col = rgb(1, 0, 0, 0.1), border = NA)
+# rect(9.5, par("usr")[3], 18.5, par("usr")[4], col = rgb(0, 0, 1, 0.1), border = NA)
+# rect(18.5, par("usr")[3], 19.5, par("usr")[4], col = rgb(0, 1, 0, 0.1), border = NA)
+```
+
+```{r, eval=FALSE}
+res = res[-8, ]
+res$estimator <- 1:nrow(res)
+
+boot.CI = t(apply(boot.res, 1, quantile, c(0.025, 0.975)))[1:7,]
+
+# Calculate the confidence intervals
+res$lower_bound <- boot.CI[, 1]
+res$upper_bound <- boot.CI[, 2]
+
+# Create the plot
+plot(res$estimator, res$PE, ylim = range(res$lower_bound, res$upper_bound),
+     xlab = "Estimator", ylab = "Estimate", pch = 16, 
+     main = "PE with 95% bootstrap CI", xaxt = "n")
+
+lines(res$estimator, res$PE, ylim = range(res$lower_bound, res$upper_bound), lwd = 2)
+arrows(res$estimator, res$lower_bound, res$estimator, res$upper_bound, 
+       angle = 90, code = 3, length = 0.05, lwd = 2)
+axis(1, at = res$estimator, 
+     labels = c(expression(hat(mu)["100"]), expression(hat(mu)["010"]), expression(hat(mu)["001"]),
+                   expression(hat(mu)["110"]), expression(hat(mu)["101"]), expression(hat(mu)["011"]),
+                   expression(hat(mu)["111"])))
+abline(h = 1, col = "red",lty = 2, lwd = 2)
+rect(0.5, par("usr")[3], 3.5, par("usr")[4], col = rgb(1, 0, 0, 0.1), border = NA)
+rect(3.5, par("usr")[3], 6.5, par("usr")[4], col = rgb(0, 0, 1, 0.1), border = NA)
+rect(6.5, par("usr")[3], 7.5, par("usr")[4], col = rgb(0, 1, 0, 0.1), border = NA)
+```
+
+## Overall data (Mild misspecification)
+
+```{r}
+situation = 1
+wrong.num = 1
+boot = TRUE; B = 500;
+```
+
+### Code
+
+```{r}
+dat = original.dat
+
+dat$fh = dat$father*dat$health 
+dat$fp = dat$father*dat$parent_report
+dat$hp = dat$health*dat$parent_report
+
+propensity.list.0 = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta), 
+                                 w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                                 model.y = function(y) y,
+                                 model.x1.names = NULL,
+                                 model.x2.names = NULL),
+                            list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta), 
+                                 w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                                 model.y = function(y) NULL,
+                                 model.x1.names = c("father", "parent_report"),
+                                 model.x2.names = NULL),
+                            list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta), 
+                                 w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                                 model.y = function(y) y,
+                                 model.x1.names = c("father"),
+                                 model.x2.names = NULL))
+
+propensity.list.1 = list(list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta), 
+                                 w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                                 model.y = function(y) y,
+                                 model.x1.names = NULL,
+                                 model.x2.names = NULL),
+                            list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), x)%*%theta), 
+                                 w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), x)%*%theta),
+                                 model.y = function(y) NULL,
+                                 model.x1.names = c("father"),
+                                 model.x2.names = NULL),
+                            list(w = function(theta, y, x, L) 1+exp(cbind(rep(1, L), y, x)%*%theta), 
+                                 w.prime = function(theta, y, x, L) exp(cbind(rep(1, L), y, x)%*%theta),
+                                 model.y = function(y) y,
+                                 model.x1.names = c("father"),
+                                 model.x2.names = NULL))
+
+propensity.list.list = list(propensity.list.0, propensity.list.1)
+```
+
+```{r}
+auxilliary.f = function(dat) list(cbind(as.factor(dat$father), as.factor(dat$parent_report)),
+                  NULL)
+
+health = 0:1
+subset_names = c("health0", "health1")
+
+# odds_ratio = function(x, y) y/x
+# delta_method = function(x, y) c(-y/x^2, 1/x)
+
+odds_ratio = function(x, y) (y/(1-y))/(x/(1-x))
+delta_method = function(x, y) c(-(y/(1-y))/((x/(1-x))^2)*((1/x^2)/((1/x-1)^2)), 
+                                ((1/y^2)/((1/y-1)^2))/(x/(1-x)))
+
+true.index = c(3, 3)
+zeta.v = seq(-0.5, -0.05, length.out = 30)
+xi.v = N^(zeta.v)
+xi.v = seq(0, N^(-0.5), length.out = 30)
+res = matrix(NA, length(xi.v), 2)
+m = 1
+for(xi in xi.v){
+  est = matrix(NA, length(health), 2)
+  for(k in 1:length(health)){
+    dat = original.dat[original.dat$health == health[k], ]
+    N = nrow(dat)
+    n = sum(dat$r)
+    y = dat$teacher_report
+    r = dat$r
+    auxilliary = auxilliary.f(dat)
+    pi.fit.list = list()
+    l = 1
+    for(j in 1:length(propensity.list.list[[k]])){
+      pi.fit.list[[l]] = Wang2014.1(auxilliary = auxilliary,
+                                    model.y = propensity.list.list[[k]][[j]]$model.y(y),
+                                    model.x1.names = propensity.list.list[[k]][[j]]$model.x1.names,
+                                    model.x2.names = propensity.list.list[[k]][[j]]$model.x2.names,
+                                    w = propensity.list.list[[k]][[j]]$w,
+                                    w.prime = propensity.list.list[[k]][[j]]$w.prime)
+      l = l + 1
+    }
+    est.res = ChuangChao2023(pi.fit.list, auxilliary, family)
+    exp.tilt = function(y, x) exp(xi*as.matrix(cbind(y))%*%rep(1, ncol(cbind(y))))
+    exp.tilt.x.names = NULL
+    mild.est.res = mild.est(pi.m = est.res$pi.m, true.index = true.index[k], exp.tilt = exp.tilt, exp.tilt.x.names = exp.tilt.x.names, 
+                            auxilliary, family = "gaussian")
+    saveRDS(mild.est.res,
+            paste0(c("MHDResults/MNAR_est_", subset_names[k], "_", 1:3, "_mild", round(xi, 3), "_OR5.RDS"), collapse = ""))
+    print(mild.est.res$w.pi)
+    est[k, ] = unlist(mild.est.res[c(1, 2)])
+  }
+  effect = odds_ratio(est[1, 1], est[2, 1])
+  Sigma = matrix(c(est[1, 2]^2, 0, 0, est[2, 2]^2), 2,2)
+  se = sqrt(delta_method(est[1, 1], est[2, 1])%*%Sigma%*%delta_method(est[1, 1], est[2, 1]))
+  res[m, ] = c(effect, se)
+  m = m + 1
+}
+```
+
+```{r}
+health = 0:1
+subset_names = c("health0", "health1")
+
+# odds_ratio = function(x, y) y/x
+# delta_method = function(x, y) c(-y/x^2, 1/x)
+
+odds_ratio = function(x, y) (y/(1-y))/(x/(1-x))
+delta_method = function(x, y) c(-(y/(1-y))/((x/(1-x))^2)*((1/x^2)/((1/x-1)^2)), 
+                                ((1/y^2)/((1/y-1)^2))/(x/(1-x)))
+
+true.index = c(3, 3)
+zeta.v = seq(-0.5, -0.05, length.out = 30)
+xi.v = N^(zeta.v)
+xi.v = seq(0, N^(-0.05), length.out = 30)
+xi.v = seq(0, N^(-0.5), length.out = 30)
+res = matrix(NA, length(xi.v), 2)
+m = 1
+for(xi in xi.v){
+  est = matrix(NA, length(health), 2)
+  for(k in 1:length(health)){
+    mild.est.res = readRDS(paste0(c("MHDResults/MNAR_est_", subset_names[k], "_", 1:3, "_mild", round(xi, 3), "_OR5.RDS"), collapse = ""))
+    print(mild.est.res$w.pi)
+    est[k, ] = unlist(mild.est.res[c(1, 2)])
+  }
+  effect = odds_ratio(est[1, 1], est[2, 1])
+  Sigma = matrix(c(est[1, 2]^2, 0, 0, est[2, 2]^2), 2,2)
+  se = sqrt(delta_method(est[1, 1], est[2, 1])%*%Sigma%*%delta_method(est[1, 1], est[2, 1]))
+  res[m, ] = c(effect, se)
+  m = m + 1
+}
+
+# Create the plot
+plot(cbind(xi.v, res[, 1]), type = "o",
+     xlab = expression(xi), 
+     ylab = "",  # Remove default ylab to add custom label
+     las = 1)  # Ensure axis labels are horizontal
+
+# Add the y-axis label manually with horizontal rotation
+mtext(expression(hat(theta)), side = 2, line = 3, at = mean(par("usr")[3:4]), cex = 1, las = 1)
+points(zeta.v, res[, 1], pch = 16)
+abline(h = 1, lwd = 2)
+```
+
+### Results
+
+```{r}
+# boot.res = readRDS("MHDResults/MNAR_est_boot_health_effect_OR2.RDS")
+# par(mfrow = c(2, 4))
+# for(i in 1:nrow(boot.res)) hist(boot.res[i, ])
+```
+
+```{r}
+boot.res.se = boot.res.CI =  boot.res.se.mean = boot.res.se.CI = rep(NA, 20)
+m = 1
+for(model_num in 1:3){
+  model_combinations = combn(3, model_num)
+  for(i in 1:ncol(model_combinations)){
+    print(c(model_num, i))
+    model_set0 = model_combinations[, i]
+    boot.res0 = readRDS(paste0(c("MHDResults/MNAR_boot_est_", subset_names[1], "_", model_set0, "_mild_OR13.RDS"), collapse = ""))
+    boot.res = matrix(NA, length(health)*2, ncol(boot.res0))
+    boot.res[1, ] = boot.res0[1, ]
+    boot.res[3, ] = boot.res0[2, ]
+    for(j in 1:ncol(model_combinations)){
+      model_set1 = model_combinations[, j]
+      boot.res1 = readRDS(paste0(c("MHDResults/MNAR_boot_est_", subset_names[2], "_", model_set1, "_mild_OR13.RDS"), collapse = ""))
+      boot.res[2, ] = boot.res1[1, ]
+      boot.res[4, ] = boot.res1[2, ]
+      
+      boot.mu.hat = apply(boot.res[1:2, ], 1, function(v) mean(rm.extreme(v)))
+      boot.var = apply(boot.res[1:2, ], 1, function(v) var(rm.extreme(v)))
+      boot.res.se[m] = sqrt(delta_method(boot.mu.hat[1], boot.mu.hat[2])^2%*%boot.var)
+
+      m = m + 1
+    }
+  }
+}
+boot.res[1,] = boot.res0[3, ]
+boot.res[2,] = boot.res1[3, ]
+boot.mu.hat = apply(boot.res[1:2, 1:1000], 1, function(v) mean(rm.extreme(v)))
+boot.var = apply(boot.res[1:2, 1:1000], 1, function(v) var(rm.extreme(v)))
+boot.res.se[20] = sqrt(delta_method(boot.mu.hat[1], boot.mu.hat[2])^2%*%boot.var)
+```
+
+```{r}
+res = res.tmp
+res = cbind(res, boot.res.se)
+res = as.data.frame(res)
+res = cbind(round(res, 4),
+            apply(cbind(res[, 1] - qnorm(0.975)*res[, 2], res[, 1] + qnorm(0.975)*res[, 2]), 1, 
+                  function(v) paste0("[", round(v[1], 4) , ", ", round(v[2], 4), "]")))
+
+rownames(res) = c("$\\hat{\\theta}_{100}^{100}$", "$\\hat{\\theta}_{100}^{010}$", "$\\hat{\\theta}_{100}^{001}$",
+                  "$\\hat{\\theta}_{010}^{100}$", "$\\hat{\\theta}_{010}^{010}$", "$\\hat{\\theta}_{010}^{001}$",
+                  "$\\hat{\\theta}_{001}^{100}$", "$\\hat{\\theta}_{001}^{010}$", "$\\hat{\\theta}_{001}^{001}$",
+                  "$\\hat{\\theta}_{110}^{110}$", "$\\hat{\\theta}_{110}^{101}$", "$\\hat{\\theta}_{110}^{011}$",
+                  "$\\hat{\\theta}_{101}^{110}$", "$\\hat{\\theta}_{101}^{101}$", "$\\hat{\\theta}_{101}^{011}$",
+                  "$\\hat{\\theta}_{011}^{110}$", "$\\hat{\\theta}_{011}^{101}$", "$\\hat{\\theta}_{011}^{011}$",
+                  "$\\hat{\\theta}_{111}^{111}$", "$\\hat{\\theta}_\\text{CC}$")
+colnames(res) = c("PE", "SE", "Bootstrap SE", "$95\\%$ CI")
+kable(res, align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
+      caption = "") %>%
+  kable_styling(full_width = F, latex_options = c("hold_position")) %>%
+  row_spec(9, hline_after = T) %>%
+  row_spec(18, hline_after = T) %>%
+  row_spec(19, hline_after = T) 
+```
+
+```{r}
+res = res[-20, ]
+res$estimator <- 1:nrow(res)
+
+# Calculate the confidence intervals
+res$lower_bound <- res$PE - 1.96 * res$SE
+res$upper_bound <- res$PE + 1.96 * res$SE
+
+# Create the plot
+par(mgp = c(3, 2.8, 0), mar = c(5, 5, 4, 2) + 0.1)
+symbols = rep(NA, 19)
+symbols[setdiff(1:19, c(1, 10:11, 13:14, 19))] = 16
+symbols[c(1, 10:11, 13:14, 19)] = 17
+plot(res$estimator, res$PE, ylim = range(res$lower_bound, res$upper_bound),
+     xlab = "", ylab = "", pch = symbols, 
+     main = "", xaxt = "n", cex = 2, cex.axis = 1.8)
+
+abline(h = 1, col = "black",lty = 1, lwd = 4)
+# abline(h = res$PE[19], col = "darkgrey",lty = 3, lwd = 4)
+abline(v = 9.5, col = "darkgrey",lty = 2, lwd = 4)
+abline(v = 18.5, col = "darkgrey",lty = 2, lwd = 4)
+
+# arrows(res$estimator, res$lower_bound, res$estimator, res$upper_bound, 
+#        angle = 90, code = 3, length = 0.05, lwd = 4, col = "grey40")
+lines(res$estimator, res$PE, ylim = range(res$lower_bound, res$upper_bound), lwd = 5)
+# points(res$estimator[setdiff(1:19, c(1, 10:11, 13:14, 19))],
+#        res$PEsetdiff[setdiff(1:19, c(1, 10:11, 13:14, 19))], pch = 16)
+# points(res$estimator[c(1, 10:11, 13:14, 19)],
+#        res$PEsetdiff[c(1, 10:11, 13:14, 19)], pch = 3)
+axis(1, at = res$estimator,
+     labels = c(expression(hat(theta)["100"]^"100"), expression(hat(theta)["100"]^"010"), expression(hat(theta)["100"]^"001"),
+                expression(hat(theta)["010"]^"100"), expression(hat(theta)["010"]^"010"), expression(hat(theta)["010"]^"001"),
+                expression(hat(theta)["001"]^"100"), expression(hat(theta)["001"]^"010"), expression(hat(theta)["001"]^"001"),
+                expression(hat(theta)["110"]^"110"), expression(hat(theta)["110"]^"101"), expression(hat(theta)["110"]^"011"),
+                expression(hat(theta)["101"]^"110"), expression(hat(theta)["101"]^"101"), expression(hat(theta)["101"]^"011"),
+                expression(hat(theta)["011"]^"110"), expression(hat(theta)["011"]^"101"), expression(hat(theta)["011"]^"011"),
+                expression(hat(theta)["111"]^"111")), cex.axis = 2)
+# text(c(1, 10:11, 13:14, 19),  res$upper_bound[c(1, 10:11, 13:14, 19)] + 0.1, "*", cex=2, col="black")
+# rect(0.5, par("usr")[3], 9.5, par("usr")[4], col = rgb(1, 0, 0, 0.1), border = NA)
+# rect(9.5, par("usr")[3], 18.5, par("usr")[4], col = rgb(0, 0, 1, 0.1), border = NA)
+# rect(18.5, par("usr")[3], 19.5, par("usr")[4], col = rgb(0, 1, 0, 0.1), border = NA)
+```
+
+```{r, eval=FALSE}
+res = res[-8, ]
+res$estimator <- 1:nrow(res)
+
+boot.CI = t(apply(boot.res, 1, quantile, c(0.025, 0.975)))[1:7,]
+
+# Calculate the confidence intervals
+res$lower_bound <- boot.CI[, 1]
+res$upper_bound <- boot.CI[, 2]
+
+# Create the plot
+plot(res$estimator, res$PE, ylim = range(res$lower_bound, res$upper_bound),
+     xlab = "Estimator", ylab = "Estimate", pch = 16, 
+     main = "PE with 95% bootstrap CI", xaxt = "n")
+
+lines(res$estimator, res$PE, ylim = range(res$lower_bound, res$upper_bound), lwd = 2)
+arrows(res$estimator, res$lower_bound, res$estimator, res$upper_bound, 
+       angle = 90, code = 3, length = 0.05, lwd = 2)
+axis(1, at = res$estimator, 
+     labels = c(expression(hat(mu)["100"]), expression(hat(mu)["010"]), expression(hat(mu)["001"]),
+                   expression(hat(mu)["110"]), expression(hat(mu)["101"]), expression(hat(mu)["011"]),
+                   expression(hat(mu)["111"])))
+abline(h = 1, col = "red",lty = 2, lwd = 2)
+rect(0.5, par("usr")[3], 3.5, par("usr")[4], col = rgb(1, 0, 0, 0.1), border = NA)
+rect(3.5, par("usr")[3], 6.5, par("usr")[4], col = rgb(0, 0, 1, 0.1), border = NA)
+rect(6.5, par("usr")[3], 7.5, par("usr")[4], col = rgb(0, 1, 0, 0.1), border = NA)
+```
+
+
+
+
