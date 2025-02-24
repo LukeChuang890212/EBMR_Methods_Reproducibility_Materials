@@ -305,7 +305,7 @@ EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_t
   # Perturb the designated propensity score model with the exponential tilt model
   ################################################################################
   J = ncol(ps.matrix)
-  ps.matrix[, perturb_ps] = exp_tilt(y[r == 1], data[r == 1, exp_tilt_x_names])*ps.matrix[, perturb_ps]
+  ps.matrix[, perturb_ps] = exp_tilt(y, self$data[, exp_tilt_x_names])*ps.matrix[, perturb_ps]
   ################################################################################
 
   ################################################################################
