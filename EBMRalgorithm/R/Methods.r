@@ -253,6 +253,63 @@ EBMR_IPW = function(h_x_names, true_ps = NULL) {
   return(result)
 }
 
+EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_tilt, exp_tilt_x_names){
+  # Basic setup
+  r = as.matrix(private$r)
+  y = as.matrix(private$y)
+  n = private$n
+
+  ################################################################################
+  # Perturb the designated propensity score model with the exponential tilt model
+  ################################################################################
+  J = ncol(ps.matrix)
+  ps.matrix[, perturb_ps] = exp_tilt(y[r == 1], data[r == 1, exp_tilt_x_names])*ps.matrix[, perturb_ps]
+  ################################################################################
+
+  ################################################################################
+  # Ensemble step
+  ################################################################################
+  ensemble_fit = private$estimate_nu(ps.matrix, self$data[h_x_names], init = rep(1/J, J))
+  nu.hat = ensemble_fit$coefficients
+  w.hat = nu.hat^2/sum(nu.hat^2)
+  ensemble_ps = ps.matrix%*%w.hat
+  ################################################################################
+
+  ################################################################################
+  # Compute necessary quantities to estimate the influence function:
+  # \psi(\bm{\alpha}_*, \bm{\nu}_*)
+  ###############################################################################
+  dot_W = function(nu){
+    (diag(2*nu)*sum(nu^2)-2*(nu)%*%t(nu^2))/(sum(nu^2)^2)
+  }
+  dot_W_nu_hat = 0; if(length(nu.hat) > 1) dot_W_nu_hat = dot_W(nu.hat)
+
+  w.H_nu = apply(ps.matrix%*%t(dot_W_nu_hat)*as.vector(r*y*((ensemble_ps)^(-2))), 2, mean)
+
+  K_nu = ensemble_fit$K
+  g = t(ensemble_fit$g.matrix)
+  ################################################################################
+
+  ################################################################################
+  # IPW estimator for the population mean mu_0 with propensity score being estimated
+  # by the methods of Wang, Shao and Kim (2014).
+  ################################################################################
+  mu_ipw = mean(r/ensemble_ps*y)
+  mu_ipw.iid = as.vector(t(r/ensemble_ps*y)+t(w.H_nu)%*%K_nu%*%g)
+  se_ipw = sqrt(var(mu_ipw.iid)/n)
+  ################################################################################
+
+  result = list(mu_ipw = mu_ipw,
+                se_ipw = se_ipw,
+                ps.matrix = ps.matrix,
+                nu.hat = nu.hat,
+                w.hat = w.hat,
+                imbalance = sum(apply(ensemble_fit$g, 1, mean)^2)
+  )
+
+  return(result)
+}
+
 # estimate_nu = function(ps.matrix, h_x, init = NULL){
 #   result = separate_variable_types(h_x)
 #   h_x1 = result$x1
@@ -431,12 +488,12 @@ EBMR_IPW = function(h_x_names, true_ps = NULL) {
 #   return(results)
 # }
 
-# EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_index, exp_tilt, exp_tilt.x.names, h){
+# EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_tilt, exp_tilt_x_names, h){
 #   ################################################################################
 #   # Collect the propensity score models
 #   ################################################################################
 #   J = ncol(ps.matrix)
-#   ps.matrix[, perturb.index] = exp_tilt(y[r == 1], data[r == 1, exp_tilt.x.names])*ps.matrix[, perturb.index]
+#   ps.matrix[, perturb_ps] = exp_tilt(y[r == 1], data[r == 1, exp_tilt_x_names])*ps.matrix[, perturb_ps]
 #   imputed.ps.matrix = matrix(1, N, J)
 #   imputed.ps.matrix[r == 1, ] = ps.matrix
 #   ################################################################################
