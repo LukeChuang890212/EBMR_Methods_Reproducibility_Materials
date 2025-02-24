@@ -232,6 +232,7 @@ EBMR_IPW = function(h_x_names, true_ps = NULL) {
   # IPW estimator for the population mean mu_0 with known propensity score.
   ################################################################################
   mu_ipw.true = NA
+  se_ipw.true = NA
   if(!is.null(true_ps)){
     mu_ipw.true = mean(r/true_ps*y)
     mu_ipw.true.iid = as.vector(r/true_ps*y)
