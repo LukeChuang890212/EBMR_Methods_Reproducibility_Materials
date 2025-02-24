@@ -50,9 +50,14 @@ estimate_nu = function(ps.matrix, h_x, init = NULL) {
   continuous_dim = ncol(h_x2)
   h_dim = discrete_dim + continuous_dim
 
-  r = as.matrix(r)
-  h_x1 = as.matrix(h_x1)
-  h_x2 = as.matrix(h_x2)
+  # r = as.matrix(r)
+  if(continuous_dim == 0){
+    h_x2 = NULL
+  }else{
+    h_x2 = as.matrix(h_x2)
+  }
+  # h_x1 = as.matrix(h_x1)
+  # h_x2 = as.matrix(h_x2)
 
   g = function(nu){
     g.matrix = matrix(NA, n, h_dim)

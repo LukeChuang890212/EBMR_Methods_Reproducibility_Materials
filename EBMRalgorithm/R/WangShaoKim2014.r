@@ -43,9 +43,9 @@
 WangShaoKim2014 = function(formula, h_x_names, inv_link, init = NULL) {
   # Basic setup
   result = private$parse_formula(formula)
-  r = self$data[result$r_names]
-  y = self$data[result$y_names]
-  x = self$data[result$x_names]
+  r = as.matrix(self$data[result$r_names])
+  y = as.matrix(self$data[result$y_names])
+  x = as.matrix(self$data[result$x_names])
   n = private$n
   model_x_names = colnames(x)
 
@@ -80,10 +80,14 @@ WangShaoKim2014 = function(formula, h_x_names, inv_link, init = NULL) {
   continuous_dim = ncol(h_x2)
   h_dim = discrete_dim + continuous_dim
 
-  r = as.matrix(r)
-  y = as.matrix(y)
-  x = as.matrix(x)
-  if(continuous_dim == 0) h_x2 = NULL
+  # r = as.matrix(r)
+  # y = as.matrix(y)
+  # x = as.matrix(x)
+  if(continuous_dim == 0){
+    h_x2 = NULL
+  }else{
+    h_x2 = as.matrix(h_x2)
+  }
   # h_x1 = as.matrix(h_x1)
   # h_x2 = as.matrix(h_x2)
 

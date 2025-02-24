@@ -1,6 +1,6 @@
 ---
-title: "Mental Health Data Analysis"
-author: "Name:莊明儒 &nbsp; Student ID:111024513"
+title: "Mental Health Data Application"
+author: "Name: Ming-Ju Chuang"
 header-includes:
 - \usepackage{xeCJK}
 - \setCJKmainfont{標楷體}
@@ -29,6 +29,7 @@ output:
 options(knitr.kable.NA = '')
 knitr::opts_chunk$set(echo = FALSE, fig.height = 10, fig.width = 16, fig.align = "center")
 
+# devtools::install_github("LukeChuang890212/EBMR_Methods_Reproducibility_Materials/EBMRalgorithm")
 library(EBMRalgorithm)
 
 library(tidyverse)
