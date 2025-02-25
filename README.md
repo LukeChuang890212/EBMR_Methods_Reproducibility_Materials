@@ -7,19 +7,7 @@ This folder is a r package that can be loaded into R by the syntax:
 ```r
 devtools::install_github("LukeChuang890212/EBMR_Methods_Reproducibility_Materials/EBMRalgorithm")".
 ```
-Inside EBMRalgorithm/R, there are five essential R files: EBMRAlgorithm.r, WangShaoKim2014.r, Methods.r, Preprocessor.r and Fool_proofing.r. In EBMRAlgorithm.r, we defined a R6 class which encapsulate all the necessary functions to implement the proposed method. WangShaoKim2014.r contains the function for implementing the proposed method by Wang, Shao and Kim (2014) to estimate the candidate propensity score models, which corresponds to the first step of the proposed ensemble framework. Methods.r contains the functions for implementing the second step of the proposed ensemble framework, including the one that estimate $\bm{\nu}$ and that for computing the proposed inverse probability weighting (IPW) estimator and its asymptotic variance. Finally, Preprocessor.r and Fool_proofing.r contain the technical functions for preprocessing the input arguments and data to make sure the input arguments and data structure are appropriate for the implementation.
-
-# ## Repository Structure
-# 
-# ```
-# EBMR_Methods_Reproducibility_Materials/
-# ├── data/                 # Example datasets used in the analysis
-# ├── scripts/              # R scripts for model estimation and simulations
-# ├── results/              # Generated results from simulations
-# ├── figures/              # Plots and visualizations
-# ├── docs/                 # Additional documentation
-# └── README.md             # Project overview and instructions
-# ```
+Inside EBMRalgorithm/R, there are five essential R files: EBMRAlgorithm.r, WangShaoKim2014.r, Methods.r, Preprocessor.r and Fool_proofing.r. In EBMRAlgorithm.r, we defined a R6 class which encapsulate all the necessary functions to implement the proposed method. WangShaoKim2014.r contains the function for implementing the proposed method by Wang, Shao and Kim (2014) to estimate the candidate propensity score models, which corresponds to the first step of the proposed ensemble framework. Methods.r contains the functions for implementing the second step of the proposed ensemble framework, including the one that estimate $\bf{\nu}$ and that for computing the proposed inverse probability weighting (IPW) estimator and its asymptotic variance. Finally, Preprocessor.r and Fool_proofing.r contain the technical functions for preprocessing the input arguments and data to make sure the input arguments and data structure are appropriate for the implementation.
 
 ## Prerequisites
 
