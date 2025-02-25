@@ -1,0 +1,95 @@
+---
+title: "Simulation Results"
+author: "Name: Ming-Ju Chuang"
+header-includes:
+- \usepackage{xeCJK}
+- \setCJKmainfont{標楷體}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage{xcolor}
+- \usepackage{float}
+output:
+  bookdown::pdf_document2:
+    latex_engine: xelatex
+    toc: no
+---
+
+```{r setup, include=FALSE}
+options(knitr.kable.NA = '')
+knitr::opts_chunk$set(echo = FALSE, fig.height = 10, fig.width = 16, fig.align = "center")
+
+# devtools::install_github("LukeChuang890212/EBMR_Methods_Reproducibility_Materials/EBMRalgorithm")
+library(EBMRalgorithm)
+
+library(dplyr)
+library(kableExtra)
+
+source("Simulation.r")
+source("Basic_setup.r")
+```
+
+```{r}
+J = 3
+n.vector = c(300, 1000)
+```
+
+```{r}
+summarize_all_settings_with_all_missing_rates(scenario = 1,
+                                              J = J,
+                                              n.vector = n.vector,
+                                              correct_model_all_data_file.list,
+                                              version = 43)
+```
+
+```{r}
+summarize_all_settings_with_all_missing_rates(scenario = 2,
+                                              J = J,
+                                              n.vector = n.vector,
+                                              misspecified_model_all_data_file.list,
+                                              version = 43)
+```
+
+```{r}
+summarize_all_settings_with_all_missing_rates(scenario = 3,
+                                              J = J,
+                                              n.vector = n.vector,
+                                              correct_model_all_data_file.list,
+                                              version = 38)
+```
+
+```{r}
+summarize_all_settings_with_all_missing_rates(scenario = 4,
+                                              J = J,
+                                              n.vector = n.vector,
+                                              misspecified_model_all_data_file.list,
+                                              version = 38)
+```
+
+```{r}
+summarize_all_settings_with_all_missing_rates(scenario = 5,
+                                              J = J,
+                                              n.vector = n.vector,
+                                              correct_model_all_data_file.list,
+                                              version = 45)
+```
+
+```{r}
+summarize_all_settings_with_all_missing_rates(scenario = 6,
+                                              J = J,
+                                              n.vector = n.vector,
+                                              misspecified_model_all_data_file.list,
+                                              version = 45)
+```
+
+

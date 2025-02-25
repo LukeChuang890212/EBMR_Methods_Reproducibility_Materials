@@ -1,3 +1,7 @@
+#------------------------------------------------------------------------------#
+# Functions for running the simulation results ----
+#------------------------------------------------------------------------------#
+
 simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, replicate_num, save_file = NULL){
   # source("Data_Generation.r", local = TRUE)
   library(EBMRalgorithm)
@@ -132,3 +136,125 @@ simulate_all_settings_with_all_missing_rates = function(scenario,
   }
 }
 
+#------------------------------------------------------------------------------#
+# Functions for summarizing the simulation results ----
+#------------------------------------------------------------------------------#
+
+rm.extreme = function(v){
+  v = na.omit(v)
+  lower = quantile(v, 0.25) - 1.5*IQR(v)
+  upper = quantile(v, 0.75) + 1.5*IQR(v)
+  print(paste(sum(v < lower | v > upper), length(v)))
+  v = v[v >= lower & v <= upper]
+  return(v)
+}
+
+summarize_results = function(sim_result, pe_index, ese_index, mu.true, is.original){
+  process_sim_replicates = switch(is.original,
+                                  `TRUE` = function(v) v,
+                                  `FALSE` = rm.extreme)
+  pe = rep(NA, length(pe_index))
+  for(i in 1:length(pe_index)){
+    pe[i] = mean(process_sim_replicates(sim_result[pe_index[i],]))
+  }
+  esd = rep(NA, length(pe_index))
+  for(i in 1:length(pe_index)){
+    esd[i] = sd(process_sim_replicates(sim_result[pe_index[i],]))
+  }
+  
+  bias = pe - mu.true
+  mse = bias^2+esd^2
+  bias = round(bias, 3)
+  mse = round(mse, 3)
+  esd = round(esd, 3)
+  
+  ese = sim_result[ese_index,]
+  cp = rep(NA, length(ese_index))
+  for(k in 1:length(ese_index)){
+    ci = cbind(sim_result[pe_index[k],]-1.96*ese, sim_result[pe_index[k],]+1.96*ese)
+    coverage = apply(ci, 1,
+                     function(interval) ifelse(mu.true >= interval[1] & mu.true <= interval[2], 1, 0))
+    cp[k] = mean(na.omit(coverage)) 
+    # se.cp[k] = sd(na.omit(coverage)) 
+  }
+  ese = round(mean(ese), 3)
+  cp = round(cp, 3) 
+  
+  return(c(bias, esd, ese, mse, cp))
+}
+
+summarize_all_model_combinations_and_sample_sizes = function(setting, 
+                                                             scenario, 
+                                                             J,
+                                                             missing_rate,
+                                                             n.vector, 
+                                                             replicate_num, 
+                                                             mu.true,
+                                                             version,
+                                                             is.original){
+  
+  result = matrix(NA, 8*length(n.vector),  5)
+  j = 1
+  for(n in n.vector){
+    for(model_num in 1:J){
+      model_combinations = combn(J, model_num)
+      for(i in 1:ncol(model_combinations)){
+        # print(c(model_num, i))
+        model_set = model_combinations[, i]
+        read_file = paste0(c("Simulation_Results/EBMR_IPW_", setting, "-", missing_rate, "-scenario", scenario, "_", model_set, "_n", n, "_replicate", replicate_num, "_", version, ".RDS"), collapse = "")
+        sim_result = readRDS(read_file)
+        
+        if(model_num == 1 & i == 1){
+          result[j, ] = summarize_results(sim_result, pe_index = 2, ese_index = 4, mu.true, is.original)
+          j = j + 1
+        }
+        
+        result[j, ] = summarize_results(sim_result, pe_index = 1, ese_index = 3, mu.true, is.original)
+        j = j + 1
+      }
+    }
+  }
+  return(result)
+}
+
+summarize_all_settings_with_all_missing_rates = function(scenario,
+                                                         J,
+                                                         n.vector,
+                                                         all_data_file.list,
+                                                         version,
+                                                         is.original = TRUE){
+  settings = c("setting1", "setting2")
+  missing_rates = c("miss50", "miss30")
+  for(setting in settings){
+    results_with_all_missing_rates = matrix(NA, 8*length(n.vector), 5*length(missing_rates))
+    mu.true = mean(readRDS(all_data_file.list[[setting]][[1]][[1]])$y)
+    for(i in 1:length((missing_rates))){
+      results_with_all_missing_rates[, ((i-1)*5+1):((i-1)*5+5)] = summarize_all_model_combinations_and_sample_sizes(
+        setting = setting,
+        scenario = scenario,
+        J = J,
+        missing_rate = missing_rates[i],
+        n.vector = n.vector,
+        replicate_num = replicate_num,
+        mu.true = mu.true,
+        is.original,
+        version = version
+      )
+    }
+    estimator_names= rep(c("$\\hat{\\mu}_\\text{IPW}$",
+                           "$\\hat{\\mu}_{100}$", "$\\hat{\\mu}_{010}$", "$\\hat{\\mu}_{001}$",
+                           "$\\hat{\\mu}_{110}$", "$\\hat{\\mu}_{101}$", "$\\hat{\\mu}_{011}$",
+                           "$\\hat{\\mu}_{111}$"), length(n.vector))
+    
+    results_with_all_missing_rates = cbind(estimator_names, as.data.frame(results_with_all_missing_rates)) %>% 
+      as.data.frame
+    colnames(results_with_all_missing_rates) = c("", rep(c("Bias", "ESD", "ESE", "MSE", "CP"), length(missing_rates)))
+    
+    # print(results_with_all_missing_rates)
+    return(
+      kable(results_with_all_missing_rates, align = "c", booktabs = TRUE, escape = FALSE, linesep = "") %>%
+        kable_styling(full_width = FALSE, latex_options = c("hold_position")) %>%
+        add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5))
+    )
+  }
+}
