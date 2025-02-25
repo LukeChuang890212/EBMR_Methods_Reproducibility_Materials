@@ -3,7 +3,7 @@ This repository is the reproducibility materials for "Ensemble-Based Multiply Ro
 
 **EBMRalgorithm**
 
-This folder is a r package that can be loaded into R by the syntax: "devtools::install_github("LukeChuang890212/EBMR_Methods_Reproducibility_Materials/EBMRalgorithm")". Inside EBMRalgorithm/R, there are five essential R files: EBMRAlgorithm.r, WangShaoKim2014.r, Methods.r, Preprocessor.r and Fool_proofing.r
+This folder is a r package that can be loaded into R by the syntax: "devtools::install_github("LukeChuang890212/EBMR_Methods_Reproducibility_Materials/EBMRalgorithm")". Inside EBMRalgorithm/R, there are five essential R files: EBMRAlgorithm.r, WangShaoKim2014.r, Methods.r, Preprocessor.r and Fool_proofing.r. In EBMRAlgorithm.r, 
 
 
 
