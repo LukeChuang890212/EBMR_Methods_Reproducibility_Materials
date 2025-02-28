@@ -124,8 +124,8 @@ bootstrap = function(ps_specifications, data, B){
 ```{r}
 rm.extreme = function(v){
   z.score = scale(v)
-  v = v[abs(z.score) <= 3]
-  print(sum(abs(z.score) > 3))
+  v = v[abs(z.score) <= 4]
+  print(sum(abs(z.score) > 4))
   return(v)
 }
 ```
@@ -332,6 +332,8 @@ for(model_num in 1:3){
       # boot_se_ipw[k] = sd(boot.effect)
       boot_mu_ipw = apply(all_boot_results[1:2, ], 1, function(v) mean(rm.extreme(v)))
       boot_var_ipw = apply(all_boot_results[1:2, ], 1, function(v) var(rm.extreme(v)))
+      # boot_mu_ipw = apply(all_boot_results[1:2, ], 1, mean)
+      # boot_var_ipw = apply(all_boot_results[1:2, ], 1, mean)
       boot_se_ipw[k] = sqrt(delta_method(boot_mu_ipw[1], boot_mu_ipw[2])^2%*%boot_var_ipw)
 
       # boot.se = sqrt(apply(boot_result, 2, function(v) delta_method(v[1], v[2])^2%*%c(v[3]^2, v[4]^2)))
@@ -342,10 +344,10 @@ for(model_num in 1:3){
     }
   }
 }
-boot_result[1,] = boot_result0[3, ]
-boot_result[2,] = boot_result1[3, ]
-boot_mu_ipw = apply(boot_result[1:2, ], 1, function(v) mean(rm.extreme(v)))
-boot_var_ipw = apply(boot_result[1:2, ], 1, function(v) var(rm.extreme(v)))
+all_boot_results[1,] = boot_result0[3, ]
+all_boot_results[2,] = boot_result1[3, ]
+boot_mu_ipw = apply(all_boot_results[1:2, ], 1, function(v) mean(rm.extreme(v)))
+boot_var_ipw = apply(all_boot_results[1:2, ], 1, function(v) var(rm.extreme(v)))
 boot_se_ipw[20] = sqrt(delta_method(boot_mu_ipw[1], boot_mu_ipw[2])^2%*%boot_var_ipw)
 ```
 
@@ -371,6 +373,62 @@ kable(all_results, align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
   row_spec(9, hline_after = T) %>%
   row_spec(18, hline_after = T) %>%
   row_spec(19, hline_after = T) 
+```
+```{r}
+all_results = all_results[-20, ]
+
+# Add confidence intervals and groupings
+# Add confidence intervals and groupings
+all_results <- all_results %>%
+  mutate(
+    lower_bound = PE - 1.96 * SE,
+    upper_bound = PE + 1.96 * SE,
+    group = case_when(
+      row_number() <= 9 ~ "One model",
+      row_number() <= 18 ~ "Two models",
+      TRUE ~ "Three models"
+    ),
+    star = ifelse(lower_bound > 1 | upper_bound < 1, "*", NA)
+  )
+
+# Reorder group levels: Second Group comes before Last Group
+all_results$group <- factor(all_results$group, levels = c("One model", "Two models", "Three models"))
+
+# Convert estimator to character math expressions
+estimator_labels <- c(
+  "hat(theta)['100']^{'100'}", "hat(theta)['100']^{'010'}", "hat(theta)['100']^{'001'}",
+  "hat(theta)['010']^{'100'}", "hat(theta)['010']^{'010'}", "hat(theta)['010']^{'001'}",
+  "hat(theta)['001']^{'100'}", "hat(theta)['001']^{'010'}", "hat(theta)['001']^{'001'}",
+  "hat(theta)['110']^{'110'}", "hat(theta)['110']^{'101'}", "hat(theta)['110']^{'011'}",
+  "hat(theta)['101']^{'110'}", "hat(theta)['101']^{'101'}", "hat(theta)['101']^{'011'}",
+  "hat(theta)['011']^{'110'}", "hat(theta)['011']^{'101'}", "hat(theta)['011']^{'011'}",
+  "hat(theta)['111']^{'111'}"
+)
+
+# Store as character vector and ensure factor order is preserved
+all_results$estimator <- factor(estimator_labels, levels = estimator_labels)
+
+# Create the plot
+ggplot(all_results, aes(x = estimator, y = PE)) +
+  geom_point(size = 4, color = "black") +  # All points black
+  geom_errorbar(aes(ymin = lower_bound, ymax = upper_bound), width = 0.2, linewidth = 1.5, color = "black") +  # Black CIs
+  geom_text(aes(label = star, y = upper_bound + 0.05), size = 8, color = "black") +  # Stars above error bars
+  geom_hline(yintercept = 1, linetype = "dashed", color = "darkgrey", linewidth = 1) +  
+  theme_minimal(base_size = 16) +
+  labs(x = "", y = "Estimate", title = "") +
+  theme(
+    legend.position = "none",  # Remove legend since color is uniform
+    axis.text.y = element_text(size = 14, family = "serif"),
+    axis.text.x = element_text(size = 18, color = "black"),  # Increase font size of x-axis labels
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    panel.background = element_rect(fill = "white"),
+    strip.background = element_rect(fill = "gray90"),
+    strip.position = "top",  # Move strip to the top
+    strip.text = element_blank(),  # Hide facet labels
+    panel.spacing = unit(c(0.5, 0.5), "lines")  # Adjust spacing between panels (vertical, horizontal)
+  ) + 
+  facet_grid(. ~ group, scales = "free_x", space = "free_x") +  # Use facet_grid for more control over panel size
+  scale_x_discrete(labels = function(x) parse(text = x))  # Math notation for x-axis labels
 ```
 
 ```{r}

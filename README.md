@@ -11,13 +11,25 @@ The EBMRalgorithm folder contains an R package that can be installed using:
 ```r
 devtools::install_github("LukeChuang890212/EBMR_Methods_Reproducibility_Materials/EBMRalgorithm")".
 ```
-Inside EBMRalgorithm/R, there are five essential R files: EBMRAlgorithm.r, WangShaoKim2014.r, Methods.r, Preprocessor.r and Fool_proofing.r. In EBMRAlgorithm.r, we defined a R6 class which encapsulate all the necessary functions to implement the proposed method. WangShaoKim2014.r contains the function for implementing the proposed method by Wang, Shao and Kim (2014) to estimate the candidate propensity score models, which corresponds to the first step of the proposed ensemble framework. Methods.r contains the functions for implementing the second step of the proposed ensemble framework, including the one that estimate $\bf{\nu}$ and that for computing the proposed inverse probability weighting (IPW) estimator and its asymptotic variance. Finally, Preprocessor.r and Fool_proofing.r contain the technical functions for preprocessing the input arguments and data to make sure the input arguments and data structure are appropriate for the implementation.
 
 Key Files in EBMRalgorithm/R
 -	EBMRAlgorithm.r – Defines an R6 class encapsulating all essential functions for the proposed method.
 -	WangShaoKim2014.r – Implements the method by Wang, Shao, and Kim (2014) for estimating candidate propensity score models (first step of the ensemble framework).
--	Methods.r – Implements the second step of the ensemble framework, including estimation of ν and computation of the inverse probability weighting (IPW) estimator with its asymptotic variance.
+-	Methods.r – Implements the second step of the ensemble framework, including estimation of $\bf{\nu}$ and computation of the inverse probability weighting (IPW) estimator with its asymptotic variance.
 -	Preprocessor.r & Fool_proofing.r – Handle input validation and data preprocessing to ensure correct argument and data structures for implementation.
+
+Key Files in EBMRalgorithm/R
+-	EBMRAlgorithm.r – Defines an R6 class encapsulating all essential functions for the proposed method.
+-	WangShaoKim2014.r – Implements the method by Wang, Shao, and Kim (2014) for estimating candidate propensity score models (first step of the ensemble framework).
+-	Methods.r – Implements the second step of the ensemble framework, including estimation of $\bf{\nu}$ and computation of the inverse probability weighting (IPW) estimator with its asymptotic variance.
+-	Preprocessor.r & Fool_proofing.r – Handle input validation and data preprocessing to ensure correct argument and data structures for implementation.
+
+Key Files in Simulation_Studies
+-	Data_Generation.r – Defines functions for generating data for Settings 1 & 2.
+-	Basic_setup.r – Initializes common variables used across all simulation scenarios.
+- Simulation.r – Implements the methods required for running simulations.
+-	Simulation_main.r – Main script for executing the entire simulation study.
+-	Simulation_results.rmd – Generates a report summarizing the simulation results and outputs Simulation_results.pdf, which includes all tables presented in the main paper.
 	
 ## Prerequisites
 
