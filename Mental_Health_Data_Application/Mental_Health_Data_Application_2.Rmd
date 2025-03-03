@@ -491,8 +491,8 @@ for(k in 1:length(health)){
       
     full_ps_specifications = full_ps_specifications.list[[k]]
     ps_specifications <- list(
-        formula.list = full_ps_specifications$formula.list[model_set],
-        h_x_names.list = full_ps_specifications$h_x_names.list[model_set],
+        formula.list = full_ps_specifications$formula.list,
+        h_x_names.list = full_ps_specifications$h_x_names.list,
         inv_link = full_ps_specifications$inv_link
       )
     ebmr = EBMRAlgorithm$new(y_names = "teacher_report",
