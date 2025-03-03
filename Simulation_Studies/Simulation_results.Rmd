@@ -49,7 +49,7 @@ summarize_all_settings_with_all_missing_rates(scenario = 1,
                                               J = J,
                                               n.vector = n.vector,
                                               correct_model_all_data_file.list,
-                                              version = 43)
+                                              version = 2)
 ```
 
 ```{r}
@@ -57,7 +57,7 @@ summarize_all_settings_with_all_missing_rates(scenario = 2,
                                               J = J,
                                               n.vector = n.vector,
                                               misspecified_model_all_data_file.list,
-                                              version = 43)
+                                              version = 2)
 ```
 
 ```{r}
@@ -65,7 +65,7 @@ summarize_all_settings_with_all_missing_rates(scenario = 3,
                                               J = J,
                                               n.vector = n.vector,
                                               correct_model_all_data_file.list,
-                                              version = 38)
+                                              version = 2)
 ```
 
 ```{r}
@@ -73,7 +73,7 @@ summarize_all_settings_with_all_missing_rates(scenario = 4,
                                               J = J,
                                               n.vector = n.vector,
                                               misspecified_model_all_data_file.list,
-                                              version = 38)
+                                              version = 2)
 ```
 
 ```{r}
@@ -81,7 +81,7 @@ summarize_all_settings_with_all_missing_rates(scenario = 5,
                                               J = J,
                                               n.vector = n.vector,
                                               correct_model_all_data_file.list,
-                                              version = 45)
+                                              version = 2)
 ```
 
 ```{r}
@@ -89,7 +89,7 @@ summarize_all_settings_with_all_missing_rates(scenario = 6,
                                               J = J,
                                               n.vector = n.vector,
                                               misspecified_model_all_data_file.list,
-                                              version = 45)
+                                              version = 2)
 ```
 
 

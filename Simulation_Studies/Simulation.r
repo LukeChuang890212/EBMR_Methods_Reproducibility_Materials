@@ -251,10 +251,15 @@ summarize_all_settings_with_all_missing_rates = function(scenario,
     colnames(results_with_all_missing_rates) = c("", rep(c("Bias", "ESD", "ESE", "MSE", "CP"), length(missing_rates)))
     
     # print(results_with_all_missing_rates)
-    return(
+    print(
       kable(results_with_all_missing_rates, align = "c", booktabs = TRUE, escape = FALSE, linesep = "") %>%
         kable_styling(full_width = FALSE, latex_options = c("hold_position")) %>%
         add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5))
     )
+    # return(
+    #   kable(results_with_all_missing_rates, align = "c", booktabs = TRUE, escape = FALSE, linesep = "") %>%
+    #     kable_styling(full_width = FALSE, latex_options = c("hold_position")) %>%
+    #     add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5))
+    # )
   }
 }
