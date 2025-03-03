@@ -423,6 +423,7 @@ EBMR_IPW_perturb = function(h_x_names, true_ps = NULL) {
   mu_ipw.iid = rexp(n)*as.vector(t(r/ensemble_ps*y)
                          +(t(H_alpha.w)-2*t(w.H_nu)%*%K_nu%*%t(E_dot_g))%*%K_alpha%*%g_all
                          +t(w.H_nu)%*%K_nu%*%g)
+  mu_ipw = mean(mu_ipw.iid)
   se_ipw = sqrt(var(mu_ipw.iid)/n)
   ################################################################################
 
