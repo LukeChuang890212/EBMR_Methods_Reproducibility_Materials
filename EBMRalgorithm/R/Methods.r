@@ -203,11 +203,8 @@ EBMR_IPW = function(h_x_names, true_ps = NULL) {
   }
   E_dot_g = -(t(dot_pi)*rep(w.hat, alpha_dim))%*%(ensemble_fit$h_x*as.vector(r*((ensemble_ps)^(-2))))/n
 
-  # dot_W = function(nu){
-  #   (diag(2*nu)*sum(nu^2)-2*(nu)%*%t(nu^2))/(sum(nu^2)^2)
-  # }
   dot_W = function(nu){
-    (diag(2*nu)*sum(nu^2)-2*(nu^2)%*%t(nu))/(sum(nu^2)^2)
+    (diag(2*nu)*sum(nu^2)-2*(nu)%*%t(nu^2))/(sum(nu^2)^2)
   }
   dot_W_nu_hat = 0; if(length(nu.hat) > 1) dot_W_nu_hat = dot_W(nu.hat)
 
