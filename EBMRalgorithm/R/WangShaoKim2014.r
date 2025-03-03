@@ -176,6 +176,142 @@ WangShaoKim2014 = function(formula, h_x_names, inv_link, init = NULL) {
   return(results)
 }
 
+WangShaoKim2014_perturb = function(formula, h_x_names, inv_link, init = NULL) {
+  # Basic setup
+  result = private$parse_formula(formula)
+  r = as.matrix(self$data[result$r_names])
+  y = as.matrix(self$data[result$y_names])
+  x = as.matrix(self$data[result$x_names])
+  n = private$n
+  model_x_names = colnames(x)
+
+  # result = separate_variable_types(x)
+  # model_x1 = result$x1
+  # model_x2 = result$x2
+  # model_x1_names = result$x1_names
+  # model_x2_names = result$x2_names
+
+  result = private$separate_variable_types(self$data[h_x_names])
+  h_x1 = result$x1
+  h_x2 = result$x2
+
+  # h_x1 = h[[1]]; h_x2 = h[[2]];
+  # if(!is.null(x1)) x1 = as.matrix(x1)
+  # if(!is.null(x2)) x2 = as.matrix(x2)
+  #
+  # model_x1 = NULL; model_x2 = NULL;
+  # if(!is.null(model_x1_names)) model_x1 = as.matrix(dat[model_x1_names])
+  # if(!is.null(model_x2_names)) model_x2 = as.matrix(dat[model_x2_names])
+
+  is.mnar = ifelse(ncol(y) == 0, FALSE, TRUE)
+  alpha_dim = 1 + as.numeric(is.mnar) + ncol(x)
+
+  d = NULL
+  if(ncol(h_x1) > 0){
+    for(j in 1:ncol(h_x1)) h_x1[, j] = as.factor(h_x1[, j])
+    d = model.matrix(lm(rep(1, n)~., data =  h_x1))
+  }
+
+  discrete_dim = ncol(d)
+  continuous_dim = ncol(h_x2)
+  h_dim = discrete_dim + continuous_dim
+
+  # r = as.matrix(r)
+  # y = as.matrix(y)
+  # x = as.matrix(x)
+  if(continuous_dim == 0){
+    h_x2 = NULL
+  }else{
+    h_x2 = as.matrix(h_x2)
+  }
+  # h_x1 = as.matrix(h_x1)
+  # h_x2 = as.matrix(h_x2)
+
+  model = function(x, y, alpha){
+    if(!is.mnar) y = NULL
+    inv_link(cbind(rep(1, n), y, x)%*%alpha)
+  }
+  w = function(x, y, alpha) 1/model(x, y, alpha)
+
+  g = function(alpha){
+    g.matrix = matrix(NA, n, h_dim)
+    rw = r*w(x, y, alpha)
+    if(discrete_dim > 0){
+      for(l in 1:discrete_dim){g.matrix[, l] = d[, l]*(rw-1)}
+    }
+    if(continuous_dim > 0){
+      for(l in (discrete_dim+1):(discrete_dim+continuous_dim)) g.matrix[, l] = h_x2[, l-discrete_dim]*(rw-1)
+    }
+    return(rexp(n)*g.matrix)
+  }
+
+  G = function(g.matrix){
+    return(matrix(apply(g.matrix, 2, mean), h_dim, 1))
+  }
+
+  W = function(g.matrix){
+    return(solve(t(g.matrix)%*%g.matrix/n))
+  }
+
+  Gamma = function(alpha){
+    Gamma.arr = array(NA, dim = c(h_dim, n, alpha_dim))
+    for(l in 1:h_dim){
+      Gamma.arr[l,,] = jacobian(function(alpha) g(alpha)[, l], alpha)
+    }
+    return(apply(Gamma.arr, c(1, 3), mean))
+  }
+
+  obj = function(alpha){
+    g.matrix = g(alpha)
+    G.hat = G(g.matrix)
+    value = t(G.hat)%*%G.hat
+    return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
+  }
+
+  if(is.null(init)) init = rep(0, alpha_dim)
+  alpha_sol_path = matrix(init, alpha_dim)
+  conv_err = 10^8
+  t = 1
+
+  while (conv_err > 10^(-8) & t < 1000){
+    opt = optim(alpha_sol_path[,t], obj, method = "L-BFGS-B")
+    alpha_sol_path = cbind(alpha_sol_path, opt$par)
+    g.matrix = g(alpha_sol_path[,t+1]); W.hat = W(g.matrix);
+    obj = function(alpha){
+      g.matrix = g(alpha); G.hat = G(g.matrix);
+      value = t(G.hat)%*%W.hat%*%G.hat
+      return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
+    }
+    conv_err = max(abs(alpha_sol_path[,t+1]-alpha_sol_path[,t]))
+    t = t + 1
+  }
+
+  alpha.hat = alpha_sol_path[, t]
+  fitted_values = model(x, y, alpha.hat)
+  Gamma.hat = Gamma(alpha.hat)
+  g.matrix = g(alpha.hat)
+  W.hat = W(g.matrix)
+  S = var(g.matrix)
+  # cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/N
+  cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat%*%S%*%W.hat%*%Gamma.hat%*%solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/n
+  se = sqrt(diag(cov.hat))
+
+  results = list(coefficients = alpha.hat,
+                 fitted.values = fitted_values,
+                 sol.path = alpha_sol_path,
+                 cov.hat = cov.hat,
+                 se = se,
+                 lower = alpha.hat-qnorm(0.975)*se,
+                 upper = alpha.hat+qnorm(0.975)*se,
+                 g.matrix = g.matrix,
+                 K = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat,
+                 model = model,
+                 model_x_names = model_x_names,
+                 h_x = cbind(d, h_x2))
+
+  return(results)
+}
+
 
 # parse_formula <- function(formula) {
 #   # Convert the formula to a string

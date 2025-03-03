@@ -104,6 +104,51 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
 
 )
 
+EBMRAlgorithm_perturb <- R6Class("EBMRAlgorithm_perturb",
+                         public = list(
+                           # Public fields (variables)
+                           data = NULL,
+                           ps_fit.list = list(),
+
+                           # Constructor to initialize fields
+                           initialize = function(y_names, ps_specifications, data) {
+                             self$data = private$check_data(y_names, data)
+                             private$r = self$data$r
+                             private$y = self$data[y_names]
+                             private$n = nrow(self$data)
+
+                             J = length(ps_specifications$formula.list)
+                             for(j in 1:J){
+                               formula = ps_specifications$formula.list[[j]]
+                               h_x_names = ps_specifications$h_x_names.list[[j]]
+                               inv_link = ps_specifications$inv_link
+                               self$ps_fit.list[[j]] = self$WangShaoKim2014(formula, h_x_names, inv_link)
+                             }
+                             # print(self$ps_fit.list[[3]]$coefficients)
+                             # print(self$ps_fit.list[[3]]$se)
+                           },
+
+                           # public fields (variables)
+                           WangShaoKim2014_perturb = WangShaoKim2014_perturb,
+                           EBMR_IPW_perturb = EBMR_IPW_perturb,
+                           EBMR_IPW_with_locally_misspecified_model = EBMR_IPW_with_locally_misspecified_model
+                         ),
+
+                         private = list(
+                           # private fields (variables)
+                           r = NULL,
+                           y = NULL,
+                           n = NULL,
+
+                           # private methods
+                           check_data = check_data,
+                           parse_formula = parse_formula,
+                           separate_variable_types = separate_variable_types,
+                           estimate_nu = estimate_nu
+                         )
+
+)
+
 ###################################
 #  ---------- Test ----------------
 ###################################

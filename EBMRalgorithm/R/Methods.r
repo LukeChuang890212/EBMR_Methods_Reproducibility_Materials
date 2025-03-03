@@ -136,6 +136,112 @@ estimate_nu = function(ps.matrix, h_x, init = NULL) {
   return(results)
 }
 
+estimate_nu_perturb = function(ps.matrix, h_x, init = NULL) {
+  # Basic setup
+  r = as.matrix(private$r)
+  n = private$n
+  J = ncol(ps.matrix)
+
+  result = private$separate_variable_types(h_x)
+  h_x1 = result$x1
+  h_x2 = result$x2
+
+  d = NULL
+  if(ncol(h_x1) > 0){
+    for(j in 1:ncol(h_x1)) h_x1[, j] = as.factor(h_x1[, j])
+    d = model.matrix(lm(rep(1, n)~., data =  h_x1))
+  }
+
+  discrete_dim = ncol(d)
+  continuous_dim = ncol(h_x2)
+  h_dim = discrete_dim + continuous_dim
+
+  # r = as.matrix(r)
+  if(continuous_dim == 0){
+    h_x2 = NULL
+  }else{
+    h_x2 = as.matrix(h_x2)
+  }
+  # h_x1 = as.matrix(h_x1)
+  # h_x2 = as.matrix(h_x2)
+
+  g = function(nu){
+    g.matrix = matrix(NA, n, h_dim)
+    rw = r/(ps.matrix%*%nu)
+    if(discrete_dim > 0){
+      for(l in 1:discrete_dim){g.matrix[, l] = d[, l]*(rw-1)}
+    }
+    if(continuous_dim > 0){
+      for(l in (discrete_dim+1):(discrete_dim+continuous_dim)) g.matrix[, l] = h_x2[, l-discrete_dim]*(rw-1)
+    }
+    return(rexp(n)*g.matrix)
+  }
+
+  G = function(g.matrix){
+    return(matrix(apply(g.matrix, 2, mean), h_dim, 1))
+  }
+
+  W = function(g.matrix){
+    return(solve(t(g.matrix)%*%g.matrix/n))
+  }
+
+  Gamma = function(nu){
+    Gamma.arr = array(NA, dim = c(h_dim, n, J))
+    for(l in 1:h_dim){
+      Gamma.arr[l,,] = jacobian(function(nu) g(nu)[, l], nu)
+    }
+    return(apply(Gamma.arr, c(1, 3), mean))
+  }
+
+  obj = function(nu){
+    g.matrix = g(nu)
+    G.hat = G(g.matrix)
+    value = t(G.hat)%*%G.hat
+    return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
+  }
+
+  if(is.null(init)) init = rep(0, J)
+  nu_sol_path = matrix(init, J)
+  conv_err = 10^8
+  t = 1
+
+  while (conv_err > 10^(-8) & t < 1000){
+    opt = optim(nu_sol_path[, t], obj, method = "L-BFGS-B",
+                lower = rep(-Inf, ncol(ps.matrix)), upper = rep(Inf, ncol(ps.matrix)))
+    nu_sol_path = cbind(nu_sol_path, opt$par)
+    g.matrix = g(nu_sol_path[,t+1]); W.hat = W(g.matrix);
+    obj = function(nu){
+      g.matrix = g(nu)
+      G.hat = G(g.matrix)
+      value = t(G.hat)%*%W.hat%*%G.hat
+      return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
+    }
+    conv_err = max(abs(nu_sol_path[,t+1]-nu_sol_path[,t]))
+    t = t + 1
+  }
+
+  nu.hat = nu_sol_path[, t]
+  Gamma.hat = Gamma(nu.hat)
+  g.matrix = g(nu.hat)
+  W.hat = W(g.matrix)
+  S = var(g.matrix)
+  # cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/N
+  cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat%*%S%*%W.hat%*%Gamma.hat%*%solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/n
+  se = sqrt(diag(cov.hat))
+
+  results = list(coefficients = nu.hat,
+                 sol.path = nu_sol_path,
+                 cov.hat = cov.hat,
+                 se = se,
+                 lower = nu.hat-qnorm(0.975)*se,
+                 upper = nu.hat+qnorm(0.975)*se,
+                 g.matrix = g.matrix,
+                 K = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat,
+                 h_x = cbind(d, h_x2))
+
+  return(results)
+}
+
 #' Compute the proposed Inverse Probability Weighting (IPW) Estimator
 #'
 #' This method computes the Inverse Probability Weighting (IPW) estimator for
@@ -226,6 +332,95 @@ EBMR_IPW = function(h_x_names, true_ps = NULL) {
   #                        +(t(H_alpha.w)-t(w.H_nu)%*%K_nu%*%t(E_dot_g))%*%K_alpha%*%g_all
   #                        +t(w.H_nu)%*%K_nu%*%g)
   mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
+                         +(t(H_alpha.w)-2*t(w.H_nu)%*%K_nu%*%t(E_dot_g))%*%K_alpha%*%g_all
+                         +t(w.H_nu)%*%K_nu%*%g)
+  se_ipw = sqrt(var(mu_ipw.iid)/n)
+  ################################################################################
+
+  ################################################################################
+  # IPW estimator for the population mean mu_0 with known propensity score.
+  ################################################################################
+  mu_ipw.true = NA
+  se_ipw.true = NA
+  if(!is.null(true_ps)){
+    mu_ipw.true = mean(r/true_ps*y)
+    mu_ipw.true.iid = as.vector(r/true_ps*y)
+    se_ipw.true = sqrt(var(mu_ipw.true.iid)/n)
+  }
+  ################################################################################
+
+  result = list(mu_ipw = mu_ipw,
+                mu_ipw.true = mu_ipw.true,
+                se_ipw = se_ipw,
+                se_ipw.true = se_ipw.true,
+                ps.matrix = ps.matrix,
+                nu.hat = nu.hat,
+                w.hat = w.hat,
+                imbalance = sum(apply(ensemble_fit$g, 1, mean)^2)
+  )
+
+  return(result)
+}
+
+EBMR_IPW_perturb = function(h_x_names, true_ps = NULL) {
+  # Basic setup
+  r = as.matrix(private$r)
+  y = as.matrix(private$y)
+  n = private$n
+
+  ################################################################################
+  # Collect the propensity score models
+  ################################################################################
+  J = length(self$ps_fit.list)
+  ps_model.list = lapply(self$ps_fit.list, function(ps_fit) ps_fit$model)
+  alpha.list = lapply(self$ps_fit.list, function(ps_fit) ps_fit$coefficients)
+  alpha_dim = unlist(lapply(alpha.list, length))
+  ps.matrix = do.call(cbind, lapply(self$ps_fit.list, function(ps_fit) ps_fit$fitted.values))
+  ################################################################################
+
+  ################################################################################
+  # Ensemble step
+  ################################################################################
+  ensemble_fit = private$estimate_nu_perturb(ps.matrix, self$data[h_x_names], init = rep(1/J, J))
+  nu.hat = ensemble_fit$coefficients
+  w.hat = nu.hat^2/sum(nu.hat^2)
+  ensemble_ps = ps.matrix%*%w.hat
+  ################################################################################
+
+  ################################################################################
+  # Compute necessary quantities to estimate the influence function:
+  # \psi(\bm{\alpha}_*, \bm{\nu}_*)
+  ################################################################################
+  dot_pi = matrix(NA, n, sum(alpha_dim))
+  for(j in 1:J){
+    x = as.matrix(self$data[self$ps_fit.list[[j]]$model_x_names])
+    dot_pi[, (sum(alpha_dim[0:(j-1)])+1):sum(alpha_dim[1:j])] = jacobian(function(alpha) ps_model.list[[j]](x, y, alpha), alpha.list[[j]])
+  }
+  E_dot_g = -(t(dot_pi)*rep(w.hat, alpha_dim))%*%(ensemble_fit$h_x*as.vector(r*((ensemble_ps)^(-2))))/n
+
+  dot_W = function(nu){
+    (diag(2*nu)*sum(nu^2)-2*(nu)%*%t(nu^2))/(sum(nu^2)^2)
+  }
+  dot_W_nu_hat = 0; if(length(nu.hat) > 1) dot_W_nu_hat = dot_W(nu.hat)
+
+  H_alpha.w = apply(t((t(dot_pi)*rep(w.hat, alpha_dim)))*as.vector(r*y*((ensemble_ps)^(-2))), 2, mean)
+  w.H_nu = apply(ps.matrix%*%t(dot_W_nu_hat)*as.vector(r*y*((ensemble_ps)^(-2))), 2, mean)
+
+  K_alpha = c(lapply(self$ps_fit.list, function(ps_fit) ps_fit$K)) %>% bdiag()
+  g_all = do.call(rbind, lapply(self$ps_fit.list, function(ps_fit) t(ps_fit$g.matrix)))
+  K_nu = ensemble_fit$K
+  g = t(ensemble_fit$g.matrix)
+  ################################################################################
+
+  ################################################################################
+  # IPW estimator for the population mean mu_0 with propensity score being estimated
+  # by the methods of Wang, Shao and Kim (2014).
+  ################################################################################
+  mu_ipw = mean(rexp(n)*r/ensemble_ps*y)
+  # mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
+  #                        +(t(H_alpha.w)-t(w.H_nu)%*%K_nu%*%t(E_dot_g))%*%K_alpha%*%g_all
+  #                        +t(w.H_nu)%*%K_nu%*%g)
+  mu_ipw.iid = rexp(n)*as.vector(t(r/ensemble_ps*y)
                          +(t(H_alpha.w)-2*t(w.H_nu)%*%K_nu%*%t(E_dot_g))%*%K_alpha%*%g_all
                          +t(w.H_nu)%*%K_nu%*%g)
   se_ipw = sqrt(var(mu_ipw.iid)/n)
