@@ -101,7 +101,8 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                      check_data = check_data,
                      parse_formula = parse_formula,
                      separate_variable_types = separate_variable_types,
-                     estimate_nu = estimate_nu
+                     estimate_nu = estimate_nu,
+                     estimate_nu_perturb = estimate_nu_perturb
                    )
 
 )
