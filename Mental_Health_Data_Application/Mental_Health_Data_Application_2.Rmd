@@ -163,8 +163,7 @@ show.alpha = function(est.all_results){
 full_ps_specifications_for_p0 = list(
   formula.list = list(
     r ~ o(teacher_report) + father,
-    r ~ o(teacher_report),
-    r ~ father
+    r ~ o(teacher_report)
   ),
   h_x_names.list = list(
     c("father", "parent_report"),
@@ -177,8 +176,7 @@ full_ps_specifications_for_p0 = list(
 full_ps_specifications_for_p1 = list(
   formula.list = list(
     r ~ o(teacher_report) + father,
-    r ~ o(teacher_report),
-    r ~ father
+    r ~ o(teacher_report)
   ),
   h_x_names.list = list(
     c("father", "parent_report"),
@@ -209,8 +207,8 @@ B = 500
 #------------------------------------------------------------------------------#
 # Estimate p_0 and p_1 using all combinations of the candidate models
 #------------------------------------------------------------------------------#
-for(model_num in 1:3){
-  model_combinations = combn(3, model_num)
+for(model_num in 1:2){
+  model_combinations = combn(2, model_num)
   for(i in 1:ncol(model_combinations)){
     model_set = model_combinations[, i]
     for(k in 1:length(health)){
@@ -229,7 +227,7 @@ for(model_num in 1:3){
       result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report"))
       # estimates = unlist(result[1:4])
       
-      save_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", model_set, "_OR1.RDS"), collapse = "")
+      save_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", model_set, "_OR2.RDS"), collapse = "")
       saveRDS(result, save_file)
     }
   }
@@ -240,8 +238,8 @@ for(model_num in 1:3){
 #------------------------------------------------------------------------------#
 # Bootstrap ----
 #------------------------------------------------------------------------------#
-for(model_num in 3){
-  model_combinations = combn(3, model_num)
+for(model_num in 2){
+  model_combinations = combn(2, model_num)
   for(i in 1:ncol(model_combinations)){
     model_set = model_combinations[, i]
     for(k in 1:2) {
@@ -255,7 +253,7 @@ for(model_num in 3){
           inv_link = full_ps_specifications$inv_link
         )
       boot_result = bootstrap(ps_specifications, subdat, B)
-      save.file = paste0(c("MHD_results/EBMR_IPW_bootstrap_", subset_names[k], "_", model_set, "_OR1.RDS"), collapse = "")
+      save.file = paste0(c("MHD_results/EBMR_IPW_bootstrap_", subset_names[k], "_", model_set, "_OR2.RDS"), collapse = "")
       # if(file.exists(save.file)){
       #   boot_result = cbind(readRDS(save.file), boot_result)
       #   saveRDS(boot_result, save.file)
@@ -276,10 +274,10 @@ for(model_num in 3){
 ### Results
 
 ```{r}
-all_results = matrix(NA, 20, 2)
+all_results = matrix(NA, 6, 2)
 k = 1
-for(model_num in 1:3){
-  model_combinations = combn(3, model_num)
+for(model_num in 1:2){
+  model_combinations = combn(2, model_num)
   for(i in 1:ncol(model_combinations)){
     print(c(model_num, i))
     all_estimates = matrix(NA, length(health), 2)
@@ -307,16 +305,16 @@ se_cc1 = sd(dat[cc1, ]$teacher_report)/sqrt(sum(cc1))
 mu_cc0 = mean(dat[cc0, ]$teacher_report)
 se_cc0 = sd(dat[cc0, ]$teacher_report)/sqrt(sum(cc0))
 Sigma = matrix(c(se_cc0^2, 0, 0, se_cc1^2), 2,2)
-all_results[20, ] = c(odds_ratio(mu_cc0, mu_cc1),
+all_results[6, ] = c(odds_ratio(mu_cc0, mu_cc1),
              sqrt(delta_method(mu_cc0, mu_cc1)%*%Sigma%*%delta_method(mu_cc0, mu_cc1)))
 # res.tmp = res
 ```
 
 ```{r}
-boot_se_ipw = boot_CI =  boot_se_ipw.mean = boot_se_ipw.CI = rep(NA, 20)
+boot_se_ipw = boot_CI =  boot_se_ipw.mean = boot_se_ipw.CI = rep(NA, 6)
 k = 1
-for(model_num in 1:3){
-  model_combinations = combn(3, model_num)
+for(model_num in 1:2){
+  model_combinations = combn(2, model_num)
   for(i in 1:ncol(model_combinations)){
     print(c(model_num, i))
     model_set0 = model_combinations[, i]
@@ -351,7 +349,7 @@ for(model_num in 1:3){
 all_boot_results[1,] = boot_result0[3, ]
 all_boot_results[2,] = boot_result1[3, ]
 boot.effect = apply(all_boot_results[1:2, ], 2, function(v) odds_ratio(v[1], v[2]))
-boot_se_ipw[20] = sd(rm.extreme(boot.effect))
+boot_se_ipw[6] = sd(rm.extreme(boot.effect))
 # boot_mu_ipw = apply(all_boot_results[1:2, ], 1, function(v) mean(rm.extreme(v)))
 # boot_var_ipw = apply(all_boot_results[1:2, ], 1, function(v) var(rm.extreme(v)))
 # boot_se_ipw[20] = sqrt(delta_method(boot_mu_ipw[1], boot_mu_ipw[2])^2%*%boot_var_ipw)
@@ -365,23 +363,18 @@ all_results = cbind(round(all_results, 3),
                                 all_results[, 1] + qnorm(0.975)*all_results[, 2]), 1, 
                           function(v) paste0("[", round(v[1], 3) , ", ", round(v[2], 3), "]")))
 
-rownames(all_results) = c("$\\hat{\\theta}_{100}^{100}$", "$\\hat{\\theta}_{100}^{010}$", "$\\hat{\\theta}_{100}^{001}$",
-                  "$\\hat{\\theta}_{010}^{100}$", "$\\hat{\\theta}_{010}^{010}$", "$\\hat{\\theta}_{010}^{001}$",
-                  "$\\hat{\\theta}_{001}^{100}$", "$\\hat{\\theta}_{001}^{010}$", "$\\hat{\\theta}_{001}^{001}$",
-                  "$\\hat{\\theta}_{110}^{110}$", "$\\hat{\\theta}_{110}^{101}$", "$\\hat{\\theta}_{110}^{011}$",
-                  "$\\hat{\\theta}_{101}^{110}$", "$\\hat{\\theta}_{101}^{101}$", "$\\hat{\\theta}_{101}^{011}$",
-                  "$\\hat{\\theta}_{011}^{110}$", "$\\hat{\\theta}_{011}^{101}$", "$\\hat{\\theta}_{011}^{011}$",
-                  "$\\hat{\\theta}_{111}^{111}$", "$\\hat{\\theta}_\\text{CC}$")
+rownames(all_results) = c("$\\hat{\\theta}_{10}^{10}$", "$\\hat{\\theta}_{10}^{01}$", "$\\hat{\\theta}_{01}^{10}$",
+                  "$\\hat{\\theta}_{01}^{01}$", "$\\hat{\\theta}_{11}^{11}$",  "$\\hat{\\theta}_\\text{CC}$")
 colnames(all_results) = c("PE", "SE", "Bootstrap SE", "$95\\%$ CI")
 kable(all_results, align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
       caption = "") %>%
   kable_styling(full_width = F, latex_options = c("hold_position")) %>%
-  row_spec(9, hline_after = T) %>%
-  row_spec(18, hline_after = T) %>%
-  row_spec(19, hline_after = T) 
+  row_spec(4, hline_after = T) %>%
+  row_spec(5, hline_after = T)
 ```
+
 ```{r}
-all_results = all_results[-20, ]
+all_results = all_results[-6, ]
 
 # Add confidence intervals and groupings
 # Add confidence intervals and groupings
@@ -390,51 +383,45 @@ all_results <- all_results %>%
     lower_bound = PE - 1.96 * SE,
     upper_bound = PE + 1.96 * SE,
     group = case_when(
-      row_number() <= 9 ~ "One model",
-      row_number() <= 18 ~ "Two models",
-      TRUE ~ "Three models"
+      row_number() <= 4 ~ "One model",
+      TRUE ~ "Two models"
     ),
     star = ifelse(lower_bound > 1 | upper_bound < 1, "*", NA)
   )
 
 # Reorder group levels: Second Group comes before Last Group
-all_results$group <- factor(all_results$group, levels = c("One model", "Two models", "Three models"))
+all_results$group <- factor(all_results$group, levels = c("One model", "Two models"))
 
 # Convert estimator to character math expressions
 estimator_labels <- c(
-  "hat(theta)['100']^{'100'}", "hat(theta)['100']^{'010'}", "hat(theta)['100']^{'001'}",
-  "hat(theta)['010']^{'100'}", "hat(theta)['010']^{'010'}", "hat(theta)['010']^{'001'}",
-  "hat(theta)['001']^{'100'}", "hat(theta)['001']^{'010'}", "hat(theta)['001']^{'001'}",
-  "hat(theta)['110']^{'110'}", "hat(theta)['110']^{'101'}", "hat(theta)['110']^{'011'}",
-  "hat(theta)['101']^{'110'}", "hat(theta)['101']^{'101'}", "hat(theta)['101']^{'011'}",
-  "hat(theta)['011']^{'110'}", "hat(theta)['011']^{'101'}", "hat(theta)['011']^{'011'}",
-  "hat(theta)['111']^{'111'}"
+  "hat(theta)['1010']", "hat(theta)['1001']", "hat(theta)['0110']",
+  "hat(theta)['0101']", "hat(theta)['1111']"
 )
 
 # Store as character vector and ensure factor order is preserved
 all_results$estimator <- factor(estimator_labels, levels = estimator_labels)
 
-# Create the plot
 ggplot(all_results, aes(x = estimator, y = PE)) +
   geom_point(size = 4, color = "black") +  # All points black
   geom_errorbar(aes(ymin = lower_bound, ymax = upper_bound), width = 0.2, linewidth = 1.5, color = "black") +  # Black CIs
   geom_text(aes(label = star, y = upper_bound + 0.05), size = 8, color = "black") +  # Stars above error bars
   geom_hline(yintercept = 1, linetype = "dashed", color = "darkgrey", linewidth = 1) +  
   theme_minimal(base_size = 16) +
-  labs(x = "", y = "Estimate", title = "") +
+  labs(x = "", y = "", title = "") +
   theme(
     legend.position = "none",  # Remove legend since color is uniform
-    axis.text.y = element_text(size = 14, family = "serif"),
+    axis.text.y = element_text(size = 18, family = "serif"),
     axis.text.x = element_text(size = 18, color = "black"),  # Increase font size of x-axis labels
     plot.title = element_text(hjust = 0.5, face = "bold"),
     panel.background = element_rect(fill = "white"),
     strip.background = element_rect(fill = "gray90"),
     strip.position = "top",  # Move strip to the top
     strip.text = element_blank(),  # Hide facet labels
-    panel.spacing = unit(c(0.5, 0.5), "lines")  # Adjust spacing between panels (vertical, horizontal)
+    panel.spacing.x = unit(0.5, "lines"),  # Fix spacing issue
+    panel.spacing.y = unit(0.5, "lines")
   ) + 
   facet_grid(. ~ group, scales = "free_x", space = "free_x") +  # Use facet_grid for more control over panel size
-  scale_x_discrete(labels = function(x) parse(text = x))  # Math notation for x-axis labels
+  scale_x_discrete(labels = function(x) sapply(x, function(txt) tryCatch(parse(text = txt), error = function(e) txt)))  # Fix math notation error
 ```
 
 ```{r}
@@ -487,7 +474,7 @@ text(c(1, 3, 9, 14:15, 17:18, 19),  all_results$upper_bound[c(1, 3, 9, 14:15, 17
 ### Estimation
 
 ```{r}
-possibly_true_ps.vector = c(3, 3)
+possibly_true_ps.vector = c(1, 1)
 exp_tilt_x_names = NULL
 xi.vector.list = list(
   xi.vector0 = seq(0, nrow(dat[dat$health == 0, ])^(-1/2), length.out = 30),
@@ -521,7 +508,7 @@ for(k in 1:length(health)){
       exp_tilt_x_names = exp_tilt_x_names,
       h_x_names = c("father", "parent_report")
     )
-    save_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", 1:3, "_mild", round(xi, 3), "_OR.RDS"), collapse = "")
+    save_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", 1:3, "_mild", round(xi, 3), "_OR2.RDS"), collapse = "")
     saveRDS(sa_result, save_file)
   }
 }

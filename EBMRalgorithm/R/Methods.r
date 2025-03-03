@@ -298,7 +298,7 @@ EBMR_IPW = function(h_x_names, true_ps = NULL) {
 #' print(ipw_sensitivity)
 #' }
 
-EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_tilt, exp_tilt_x_names){
+EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_tilt, exp_tilt_x_names, h_x_names){
   # Basic setup
   r = as.matrix(private$r)
   y = as.matrix(private$y)

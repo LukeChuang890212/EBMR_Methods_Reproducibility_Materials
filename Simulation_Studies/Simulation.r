@@ -153,7 +153,7 @@ which.extreme = function(v){
   extreme_num = sum(abs(z.score) > 3)
   print(paste(extreme_num, length(v)))
   if(extreme_num == 0){
-    return(integer(0))
+    return(c())
   }else{
     return(order(abs(z.score), decreasing = TRUE)[1:min(10, extreme_num)])
   }

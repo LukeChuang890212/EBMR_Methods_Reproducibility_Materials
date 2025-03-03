@@ -8,7 +8,8 @@ EBMR_IPW_with_locally_misspecified_model(
   ps.matrix,
   perturb_ps,
   exp_tilt,
-  exp_tilt_x_names
+  exp_tilt_x_names,
+  h_x_names
 )
 }
 \arguments{
