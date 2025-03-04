@@ -229,7 +229,7 @@ for(model_num in 1:3){
       result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report"))
       # estimates = unlist(result[1:4])
       
-      save_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", model_set, "_OR1.RDS"), collapse = "")
+      save_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", model_set, "_OR4.RDS"), collapse = "")
       saveRDS(result, save_file)
     }
   }
@@ -240,7 +240,7 @@ for(model_num in 1:3){
 #------------------------------------------------------------------------------#
 # Bootstrap ----
 #------------------------------------------------------------------------------#
-for(model_num in 3){
+for(model_num in 1:2){
   model_combinations = combn(3, model_num)
   for(i in 1:ncol(model_combinations)){
     model_set = model_combinations[, i]
@@ -255,7 +255,7 @@ for(model_num in 3){
           inv_link = full_ps_specifications$inv_link
         )
       boot_result = bootstrap(ps_specifications, subdat, B)
-      save.file = paste0(c("MHD_results/EBMR_IPW_bootstrap_", subset_names[k], "_", model_set, "_OR1.RDS"), collapse = "")
+      save.file = paste0(c("MHD_results/EBMR_IPW_bootstrap_", subset_names[k], "_", model_set, "_OR4.RDS"), collapse = "")
       # if(file.exists(save.file)){
       #   boot_result = cbind(readRDS(save.file), boot_result)
       #   saveRDS(boot_result, save.file)
@@ -284,11 +284,11 @@ for(model_num in 1:3){
     print(c(model_num, i))
     all_estimates = matrix(NA, length(health), 2)
     model_set0 = model_combinations[, i]
-    result0 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[1], "_", model_set0, "_OR1.RDS"), collapse = ""))
+    result0 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[1], "_", model_set0, "_OR4.RDS"), collapse = ""))
     all_estimates[1, ] = unlist(result0[c(1, 3)])
     for(j in 1:ncol(model_combinations)){
       model_set1 = model_combinations[, j]
-      result1 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[2], "_", model_set1, "_OR1.RDS"), collapse = ""))
+      result1 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[2], "_", model_set1, "_OR4.RDS"), collapse = ""))
       all_estimates[2, ] = unlist(result1[c(1, 3)])
       
       effect = odds_ratio(all_estimates[1, 1], all_estimates[2, 1])
@@ -321,13 +321,13 @@ for(model_num in 1:3){
   for(i in 1:ncol(model_combinations)){
     print(c(model_num, i))
     model_set0 = model_combinations[, i]
-    boot_result0 = readRDS(paste0(c("MHD_results/EBMR_IPW_bootstrap_", subset_names[1], "_", model_set0, "_OR1.RDS"), collapse = ""))
+    boot_result0 = readRDS(paste0(c("MHD_results/EBMR_IPW_bootstrap_", subset_names[1], "_", model_set0, "_OR4.RDS"), collapse = ""))
     all_boot_results = matrix(NA, length(health)*2, ncol(boot_result0))
     all_boot_results[1, ] = boot_result0[1, ]
     all_boot_results[3, ] = boot_result0[2, ]
     for(j in 1:ncol(model_combinations)){
       model_set1 = model_combinations[, j]
-      boot_result1 = readRDS(paste0(c("MHD_results/EBMR_IPW_bootstrap_", subset_names[2], "_", model_set1, "_OR1.RDS"), collapse = ""))
+      boot_result1 = readRDS(paste0(c("MHD_results/EBMR_IPW_bootstrap_", subset_names[2], "_", model_set1, "_OR4.RDS"), collapse = ""))
       all_boot_results[2, ] = boot_result1[1, ]
       all_boot_results[4, ] = boot_result1[2, ]
       
@@ -382,6 +382,7 @@ kable(all_results, align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
   row_spec(18, hline_after = T) %>%
   row_spec(19, hline_after = T) 
 ```
+
 ```{r}
 all_results = all_results[-20, ]
 
