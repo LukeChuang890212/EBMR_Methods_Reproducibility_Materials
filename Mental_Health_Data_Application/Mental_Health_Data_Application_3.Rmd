@@ -206,8 +206,8 @@ B = 500
 #------------------------------------------------------------------------------#
 # Estimate p_0 and p_1 using all combinations of the candidate models
 #------------------------------------------------------------------------------#
-for(model_num in 1:2){
-  model_combinations = combn(2, model_num)
+for(model_num in 1:3){
+  model_combinations = combn(3, model_num)
   for(i in 1:ncol(model_combinations)){
     model_set = model_combinations[, i]
     for(k in 1:length(health)){
@@ -226,7 +226,7 @@ for(model_num in 1:2){
       result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report"))
       # estimates = unlist(result[1:4])
       
-      save_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", model_set, "_OR1.RDS"), collapse = "")
+      save_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", model_set, "_OR3.RDS"), collapse = "")
       saveRDS(result, save_file)
     }
   }
