@@ -174,11 +174,11 @@ estimate_nu_perturb = function(ps.matrix, h_x, wt, init = NULL) {
     if(continuous_dim > 0){
       for(l in (discrete_dim+1):(discrete_dim+continuous_dim)) g.matrix[, l] = h_x2[, l-discrete_dim]*(rw-1)
     }
-    return(g.matrix)
+    return(wt*g.matrix)
   }
 
   G = function(g.matrix){
-    return(matrix(apply(g.matrix, 2, weighted.mean, wt), h_dim, 1))
+    return(matrix(apply(g.matrix, 2, mean), h_dim, 1))
   }
 
   W = function(g.matrix){
@@ -419,7 +419,7 @@ EBMR_IPW_perturb = function(h_x_names, true_ps = NULL) {
   # IPW estimator for the population mean mu_0 with propensity score being estimated
   # by the methods of Wang, Shao and Kim (2014).
   ################################################################################
-  mu_ipw = weighted.mean(r/ensemble_ps*y, wt)
+  mu_ipw = mean(wt*r/ensemble_ps*y)
   # mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
   #                        +(t(H_alpha.w)-t(w.H_nu)%*%K_nu%*%t(E_dot_g))%*%K_alpha%*%g_all
   #                        +t(w.H_nu)%*%K_nu%*%g)

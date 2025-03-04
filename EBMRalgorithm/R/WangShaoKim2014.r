@@ -243,11 +243,11 @@ WangShaoKim2014_perturb = function(formula, h_x_names, inv_link, init = NULL) {
     if(continuous_dim > 0){
       for(l in (discrete_dim+1):(discrete_dim+continuous_dim)) g.matrix[, l] = h_x2[, l-discrete_dim]*(rw-1)
     }
-    return(g.matrix)
+    return(wt*g.matrix)
   }
 
   G = function(g.matrix){
-    return(matrix(apply(g.matrix, 2, weighted.mean, wt), h_dim, 1))
+    return(matrix(apply(g.matrix, 2, mean), h_dim, 1))
   }
 
   W = function(g.matrix){
