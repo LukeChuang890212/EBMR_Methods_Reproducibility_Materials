@@ -71,6 +71,7 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                        private$r = self$data$r
                        private$y = self$data[y_names]
                        private$n = nrow(self$data)
+                       private$wt = rexp(private$n)
 
                        J = length(ps_specifications$formula.list)
                        for(j in 1:J){
@@ -96,6 +97,7 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                      r = NULL,
                      y = NULL,
                      n = NULL,
+                     wt = NULL,
 
                      # private methods
                      check_data = check_data,

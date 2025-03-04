@@ -136,7 +136,7 @@ estimate_nu = function(ps.matrix, h_x, init = NULL) {
   return(results)
 }
 
-estimate_nu_perturb = function(ps.matrix, h_x, init = NULL) {
+estimate_nu_perturb = function(ps.matrix, h_x, wt, init = NULL) {
   # Basic setup
   r = as.matrix(private$r)
   n = private$n
@@ -174,11 +174,11 @@ estimate_nu_perturb = function(ps.matrix, h_x, init = NULL) {
     if(continuous_dim > 0){
       for(l in (discrete_dim+1):(discrete_dim+continuous_dim)) g.matrix[, l] = h_x2[, l-discrete_dim]*(rw-1)
     }
-    return(rexp(n)*g.matrix)
+    return(g.matrix)
   }
 
   G = function(g.matrix){
-    return(matrix(apply(g.matrix, 2, mean), h_dim, 1))
+    return(matrix(apply(g.matrix, 2, weighted.mean, wt), h_dim, 1))
   }
 
   W = function(g.matrix){
@@ -367,6 +367,9 @@ EBMR_IPW_perturb = function(h_x_names, true_ps = NULL) {
   r = as.matrix(private$r)
   y = as.matrix(private$y)
   n = private$n
+  wt = private$wt
+
+  wt = rexp(n)
 
   ################################################################################
   # Collect the propensity score models
@@ -381,7 +384,7 @@ EBMR_IPW_perturb = function(h_x_names, true_ps = NULL) {
   ################################################################################
   # Ensemble step
   ################################################################################
-  ensemble_fit = private$estimate_nu_perturb(ps.matrix, self$data[h_x_names], init = rep(1/J, J))
+  ensemble_fit = private$estimate_nu_perturb(ps.matrix, self$data[h_x_names], wt, init = rep(1/J, J))
   nu.hat = ensemble_fit$coefficients
   w.hat = nu.hat^2/sum(nu.hat^2)
   ensemble_ps = ps.matrix%*%w.hat
@@ -416,14 +419,14 @@ EBMR_IPW_perturb = function(h_x_names, true_ps = NULL) {
   # IPW estimator for the population mean mu_0 with propensity score being estimated
   # by the methods of Wang, Shao and Kim (2014).
   ################################################################################
-  mu_ipw = mean(rexp(n)*r/ensemble_ps*y)
+  mu_ipw = weighted.mean(r/ensemble_ps*y, wt)
   # mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
   #                        +(t(H_alpha.w)-t(w.H_nu)%*%K_nu%*%t(E_dot_g))%*%K_alpha%*%g_all
   #                        +t(w.H_nu)%*%K_nu%*%g)
-  mu_ipw.iid = rexp(n)*as.vector(t(r/ensemble_ps*y)
+  mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
                          +(t(H_alpha.w)-2*t(w.H_nu)%*%K_nu%*%t(E_dot_g))%*%K_alpha%*%g_all
                          +t(w.H_nu)%*%K_nu%*%g)
-  mu_ipw = mean(mu_ipw.iid)
+  # mu_ipw = mean(mu_ipw.iid)
   se_ipw = sqrt(var(mu_ipw.iid)/n)
   ################################################################################
 
