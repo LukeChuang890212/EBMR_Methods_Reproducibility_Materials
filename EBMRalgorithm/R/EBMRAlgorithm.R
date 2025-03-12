@@ -108,7 +108,7 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                      r = NULL,
                      y = NULL,
                      n = NULL,
-                     # wt = NULL,
+                     wt = NULL,
 
                      # private methods
                      check_data = check_data,
