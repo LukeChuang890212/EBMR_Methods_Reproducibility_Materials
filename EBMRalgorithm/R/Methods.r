@@ -418,7 +418,7 @@ EBMR_IPW_perturb = function(h_x_names, mu_ipw, true_ps = NULL) {
   # IPW estimator for the population mean mu_0 with propensity score being estimated
   # by the methods of Wang, Shao and Kim (2014).
   ################################################################################
-  psi_mu = mean(wt*(r/ensemble_ps*y-mu_ipw))
+  psi_mu = mean(rexp(n)*(r/ensemble_ps*y-mu_ipw))
   # mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
   #                        +(t(H_alpha.w)-t(w.H_nu)%*%K_nu%*%t(E_dot_g))%*%K_alpha%*%g_all
   #                        +t(w.H_nu)%*%K_nu%*%g)
