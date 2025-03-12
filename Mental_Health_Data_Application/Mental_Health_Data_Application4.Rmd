@@ -111,8 +111,8 @@ bootstrap = function(ps_specifications, data, B){
       
       ebmr = EBMRAlgorithm$new(y_names = "teacher_report",
                                ps_specifications = ps_specifications,
-                               data = boot_dat)
-      result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report", "fp"))
+                               data = data, is.perturb = T)
+      result = ebmr$EBMR_IPW_perturb(h_x_names = c("father", "parent_report"))
       estimates = unlist(result[c(1, 3)])
       
       c(mu_ipw = estimates[1], se_ipw = estimates[2], mu_cc = mean(boot_dat$teacher_report[boot_dat$r == 1]))
