@@ -183,7 +183,7 @@ WangShaoKim2014_perturb = function(formula, h_x_names, inv_link, init = NULL) {
   y = as.matrix(self$data[result$y_names])
   x = as.matrix(self$data[result$x_names])
   n = private$n
-  wt = rexp(n)
+  wt = private$wt
   model_x_names = colnames(x)
 
   # result = separate_variable_types(x)

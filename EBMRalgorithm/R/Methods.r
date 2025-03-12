@@ -140,7 +140,7 @@ estimate_nu_perturb = function(ps.matrix, h_x, init = NULL) {
   # Basic setup
   r = as.matrix(private$r)
   n = private$n
-  wt = rexp(n)
+  wt = private$wt
   J = ncol(ps.matrix)
 
   result = private$separate_variable_types(h_x)
@@ -368,7 +368,7 @@ EBMR_IPW_perturb = function(h_x_names, mu_ipw, true_ps = NULL) {
   r = as.matrix(private$r)
   y = as.matrix(private$y)
   n = private$n
-  wt = rexp(n)
+  wt = private$wt
 
   ################################################################################
   # Collect the propensity score models
