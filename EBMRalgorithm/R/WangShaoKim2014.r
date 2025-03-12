@@ -183,7 +183,7 @@ WangShaoKim2014_perturb = function(formula, h_x_names, inv_link, init = NULL) {
   y = as.matrix(self$data[result$y_names])
   x = as.matrix(self$data[result$x_names])
   n = private$n
-  wt = private$wt
+  # wt = private$wt
   model_x_names = colnames(x)
 
   # result = separate_variable_types(x)
@@ -243,7 +243,7 @@ WangShaoKim2014_perturb = function(formula, h_x_names, inv_link, init = NULL) {
     if(continuous_dim > 0){
       for(l in (discrete_dim+1):(discrete_dim+continuous_dim)) g.matrix[, l] = h_x2[, l-discrete_dim]*(rw-1)
     }
-    return(wt*g.matrix)
+    return(rexp(n)*g.matrix)
   }
 
   G = function(g.matrix){

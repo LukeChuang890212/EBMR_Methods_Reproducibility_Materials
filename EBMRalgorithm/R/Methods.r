@@ -136,7 +136,7 @@ estimate_nu = function(ps.matrix, h_x, init = NULL) {
   return(results)
 }
 
-estimate_nu_perturb = function(ps.matrix, h_x, wt, init = NULL) {
+estimate_nu_perturb = function(ps.matrix, h_x, init = NULL) {
   # Basic setup
   r = as.matrix(private$r)
   n = private$n
@@ -174,7 +174,7 @@ estimate_nu_perturb = function(ps.matrix, h_x, wt, init = NULL) {
     if(continuous_dim > 0){
       for(l in (discrete_dim+1):(discrete_dim+continuous_dim)) g.matrix[, l] = h_x2[, l-discrete_dim]*(rw-1)
     }
-    return(wt*g.matrix)
+    return(rexp(n)*g.matrix)
   }
 
   G = function(g.matrix){
@@ -367,9 +367,7 @@ EBMR_IPW_perturb = function(h_x_names, true_ps = NULL) {
   r = as.matrix(private$r)
   y = as.matrix(private$y)
   n = private$n
-  wt = private$wt
-
-  wt = rexp(n)
+  # wt = private$wt
 
   ################################################################################
   # Collect the propensity score models
@@ -384,7 +382,7 @@ EBMR_IPW_perturb = function(h_x_names, true_ps = NULL) {
   ################################################################################
   # Ensemble step
   ################################################################################
-  ensemble_fit = private$estimate_nu_perturb(ps.matrix, self$data[h_x_names], wt, init = rep(1/J, J))
+  ensemble_fit = private$estimate_nu_perturb(ps.matrix, self$data[h_x_names], init = rep(1/J, J))
   nu.hat = ensemble_fit$coefficients
   w.hat = nu.hat^2/sum(nu.hat^2)
   ensemble_ps = ps.matrix%*%w.hat
@@ -419,7 +417,7 @@ EBMR_IPW_perturb = function(h_x_names, true_ps = NULL) {
   # IPW estimator for the population mean mu_0 with propensity score being estimated
   # by the methods of Wang, Shao and Kim (2014).
   ################################################################################
-  mu_ipw = mean(wt*r/ensemble_ps*y)
+  mu_ipw = mean(rexp(n)*r/ensemble_ps*y)
   # mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
   #                        +(t(H_alpha.w)-t(w.H_nu)%*%K_nu%*%t(E_dot_g))%*%K_alpha%*%g_all
   #                        +t(w.H_nu)%*%K_nu%*%g)
