@@ -64,16 +64,16 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                      # Public fields (variables)
                      data = NULL,
                      ps_fit.list = list(),
-                     WangShaoKim2014 = NULL,
-                     EBMR_IPW = NULL,
-                     # WangShaoKim2014_perturb = WangShaoKim2014_perturb,
-                     # EBMR_IPW_perturb = EBMR_IPW_perturb,
+                     WangShaoKim2014 = WangShaoKim2014,
+                     EBMR_IPW = EBMR_IPW,
+                     WangShaoKim2014_perturb = WangShaoKim2014_perturb,
+                     EBMR_IPW_perturb = EBMR_IPW_perturb,
                      EBMR_IPW_with_locally_misspecified_model = EBMR_IPW_with_locally_misspecified_model,
 
                      # Constructor to initialize fields
                      initialize = function(y_names, ps_specifications, data, is.perturb = FALSE) {
                        self$data = private$check_data(y_names, data)
-                       self$WangShaoKim2014 = ifelse(is.perturb, WangShaoKim2014_perturb, WangShaoKim2014)
+                       self$WangShaoKim2014 = ifelse(is.perturb, self$WangShaoKim2014_perturb, self$WangShaoKim2014)
                        self$EBMR_IPW = ifelse(is.perturb, EBMR_IPW_perturb, EBMR_IPW)
                        private$r = self$data$r
                        private$y = self$data[y_names]
