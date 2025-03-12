@@ -73,7 +73,6 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                      # Constructor to initialize fields
                      initialize = function(y_names, ps_specifications, data, is.perturb = FALSE) {
                        self$data = private$check_data(y_names, data)
-                       self$WangShaoKim2014 = ifelse(is.perturb, self$WangShaoKim2014_perturb, self$WangShaoKim2014)
                        self$EBMR_IPW = ifelse(is.perturb, EBMR_IPW_perturb, EBMR_IPW)
                        private$r = self$data$r
                        private$y = self$data[y_names]
@@ -82,6 +81,7 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                        # private$wt = private$wt/sum(private$wt)*private$n
 
                        J = length(ps_specifications$formula.list)
+                       WangShaoKim2014 = ifelse(is.perturb, self$WangShaoKim2014_perturb, self$WangShaoKim2014)
                        for(j in 1:J){
                          formula = ps_specifications$formula.list[[j]]
                          h_x_names = ps_specifications$h_x_names.list[[j]]
