@@ -110,14 +110,16 @@ simulate_all_model_combinations_and_sample_sizes = function(
   }
 }
 
-simulate_all_settings_with_all_missing_rates = function(scenario,
+simulate_all_settings_with_all_missing_rates = function(settings,
+                                                        missing_rates,
+                                                        scenario,
                                                         full_ps_specifications,
                                                         n.vector.list,
                                                         all_data_file.list,
                                                         alpha.true.list,
                                                         version){
-  for(setting in c("setting1", "setting2")){
-    for(missing_rate in c("miss50", "miss30")){
+  for(setting in settings){
+    for(missing_rate in missing_rates){
       for(i in 1:length(all_data_file.list[[setting]][[missing_rate]])){
         simulate_all_model_combinations_and_sample_sizes(
           setting = setting,
@@ -148,14 +150,14 @@ simulate_all_settings_with_all_missing_rates = function(scenario,
 #   return(which(v < lower | v > upper))
 # }
 
-which.extreme = function(v){
+which.not.extreme = function(v){
   z.score = scale(v)
   extreme_num = sum(abs(z.score) > 3)
   print(paste(extreme_num, length(v)))
   if(extreme_num == 0){
-    return(c())
+    return(1:length(v))
   }else{
-    return(order(abs(z.score), decreasing = TRUE)[1:min(10, extreme_num)])
+    return((1:length(v))[-order(abs(z.score), decreasing = TRUE)[1:min(extreme_num, extreme_num)]])
   }
 }
 
@@ -165,8 +167,8 @@ summarize_results = function(sim_result, pe_index, ese_index, mu.true, is.origin
   #                                 `FALSE` = rm.extreme)
 
   if(!is.original){
-    print(length(which.extreme(sim_result[ese_index,])))
-    sim_result = sim_result[, -which.extreme(sim_result[ese_index,])]
+    print(ncol(sim_result)-length(which.not.extreme(sim_result[ese_index,])))
+    sim_result = sim_result[, which.not.extreme(sim_result[ese_index,])]
   }
   # pe = rep(NA, length(pe_index))
   # esd = rep(NA, length(pe_index))
@@ -233,14 +235,14 @@ summarize_all_model_combinations_and_sample_sizes = function(setting,
   return(result)
 }
 
-summarize_all_settings_with_all_missing_rates = function(scenario,
+summarize_all_settings_with_all_missing_rates = function(settings,
+                                                         missing_rates,
+                                                         scenario,
                                                          J,
                                                          n.vector,
                                                          all_data_file.list,
                                                          version,
                                                          is.original = TRUE){
-  settings = c("setting1", "setting2")
-  missing_rates = c("miss50", "miss30")
   for(setting in settings){
     results_with_all_missing_rates = matrix(NA, 8*length(n.vector), 5*length(missing_rates))
     mu.true = mean(readRDS(all_data_file.list[[setting]][[1]][[1]])$y)

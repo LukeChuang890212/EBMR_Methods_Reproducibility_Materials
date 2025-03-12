@@ -21,21 +21,28 @@ full_ps_specifications = list(
   inv_link = function(eta) 1/(1+exp(eta))
 )
 
+settings = c("setting3")
+missing_rates = c("miss50", "miss30")
+
 ##  Scenario 1 ----
-simulate_all_settings_with_all_missing_rates(scenario = 1,
+simulate_all_settings_with_all_missing_rates(settings = settings,
+                                             missing_rates = missing_rates,
+                                             scenario = 1,
                                              full_ps_specifications,
                                              n.vector.list$correct_model,
                                              correct_model_all_data_file.list,
                                              correct_model_alpha.true.list,
-                                             version = 3)
+                                             version = 2)
 
 ##  Scenario 2 ----
-simulate_all_settings_with_all_missing_rates(scenario = 2,
+simulate_all_settings_with_all_missing_rates(settings = settings,
+                                             missing_rates = missing_rates,
+                                             scenario = 2,
                                              full_ps_specifications,
                                              n.vector.list$misspecified_model,
                                              misspecified_model_all_data_file.list,
                                              misspecified_model_alpha.true.list,
-                                             version = 3)
+                                             version = 2)
 
 #------------------------------------------------------------------------------#
 # Run the simulations for Scenario 3, 4 ----
@@ -55,20 +62,24 @@ full_ps_specifications = list(
 )
 
 ##  Scenario 3 ----
-simulate_all_settings_with_all_missing_rates(scenario = 3,
+simulate_all_settings_with_all_missing_rates(settings = settings,
+                                             missing_rates = missing_rates,
+                                             scenario = 3,
                                              full_ps_specifications,
                                              n.vector.list$correct_model,
                                              correct_model_all_data_file.list,
                                              correct_model_alpha.true.list,
-                                             version = 3)
+                                             version = 2)
 
 ##  Scenario 4 ----
-simulate_all_settings_with_all_missing_rates(scenario = 4,
+simulate_all_settings_with_all_missing_rates(settings = settings,
+                                             missing_rates = missing_rates,
+                                             scenario = 4,
                                              full_ps_specifications,
                                              n.vector.list$misspecified_model,
                                              misspecified_model_all_data_file.list,
                                              misspecified_model_alpha.true.list,
-                                             version = 3)
+                                             version = 2)
 
 #------------------------------------------------------------------------------#
 # Run the simulations for Scenario 5, 6 ----
@@ -88,20 +99,24 @@ full_ps_specifications = list(
 )
 
 ##  Scenario 5 ----
-simulate_all_settings_with_all_missing_rates(scenario = 5,
+simulate_all_settings_with_all_missing_rates(settings = settings,
+                                             missing_rates = missing_rates,
+                                             scenario = 5,
                                              full_ps_specifications,
                                              n.vector.list$correct_model,
                                              correct_model_all_data_file.list,
                                              correct_model_alpha.true.list,
-                                             version = 3)
+                                             version = 2)
 
 ##  Scenario 6 ----
-simulate_all_settings_with_all_missing_rates(scenario = 6,
+simulate_all_settings_with_all_missing_rates(settings = settings,
+                                             missing_rates = missing_rates,
+                                             scenario = 6,
                                              full_ps_specifications,
                                              n.vector.list$misspecified_model,
                                              misspecified_model_all_data_file.list,
                                              misspecified_model_alpha.true.list,
-                                             version = 3)
+                                             version = 2)
 
 
 
