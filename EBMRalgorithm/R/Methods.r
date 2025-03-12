@@ -140,7 +140,7 @@ estimate_nu_perturb = function(ps.matrix, h_x, init = NULL) {
   # Basic setup
   r = as.matrix(private$r)
   n = private$n
-  wt = private$wt
+  wt = rexp(n)
   J = ncol(ps.matrix)
 
   result = private$separate_variable_types(h_x)
@@ -363,12 +363,12 @@ EBMR_IPW = function(h_x_names, true_ps = NULL) {
   return(result)
 }
 
-EBMR_IPW_perturb = function(h_x_names, true_ps = NULL) {
+EBMR_IPW_perturb = function(h_x_names, mu_ipw, true_ps = NULL) {
   # Basic setup
   r = as.matrix(private$r)
   y = as.matrix(private$y)
   n = private$n
-  wt = private$wt
+  wt = rexp(n)
 
   ################################################################################
   # Collect the propensity score models
@@ -418,7 +418,7 @@ EBMR_IPW_perturb = function(h_x_names, true_ps = NULL) {
   # IPW estimator for the population mean mu_0 with propensity score being estimated
   # by the methods of Wang, Shao and Kim (2014).
   ################################################################################
-  mu_ipw = mean(wt*r/ensemble_ps*y)
+  psi_mu = mean(wt*(r/ensemble_ps*y-mu_ipw))
   # mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
   #                        +(t(H_alpha.w)-t(w.H_nu)%*%K_nu%*%t(E_dot_g))%*%K_alpha%*%g_all
   #                        +t(w.H_nu)%*%K_nu%*%g)
@@ -441,7 +441,7 @@ EBMR_IPW_perturb = function(h_x_names, true_ps = NULL) {
   }
   ################################################################################
 
-  result = list(mu_ipw = mu_ipw,
+  result = list(psi_mu = psi_mu,
                 mu_ipw.true = mu_ipw.true,
                 se_ipw = se_ipw,
                 se_ipw.true = se_ipw.true,
