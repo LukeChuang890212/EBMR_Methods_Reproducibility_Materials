@@ -81,13 +81,23 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                        # private$wt = private$wt/sum(private$wt)*private$n
 
                        J = length(ps_specifications$formula.list)
-                       WangShaoKim2014 = ifelse(is.perturb, self$WangShaoKim2014_perturb, self$WangShaoKim2014)
-                       for(j in 1:J){
-                         formula = ps_specifications$formula.list[[j]]
-                         h_x_names = ps_specifications$h_x_names.list[[j]]
-                         inv_link = ps_specifications$inv_link
-                         self$ps_fit.list[[j]] = WangShaoKim2014(formula, h_x_names, inv_link)
+                       # WangShaoKim2014 = ifelse(is.perturb, self$WangShaoKim2014_perturb, self$WangShaoKim2014)
+                       if(is.perturb){
+                         for(j in 1:J){
+                           formula = ps_specifications$formula.list[[j]]
+                           h_x_names = ps_specifications$h_x_names.list[[j]]
+                           inv_link = ps_specifications$inv_link
+                           self$ps_fit.list[[j]] = self$WangShaoKim2014(formula, h_x_names, inv_link)
+                         }
+                       }else{
+                         for(j in 1:J){
+                           formula = ps_specifications$formula.list[[j]]
+                           h_x_names = ps_specifications$h_x_names.list[[j]]
+                           inv_link = ps_specifications$inv_link
+                           self$ps_fit.list[[j]] = self$WangShaoKim2014_perturb(formula, h_x_names, inv_link)
+                         }
                        }
+
                        # print(self$ps_fit.list[[3]]$coefficients)
                        # print(self$ps_fit.list[[3]]$se)
                      }

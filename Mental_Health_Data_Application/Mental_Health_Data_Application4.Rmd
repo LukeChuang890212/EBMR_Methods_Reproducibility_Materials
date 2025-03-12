@@ -111,7 +111,7 @@ bootstrap = function(ps_specifications, data, B, is.perturb = FALSE){
       
       ebmr = EBMRAlgorithm$new(y_names = "teacher_report",
                                ps_specifications = ps_specifications,
-                               data = boot_dat, is.perturb)
+                               data = boot_dat)
       result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report"))
       estimates = unlist(result[c(1, 3)])
       
