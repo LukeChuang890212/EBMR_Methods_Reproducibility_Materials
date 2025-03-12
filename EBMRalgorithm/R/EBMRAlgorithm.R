@@ -73,7 +73,7 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                      # Constructor to initialize fields
                      initialize = function(y_names, ps_specifications, data, is.perturb = FALSE) {
                        self$data = private$check_data(y_names, data)
-                       self$EBMR_IPW = ifelse(is.perturb, EBMR_IPW_perturb, EBMR_IPW)
+                       # self$EBMR_IPW = ifelse(is.perturb, EBMR_IPW_perturb, EBMR_IPW)
                        private$r = self$data$r
                        private$y = self$data[y_names]
                        private$n = nrow(self$data)
