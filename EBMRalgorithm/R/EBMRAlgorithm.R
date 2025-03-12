@@ -86,7 +86,7 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                          formula = ps_specifications$formula.list[[j]]
                          h_x_names = ps_specifications$h_x_names.list[[j]]
                          inv_link = ps_specifications$inv_link
-                         self$ps_fit.list[[j]] = self$WangShaoKim2014(formula, h_x_names, inv_link)
+                         self$ps_fit.list[[j]] = WangShaoKim2014(formula, h_x_names, inv_link)
                        }
                        # print(self$ps_fit.list[[3]]$coefficients)
                        # print(self$ps_fit.list[[3]]$se)
