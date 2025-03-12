@@ -87,7 +87,7 @@ se_cc = sd(dat$teacher_report[dat$r == 1])/sqrt(sum(r))
 # Analysis with our proposed methods
 
 ```{r}
-bootstrap = function(ps_specifications, data, B, is.perturb = FALSE){
+bootstrap = function(ps_specifications, data, B){
   library(foreach)
   library(doParallel)
   library(doSNOW)
@@ -111,8 +111,8 @@ bootstrap = function(ps_specifications, data, B, is.perturb = FALSE){
       
       ebmr = EBMRAlgorithm$new(y_names = "teacher_report",
                                ps_specifications = ps_specifications,
-                               data = subdat, is.perturb = TRUE)
-      result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report"))
+                               data = boot_dat)
+      result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report", "fp"))
       estimates = unlist(result[c(1, 3)])
       
       c(mu_ipw = estimates[1], se_ipw = estimates[2], mu_cc = mean(boot_dat$teacher_report[boot_dat$r == 1]))
@@ -619,7 +619,7 @@ for(model_num in 1:3){
           h_x_names.list = full_ps_specifications$h_x_names.list[model_set],
           inv_link = full_ps_specifications$inv_link
         )
-      boot_result = bootstrap(ps_specifications, subdat, B, is.perturb = TRUE)
+      boot_result = bootstrap(ps_specifications, subdat, B)
       save.file = paste0(c("MHD_results/EBMR_IPW_bootstrap_", subset_names[k], "_", model_set, "_OR4.RDS"), collapse = "")
       # if(file.exists(save.file)){
       #   boot_result = cbind(readRDS(save.file), boot_result)
@@ -641,56 +641,19 @@ for(model_num in 1:3){
 ### Results
 
 ```{r}
-all_results = matrix(NA, 4, 2)
+all_results = matrix(NA, 20, 2)
 k = 1
-for(model_num in 0:2){
-  model_combinations = combn(2, model_num)
-  for(i in 1:ncol(model_combinations)){
-    all_estimates = matrix(NA, length(health), 2)
-    model_set = c(1, model_combinations[, i]+1)
-    print(model_set)
-    
-    result0 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[1], "_", model_set, "_OR4.RDS"), collapse = ""))
-    all_estimates[1, ] = unlist(result0[c(1, 3)])
-    
-    result1 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[2], "_", model_set, "_OR4.RDS"), collapse = ""))
-    all_estimates[2, ] = unlist(result1[c(1, 3)])
-    
-    effect = odds_ratio(all_estimates[1, 1], all_estimates[2, 1])
-    Sigma = matrix(c(all_estimates[1, 2]^2, 0, 0, all_estimates[2, 2]^2), 2,2)
-    se = sqrt(delta_method(all_estimates[1, 1], all_estimates[2, 1])%*%Sigma%*%delta_method(all_estimates[1, 1], all_estimates[2, 1]))
-    
-    all_results[k, ] = c(effect, se)
-    k = k + 1
-  }
-}
-all_results
-# cc1 = dat$health == 1 & dat$r == 1
-# cc0 = dat$health == 0 & dat$r == 1
-# mu_cc1 = mean(dat[cc1, ]$teacher_report)
-# se_cc1 = sd(dat[cc1, ]$teacher_report)/sqrt(sum(cc1))
-# mu_cc0 = mean(dat[cc0, ]$teacher_report)
-# se_cc0 = sd(dat[cc0, ]$teacher_report)/sqrt(sum(cc0))
-# Sigma = matrix(c(se_cc0^2, 0, 0, se_cc1^2), 2,2)
-# all_results[20, ] = c(odds_ratio(mu_cc0, mu_cc1),
-#              sqrt(delta_method(mu_cc0, mu_cc1)%*%Sigma%*%delta_method(mu_cc0, mu_cc1)))
-# # res.tmp = res
-```
-
-```{r}
-all_results = matrix(NA, 6, 2)
-k = 1
-for(model_num in 1:4){
-  model_combinations = combn(4, model_num)
+for(model_num in 1:3){
+  model_combinations = combn(3, model_num)
   for(i in 1:ncol(model_combinations)){
     all_estimates = matrix(NA, length(health), 2)
     model_set0 = model_combinations[, i]
-    if((4 %in% model_set0) || !(1 %in% model_set0)) next
+    # if((4 %in% model_set0) || !(1 %in% model_set0)) next
     result0 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[1], "_", model_set0, "_OR4.RDS"), collapse = ""))
     all_estimates[1, ] = unlist(result0[c(1, 3)])
     for(j in 1:ncol(model_combinations)){
       model_set1 = model_combinations[, j]
-      if((4 %in% model_set1) || !(2 %in% model_set1)) next
+      # if((4 %in% model_set1) || !(2 %in% model_set1)) next
       cat(c(model_set0, "/", model_set1), "\n")
       result1 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[2], "_", model_set1, "_OR4.RDS"), collapse = ""))
       all_estimates[2, ] = unlist(result1[c(1, 3)])
@@ -704,15 +667,15 @@ for(model_num in 1:4){
     }
   }
 }
-# cc1 = dat$health == 1 & dat$r == 1
-# cc0 = dat$health == 0 & dat$r == 1
-# mu_cc1 = mean(dat[cc1, ]$teacher_report)
-# se_cc1 = sd(dat[cc1, ]$teacher_report)/sqrt(sum(cc1))
-# mu_cc0 = mean(dat[cc0, ]$teacher_report)
-# se_cc0 = sd(dat[cc0, ]$teacher_report)/sqrt(sum(cc0))
-# Sigma = matrix(c(se_cc0^2, 0, 0, se_cc1^2), 2,2)
-# all_results[20, ] = c(odds_ratio(mu_cc0, mu_cc1),
-#              sqrt(delta_method(mu_cc0, mu_cc1)%*%Sigma%*%delta_method(mu_cc0, mu_cc1)))
+cc1 = dat$health == 1 & dat$r == 1
+cc0 = dat$health == 0 & dat$r == 1
+mu_cc1 = mean(dat[cc1, ]$teacher_report)
+se_cc1 = sd(dat[cc1, ]$teacher_report)/sqrt(sum(cc1))
+mu_cc0 = mean(dat[cc0, ]$teacher_report)
+se_cc0 = sd(dat[cc0, ]$teacher_report)/sqrt(sum(cc0))
+Sigma = matrix(c(se_cc0^2, 0, 0, se_cc1^2), 2,2)
+all_results[20, ] = c(odds_ratio(mu_cc0, mu_cc1),
+             sqrt(delta_method(mu_cc0, mu_cc1)%*%Sigma%*%delta_method(mu_cc0, mu_cc1)))
 all_results
 # res.tmp = res
 ```
@@ -735,12 +698,11 @@ for(model_num in 1:3){
       boot_result1 = readRDS(paste0(c("MHD_results/EBMR_IPW_bootstrap_", subset_names[2], "_", model_set1, "_OR4.RDS"), collapse = ""))
       all_boot_results[2, ] = boot_result1[1, ]
       all_boot_results[4, ] = boot_result1[2, ]
-      
+  
       boot.effect = apply(all_boot_results[1:2, ], 2, function(v) odds_ratio(v[1], v[2]))
       # boot_CI[k] = paste0(c("[", paste(round(quantile(boot.effect, c(0.025, 0.975)), 4), collapse = ", "),
       #                              "]"), collapse =  "")
-      boot_se_ipw[k] = sd(rm.extreme(boot.effect))
-      hist(rm.extreme(boot.effect))
+      boot_se_ipw[k] = sd(rm.extreme(boot.effect[!is.na(boot.effect)]))
       # boot_mu_ipw = apply(all_boot_results[1:2, ], 1, function(v) mean(rm.extreme(v)))
       # boot_var_ipw = apply(all_boot_results[1:2, ], 1, function(v) var(rm.extreme(v)))
       # # boot_mu_ipw = apply(all_boot_results[1:2, ], 1, mean)

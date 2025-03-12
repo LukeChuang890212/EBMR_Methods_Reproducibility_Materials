@@ -87,14 +87,14 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                            formula = ps_specifications$formula.list[[j]]
                            h_x_names = ps_specifications$h_x_names.list[[j]]
                            inv_link = ps_specifications$inv_link
-                           self$ps_fit.list[[j]] = self$WangShaoKim2014(formula, h_x_names, inv_link)
+                           self$ps_fit.list[[j]] = self$WangShaoKim2014_perturb(formula, h_x_names, inv_link)
                          }
                        }else{
                          for(j in 1:J){
                            formula = ps_specifications$formula.list[[j]]
                            h_x_names = ps_specifications$h_x_names.list[[j]]
                            inv_link = ps_specifications$inv_link
-                           self$ps_fit.list[[j]] = self$WangShaoKim2014_perturb(formula, h_x_names, inv_link)
+                           self$ps_fit.list[[j]] = self$WangShaoKim2014(formula, h_x_names, inv_link)
                          }
                        }
 
