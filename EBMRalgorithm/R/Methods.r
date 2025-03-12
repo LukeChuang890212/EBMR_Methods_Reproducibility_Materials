@@ -140,7 +140,7 @@ estimate_nu_perturb = function(ps.matrix, h_x, init = NULL) {
   # Basic setup
   r = as.matrix(private$r)
   n = private$n
-  wt = rexp(n)
+  wt = rnorm(n)
   J = ncol(ps.matrix)
 
   result = private$separate_variable_types(h_x)
