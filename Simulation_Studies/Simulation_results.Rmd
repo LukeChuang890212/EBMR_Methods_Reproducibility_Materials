@@ -40,7 +40,7 @@ source("Basic_setup.r")
 ```
 
 ```{r}
-settings = c("setting1", "setting2")
+settings = c("setting3", "setting2")
 missing_rates = c("miss50", "miss30")
 J = 3
 n.vector = c(300, 1000)
