@@ -40,7 +40,7 @@ source("Basic_setup.r")
 ```
 
 ```{r}
-settings = c("setting3", "setting2")
+settings = c("setting1", "setting2")
 missing_rates = c("miss50", "miss30")
 J = 3
 n.vector = c(300, 1000)
@@ -53,7 +53,7 @@ summarize_all_settings_with_all_missing_rates(settings = settings,
                                               J = J,
                                               n.vector = n.vector,
                                               correct_model_all_data_file.list,
-                                              version = 2,
+                                              version = "test2",
                                               is.original = FALSE)
 ```
 
@@ -64,7 +64,7 @@ summarize_all_settings_with_all_missing_rates(settings = settings,
                                               J = J,
                                               n.vector = n.vector,
                                               misspecified_model_all_data_file.list,
-                                              version = 2,
+                                              version = "test2",
                                               is.original = FALSE)
 ```
 
@@ -75,7 +75,7 @@ summarize_all_settings_with_all_missing_rates(settings = settings,
                                               J = J,
                                               n.vector = n.vector,
                                               correct_model_all_data_file.list,
-                                              version = 2,
+                                              version = "test2",
                                               is.original = FALSE)
 ```
 
@@ -86,7 +86,7 @@ summarize_all_settings_with_all_missing_rates(settings = settings,
                                               J = J,
                                               n.vector = n.vector,
                                               misspecified_model_all_data_file.list,
-                                              version = 2,
+                                              version = "test2",
                                               is.original = FALSE)
 ```
 
@@ -97,7 +97,7 @@ summarize_all_settings_with_all_missing_rates(settings = settings,
                                               J = J,
                                               n.vector = n.vector,
                                               correct_model_all_data_file.list,
-                                              version = 2,
+                                              version = "test2",
                                               is.original = FALSE)
 ```
 
@@ -108,7 +108,7 @@ summarize_all_settings_with_all_missing_rates(settings = settings,
                                               J = J,
                                               n.vector = n.vector,
                                               misspecified_model_all_data_file.list,
-                                              version = 2,
+                                              version = "test2",
                                               is.original = FALSE)
 ```
 
