@@ -1168,7 +1168,7 @@ for(model_num in 1:3){
 boot_effect_se[8] = sd(rm.extreme(boot_result[2, !is.na(boot_result[2,])]))
 # boot_se_se[8] = quantile(rm.extreme_se(boot_result[4, !is.na(boot_result[4,])]), .95)
 # boot_effect_se
-boot_se_se
+# boot_se_se
 ```
 
 ```{r}
