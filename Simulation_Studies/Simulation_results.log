@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.14159265-2.6-0.999992 (TeX Live 2020/W32TeX) (preloaded format=xelatex 2025.2.25)  20 MAR 2025 22:05
+This is XeTeX, Version 3.14159265-2.6-0.999992 (TeX Live 2020/W32TeX) (preloaded format=xelatex 2025.2.25)  27 MAR 2025 21:56
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -611,7 +611,44 @@ File: bkm-dvipdfm.def 2019/12/03 v1.28 bookmark driver for dvipdfm (HO)
 \BKM@id=\count324
 )) (c:/texlive/2020/texmf-dist/tex/latex/xurl/xurl.sty
 Package: xurl 2020/01/24 v 0.09 modify URL breaks
-) (./Simulation_results.aux)
+) (./Simulation_results.aux
+
+LaTeX Warning: Label `tab:unnamed-chunk-2' multiply defined.
+
+
+LaTeX Warning: Label `tab:unnamed-chunk-2' multiply defined.
+
+
+LaTeX Warning: Label `tab:unnamed-chunk-3' multiply defined.
+
+
+LaTeX Warning: Label `tab:unnamed-chunk-3' multiply defined.
+
+
+LaTeX Warning: Label `tab:unnamed-chunk-4' multiply defined.
+
+
+LaTeX Warning: Label `tab:unnamed-chunk-4' multiply defined.
+
+
+LaTeX Warning: Label `tab:unnamed-chunk-5' multiply defined.
+
+
+LaTeX Warning: Label `tab:unnamed-chunk-5' multiply defined.
+
+
+LaTeX Warning: Label `tab:unnamed-chunk-6' multiply defined.
+
+
+LaTeX Warning: Label `tab:unnamed-chunk-6' multiply defined.
+
+
+LaTeX Warning: Label `tab:unnamed-chunk-7' multiply defined.
+
+
+LaTeX Warning: Label `tab:unnamed-chunk-7' multiply defined.
+
+)
 \openout1 = `Simulation_results.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 114.
@@ -996,1253 +1033,92 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) (c:/texlive/2020/texmf-dist/tex/latex/microtype/mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
+(Font)              scaled to size 7.0pt on input line 145.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
+(Font)              scaled to size 5.0pt on input line 145.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
+(Font)              scaled to size 10.00092pt on input line 145.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
+(Font)              scaled to size 7.00064pt on input line 145.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(2)/m/n' will be
+(Font)              scaled to size 5.00046pt on input line 145.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
+(Font)              scaled to size 9.99893pt on input line 145.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
+(Font)              scaled to size 6.99925pt on input line 145.
+LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
+(Font)              scaled to size 4.99947pt on input line 145.
 
-Package xeCJK Warning: Unknown CJK family `\CJKttdefault' is being ignored.
-(xeCJK)                
-(xeCJK)                Try to use `\setCJKmonofont[...]{...}' to define it.
+LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-LaTeX Font Info:    Font shape `TU/標楷體(0)/m/n' will be
-(Font)              scaled to size 9.43039pt on input line 117.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 675.
 [1
 
-] [2]
-Overfull \hbox (244.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## \multicolumn{1}{c}{} & \multicolumn{5}{c}{\$50\textbacksla
-sh{}\%\$ missing} & \multicolumn{5}{c}{\$30\textbackslash{}\%\$ missing} \\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.009 & 0.157 & 0.160 & 0.025 & 0
-.953 & 0.001 & 0.125 & 0.128 & 0.016 & 0.962\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.006 & 0.131 & 0.155 & 0.017 & 0.973
- & 0.000 & 0.109 & 0.116 & 0.012 & 0.968\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & -0.104 & 0.168 & 0.189 & 0.039 & 0.932
- & -0.055 & 0.130 & 0.136 & 0.020 & 0.931\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & -0.109 & 0.170 & 0.189 & 0.041 & 0.928
- & -0.058 & 0.131 & 0.137 & 0.021 & 0.932\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & -0.005 & 0.131 & 0.163 & 0.017 & 0.974
- & -0.001 & 0.109 & 0.127 & 0.012 & 0.969\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.006 & 0.131 & 0.155 & 0.017 & 0.973
- & -0.001 & 0.109 & 0.116 & 0.012 & 0.969\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & -0.104 & 0.168 & 0.189 & 0.039 & 0.934
- & -0.054 & 0.131 & 0.137 & 0.020 & 0.931\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & -0.010 & 0.134 & 0.194 & 0.018 & 0.976
- & -0.005 & 0.110 & 0.132 & 0.012 & 0.972\\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.001 & 0.089 & 0.088 & 0.008 & 0
-.957 & 0.000 & 0.072 & 0.070 & 0.005 & 0.939\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & 0.001 & 0.070 & 0.074 & 0.005 & 0.949 
-& 0.000 & 0.062 & 0.063 & 0.004 & 0.957\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & -0.092 & 0.091 & 0.094 & 0.017 & 0.850
- & -0.054 & 0.074 & 0.074 & 0.008 & 0.883\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & -0.097 & 0.092 & 0.095 & 0.018 & 0.844
- & -0.057 & 0.074 & 0.074 & 0.009 & 0.877\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & 0.001 & 0.070 & 0.074 & 0.005 & 0.949 
-& 0.001 & 0.062 & 0.063 & 0.004 & 0.957\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & 0.001 & 0.070 & 0.074 & 0.005 & 0.949 
-& 0.000 & 0.062 & 0.063 & 0.004 & 0.957\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & -0.092 & 0.091 & 0.095 & 0.017 & 0.850
- & -0.054 & 0.074 & 0.074 & 0.008 & 0.883\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & 0.002 & 0.071 & 0.077 & 0.005 & 0.949 
-& -0.001 & 0.062 & 0.068 & 0.004 & 0.961\\[] 
- []
-
-[3] [4]
-Overfull \hbox (244.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## \multicolumn{1}{c}{} & \multicolumn{5}{c}{\$50\textbacksla
-sh{}\%\$ missing} & \multicolumn{5}{c}{\$30\textbackslash{}\%\$ missing} \\[] 
- []
-
-
-Overfull \hbox (97.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & -0.002 & 0.055 & 0.054 & 0.003 & 
-0.950 & 0.000 & 0.041 & 0.043 & 0.002 & 0.960\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.003 & 0.067 & 0.077 & 0.005 & 0.945
- & -0.004 & 0.051 & 0.053 & 0.003 & 0.951\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & 0.012 & 0.075 & 0.081 & 0.006 & 0.932 
-& 0.006 & 0.055 & 0.057 & 0.003 & 0.923\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & 0.017 & 0.075 & 0.079 & 0.006 & 0.935 
-& 0.008 & 0.054 & 0.056 & 0.003 & 0.926\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & -0.003 & 0.067 & 0.077 & 0.004 & 0.946
- & -0.004 & 0.051 & 0.054 & 0.003 & 0.955\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.004 & 0.067 & 0.077 & 0.004 & 0.948
- & -0.004 & 0.050 & 0.053 & 0.003 & 0.953\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & 0.011 & 0.074 & 0.081 & 0.006 & 0.936 
-& 0.005 & 0.054 & 0.057 & 0.003 & 0.928\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & -0.003 & 0.066 & 0.077 & 0.004 & 0.946
- & -0.004 & 0.051 & 0.054 & 0.003 & 0.956\\[] 
- []
-
-
-Overfull \hbox (97.24498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & -0.001 & 0.029 & 0.030 & 0.001 & 
-0.959 & 0.000 & 0.023 & 0.023 & 0.001 & 0.951\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.001 & 0.036 & 0.038 & 0.001 & 0.956
- & 0.000 & 0.027 & 0.028 & 0.001 & 0.965\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & 0.015 & 0.040 & 0.042 & 0.002 & 0.946 
-& 0.010 & 0.030 & 0.031 & 0.001 & 0.958\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & 0.019 & 0.040 & 0.042 & 0.002 & 0.936 
-& 0.013 & 0.029 & 0.031 & 0.001 & 0.949\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & -0.001 & 0.036 & 0.038 & 0.001 & 0.956
- & 0.000 & 0.027 & 0.028 & 0.001 & 0.964\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.001 & 0.036 & 0.038 & 0.001 & 0.955
- & 0.000 & 0.027 & 0.028 & 0.001 & 0.965\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & 0.015 & 0.040 & 0.042 & 0.002 & 0.946 
-& 0.010 & 0.030 & 0.031 & 0.001 & 0.958\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 364--364
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & -0.001 & 0.036 & 0.038 & 0.001 & 0.956
- & 0.000 & 0.027 & 0.028 & 0.001 & 0.965\\[] 
- []
-
-[5] [6]
-Overfull \hbox (244.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## \multicolumn{1}{c}{} & \multicolumn{5}{c}{\$50\textbacksla
-sh{}\%\$ missing} & \multicolumn{5}{c}{\$30\textbackslash{}\%\$ missing} \\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.222 & 0.159 & 0.152 & 0.075 & 0
-.683 & 0.219 & 0.135 & 0.137 & 0.066 & 0.639\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & 0.001 & 0.136 & 0.145 & 0.018 & 0.953 
-& -0.003 & 0.112 & 0.114 & 0.013 & 0.963\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & -0.094 & 0.180 & 0.218 & 0.041 & 0.953
- & -0.062 & 0.133 & 0.135 & 0.022 & 0.933\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & -0.089 & 0.182 & 0.216 & 0.041 & 0.961
- & -0.066 & 0.134 & 0.136 & 0.022 & 0.935\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & 0.001 & 0.136 & 0.146 & 0.018 & 0.955 
-& -0.003 & 0.113 & 0.115 & 0.013 & 0.964\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & 0.001 & 0.136 & 0.145 & 0.018 & 0.953 
-& -0.003 & 0.112 & 0.114 & 0.013 & 0.963\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & -0.092 & 0.177 & 0.221 & 0.040 & 0.952
- & -0.062 & 0.133 & 0.135 & 0.021 & 0.935\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & -0.003 & 0.138 & 0.183 & 0.019 & 0.962
- & -0.007 & 0.114 & 0.130 & 0.013 & 0.970\\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.114 & 0.084 & 0.082 & 0.020 & 0
-.702 & 0.115 & 0.072 & 0.074 & 0.018 & 0.663\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.001 & 0.071 & 0.072 & 0.005 & 0.946
- & -0.002 & 0.062 & 0.063 & 0.004 & 0.950\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & -0.099 & 0.093 & 0.096 & 0.018 & 0.848
- & -0.061 & 0.073 & 0.074 & 0.009 & 0.863\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & -0.094 & 0.093 & 0.098 & 0.017 & 0.864
- & -0.064 & 0.074 & 0.074 & 0.010 & 0.854\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & -0.001 & 0.071 & 0.072 & 0.005 & 0.946
- & -0.002 & 0.062 & 0.063 & 0.004 & 0.950\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.001 & 0.071 & 0.072 & 0.005 & 0.946
- & -0.002 & 0.062 & 0.063 & 0.004 & 0.950\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & -0.099 & 0.092 & 0.097 & 0.018 & 0.848
- & -0.061 & 0.074 & 0.074 & 0.009 & 0.864\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & -0.002 & 0.071 & 0.075 & 0.005 & 0.947
- & -0.003 & 0.062 & 0.067 & 0.004 & 0.956\\[] 
- []
-
-[7] [8]
-Overfull \hbox (244.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## \multicolumn{1}{c}{} & \multicolumn{5}{c}{\$50\textbacksla
-sh{}\%\$ missing} & \multicolumn{5}{c}{\$30\textbackslash{}\%\$ missing} \\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.035 & 0.057 & 0.058 & 0.004 & 0
-.910 & 0.037 & 0.039 & 0.039 & 0.003 & 0.835\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.004 & 0.070 & 0.083 & 0.005 & 0.960
- & -0.004 & 0.048 & 0.051 & 0.002 & 0.955\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & 0.011 & 0.077 & 0.085 & 0.006 & 0.937 
-& 0.006 & 0.053 & 0.055 & 0.003 & 0.939\\[] 
- []
-
-[9]
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & 0.016 & 0.076 & 0.082 & 0.006 & 0.943 
-& 0.008 & 0.052 & 0.054 & 0.003 & 0.934\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & -0.004 & 0.069 & 0.088 & 0.005 & 0.965
- & -0.004 & 0.049 & 0.069 & 0.002 & 0.955\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.005 & 0.070 & 0.081 & 0.005 & 0.959
- & -0.004 & 0.048 & 0.051 & 0.002 & 0.955\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & 0.010 & 0.076 & 0.084 & 0.006 & 0.944 
-& 0.006 & 0.053 & 0.055 & 0.003 & 0.941\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & -0.005 & 0.069 & 0.087 & 0.005 & 0.963
- & -0.004 & 0.049 & 0.084 & 0.002 & 0.958\\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.021 & 0.032 & 0.032 & 0.001 & 0
-.906 & 0.020 & 0.022 & 0.021 & 0.001 & 0.844\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.001 & 0.038 & 0.039 & 0.001 & 0.960
- & -0.001 & 0.027 & 0.028 & 0.001 & 0.960\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & 0.016 & 0.043 & 0.044 & 0.002 & 0.942 
-& 0.009 & 0.030 & 0.030 & 0.001 & 0.934\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & 0.021 & 0.042 & 0.044 & 0.002 & 0.931 
-& 0.012 & 0.030 & 0.030 & 0.001 & 0.919\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & 0.000 & 0.038 & 0.040 & 0.001 & 0.962 
-& -0.001 & 0.027 & 0.028 & 0.001 & 0.961\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.001 & 0.038 & 0.039 & 0.001 & 0.960
- & -0.001 & 0.027 & 0.028 & 0.001 & 0.960\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & 0.016 & 0.043 & 0.044 & 0.002 & 0.938 
-& 0.009 & 0.030 & 0.030 & 0.001 & 0.934\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 613--613
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & 0.000 & 0.038 & 0.040 & 0.001 & 0.962 
-& -0.001 & 0.027 & 0.028 & 0.001 & 0.961\\[] 
- []
-
-[10] [11]
-Overfull \hbox (244.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## \multicolumn{1}{c}{} & \multicolumn{5}{c}{\$50\textbacksla
-sh{}\%\$ missing} & \multicolumn{5}{c}{\$30\textbackslash{}\%\$ missing} \\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.009 & 0.157 & 0.160 & 0.025 & 0
-.953 & 0.001 & 0.125 & 0.128 & 0.016 & 0.962\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.006 & 0.131 & 0.155 & 0.017 & 0.973
- & 0.000 & 0.109 & 0.116 & 0.012 & 0.968\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & -0.010 & 0.131 & 0.152 & 0.017 & 0.969
- & -0.004 & 0.110 & 0.117 & 0.012 & 0.964\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & -0.109 & 0.170 & 0.189 & 0.041 & 0.928
- & -0.058 & 0.131 & 0.137 & 0.021 & 0.932\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & -0.004 & 0.131 & 0.206 & 0.017 & 0.973
- & -0.001 & 0.109 & 0.120 & 0.012 & 0.969\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.006 & 0.131 & 0.155 & 0.017 & 0.973
- & -0.001 & 0.109 & 0.116 & 0.012 & 0.969\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & -0.012 & 0.131 & 0.156 & 0.017 & 0.973
- & -0.004 & 0.110 & 0.117 & 0.012 & 0.965\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & -0.005 & 0.131 & 0.171 & 0.017 & 0.975
- & -0.001 & 0.109 & 0.137 & 0.012 & 0.969\\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.001 & 0.089 & 0.088 & 0.008 & 0
-.957 & 0.000 & 0.072 & 0.070 & 0.005 & 0.939\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & 0.001 & 0.070 & 0.074 & 0.005 & 0.949 
-& 0.000 & 0.062 & 0.063 & 0.004 & 0.957\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & -0.004 & 0.071 & 0.075 & 0.005 & 0.953
- & -0.003 & 0.062 & 0.063 & 0.004 & 0.955\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & -0.097 & 0.092 & 0.095 & 0.018 & 0.844
- & -0.057 & 0.074 & 0.074 & 0.009 & 0.877\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & 0.002 & 0.071 & 0.076 & 0.005 & 0.951 
-& 0.001 & 0.062 & 0.063 & 0.004 & 0.956\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & 0.001 & 0.070 & 0.074 & 0.005 & 0.949 
-& 0.000 & 0.062 & 0.063 & 0.004 & 0.957\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & -0.004 & 0.071 & 0.075 & 0.005 & 0.954
- & -0.002 & 0.062 & 0.063 & 0.004 & 0.955\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & 0.002 & 0.071 & 0.076 & 0.005 & 0.951 
-& 0.001 & 0.062 & 0.069 & 0.004 & 0.956\\[] 
- []
-
-[12] [13]
-Overfull \hbox (244.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## \multicolumn{1}{c}{} & \multicolumn{5}{c}{\$50\textbacksla
-sh{}\%\$ missing} & \multicolumn{5}{c}{\$30\textbackslash{}\%\$ missing} \\[] 
- []
-
-
-Overfull \hbox (97.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & -0.002 & 0.055 & 0.054 & 0.003 & 
-0.950 & 0.000 & 0.041 & 0.043 & 0.002 & 0.960\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.003 & 0.067 & 0.077 & 0.005 & 0.945
- & -0.004 & 0.051 & 0.053 & 0.003 & 0.951\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & 0.002 & 0.067 & 0.073 & 0.005 & 0.949 
-& -0.001 & 0.050 & 0.052 & 0.003 & 0.949\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & 0.017 & 0.075 & 0.079 & 0.006 & 0.935 
-& 0.008 & 0.054 & 0.056 & 0.003 & 0.926\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & -0.003 & 0.067 & 0.077 & 0.005 & 0.947
- & -0.004 & 0.050 & 0.053 & 0.003 & 0.958\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.004 & 0.067 & 0.077 & 0.004 & 0.948
- & -0.004 & 0.050 & 0.053 & 0.003 & 0.953\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & 0.003 & 0.068 & 0.075 & 0.005 & 0.951 
-& -0.001 & 0.050 & 0.053 & 0.003 & 0.950\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & -0.004 & 0.067 & 0.077 & 0.004 & 0.948
- & -0.004 & 0.050 & 0.053 & 0.003 & 0.959\\[] 
- []
-
-
-Overfull \hbox (97.24498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & -0.001 & 0.029 & 0.030 & 0.001 & 
-0.959 & 0.000 & 0.023 & 0.023 & 0.001 & 0.951\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.001 & 0.036 & 0.038 & 0.001 & 0.956
- & 0.000 & 0.027 & 0.028 & 0.001 & 0.965\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & 0.004 & 0.036 & 0.037 & 0.001 & 0.951 
-& 0.003 & 0.027 & 0.028 & 0.001 & 0.965\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & 0.019 & 0.040 & 0.042 & 0.002 & 0.936 
-& 0.013 & 0.029 & 0.031 & 0.001 & 0.949\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & -0.001 & 0.036 & 0.038 & 0.001 & 0.956
- & 0.000 & 0.027 & 0.028 & 0.001 & 0.965\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.001 & 0.036 & 0.038 & 0.001 & 0.955
- & 0.000 & 0.027 & 0.028 & 0.001 & 0.965\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & 0.004 & 0.036 & 0.037 & 0.001 & 0.952 
-& 0.003 & 0.027 & 0.028 & 0.001 & 0.965\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 862--862
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & 0.000 & 0.036 & 0.038 & 0.001 & 0.956 
-& 0.000 & 0.027 & 0.028 & 0.001 & 0.966\\[] 
- []
-
-[14] [15]
-Overfull \hbox (244.24498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## \multicolumn{1}{c}{} & \multicolumn{5}{c}{\$50\textbacksla
-sh{}\%\$ missing} & \multicolumn{5}{c}{\$30\textbackslash{}\%\$ missing} \\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.222 & 0.159 & 0.152 & 0.075 & 0
-.683 & 0.219 & 0.135 & 0.137 & 0.066 & 0.639\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & 0.001 & 0.136 & 0.145 & 0.018 & 0.953 
-& -0.003 & 0.112 & 0.114 & 0.013 & 0.963\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & 0.007 & 0.137 & 0.145 & 0.019 & 0.949 
-& -0.006 & 0.113 & 0.115 & 0.013 & 0.960\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & -0.089 & 0.182 & 0.216 & 0.041 & 0.961
- & -0.066 & 0.134 & 0.136 & 0.022 & 0.935\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & 0.000 & 0.136 & 0.159 & 0.019 & 0.957 
-& -0.003 & 0.112 & 0.116 & 0.013 & 0.963\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & 0.001 & 0.136 & 0.145 & 0.018 & 0.953 
-& -0.003 & 0.112 & 0.114 & 0.013 & 0.963\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & 0.007 & 0.137 & 0.146 & 0.019 & 0.952 
-& -0.007 & 0.114 & 0.116 & 0.013 & 0.960\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & 0.000 & 0.136 & 0.171 & 0.019 & 0.959 
-& -0.003 & 0.112 & 0.120 & 0.013 & 0.963\\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.114 & 0.084 & 0.082 & 0.020 & 0
-.702 & 0.115 & 0.072 & 0.074 & 0.018 & 0.663\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.001 & 0.071 & 0.072 & 0.005 & 0.946
- & -0.002 & 0.062 & 0.063 & 0.004 & 0.950\\[] 
- []
-
-[16]
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & 0.004 & 0.071 & 0.073 & 0.005 & 0.947 
-& -0.005 & 0.062 & 0.063 & 0.004 & 0.948\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & -0.094 & 0.093 & 0.098 & 0.017 & 0.864
- & -0.064 & 0.074 & 0.074 & 0.010 & 0.854\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & -0.002 & 0.071 & 0.080 & 0.005 & 0.947
- & -0.002 & 0.062 & 0.063 & 0.004 & 0.950\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.001 & 0.071 & 0.072 & 0.005 & 0.946
- & -0.002 & 0.062 & 0.063 & 0.004 & 0.950\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & 0.004 & 0.071 & 0.073 & 0.005 & 0.947 
-& -0.006 & 0.062 & 0.063 & 0.004 & 0.948\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & -0.002 & 0.071 & 0.076 & 0.005 & 0.947
- & -0.002 & 0.062 & 0.070 & 0.004 & 0.950\\[] 
- []
-
-[17] [18]
-Overfull \hbox (244.24498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## \multicolumn{1}{c}{} & \multicolumn{5}{c}{\$50\textbacksla
-sh{}\%\$ missing} & \multicolumn{5}{c}{\$30\textbackslash{}\%\$ missing} \\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.035 & 0.057 & 0.058 & 0.004 & 0
-.910 & 0.037 & 0.039 & 0.039 & 0.003 & 0.835\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.004 & 0.070 & 0.083 & 0.005 & 0.960
- & -0.004 & 0.048 & 0.051 & 0.002 & 0.955\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & 0.000 & 0.069 & 0.077 & 0.005 & 0.963 
-& -0.001 & 0.048 & 0.050 & 0.002 & 0.952\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & 0.016 & 0.076 & 0.082 & 0.006 & 0.943 
-& 0.008 & 0.052 & 0.054 & 0.003 & 0.934\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & -0.005 & 0.069 & 0.081 & 0.005 & 0.962
- & -0.004 & 0.048 & 0.051 & 0.002 & 0.955\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.005 & 0.070 & 0.081 & 0.005 & 0.959
- & -0.004 & 0.048 & 0.051 & 0.002 & 0.955\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & 0.000 & 0.069 & 0.081 & 0.005 & 0.969 
-& -0.001 & 0.048 & 0.050 & 0.002 & 0.953\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & -0.006 & 0.069 & 0.082 & 0.005 & 0.961
- & -0.004 & 0.049 & 0.053 & 0.002 & 0.957\\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.021 & 0.032 & 0.032 & 0.001 & 0
-.906 & 0.020 & 0.022 & 0.021 & 0.001 & 0.844\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.001 & 0.038 & 0.039 & 0.001 & 0.960
- & -0.001 & 0.027 & 0.028 & 0.001 & 0.960\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & 0.004 & 0.037 & 0.039 & 0.001 & 0.956 
-& 0.002 & 0.027 & 0.028 & 0.001 & 0.954\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & 0.021 & 0.042 & 0.044 & 0.002 & 0.931 
-& 0.012 & 0.030 & 0.030 & 0.001 & 0.919\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & -0.001 & 0.038 & 0.039 & 0.001 & 0.960
- & -0.001 & 0.027 & 0.028 & 0.001 & 0.960\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.001 & 0.038 & 0.039 & 0.001 & 0.960
- & -0.001 & 0.027 & 0.028 & 0.001 & 0.960\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & 0.004 & 0.037 & 0.039 & 0.001 & 0.958 
-& 0.002 & 0.027 & 0.027 & 0.001 & 0.953\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1111--1111
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & -0.001 & 0.038 & 0.039 & 0.001 & 0.960
- & -0.001 & 0.027 & 0.028 & 0.001 & 0.961\\[] 
- []
-
-[19] [20]
-Overfull \hbox (244.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## \multicolumn{1}{c}{} & \multicolumn{5}{c}{\$50\textbacksla
-sh{}\%\$ missing} & \multicolumn{5}{c}{\$30\textbackslash{}\%\$ missing} \\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.009 & 0.157 & 0.160 & 0.025 & 0
-.953 & 0.001 & 0.125 & 0.128 & 0.016 & 0.962\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.006 & 0.131 & 0.155 & 0.017 & 0.973
- & 0.000 & 0.109 & 0.116 & 0.012 & 0.968\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & -0.104 & 0.168 & 0.189 & 0.039 & 0.932
- & -0.055 & 0.130 & 0.136 & 0.020 & 0.931\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & -0.010 & 0.131 & 0.152 & 0.017 & 0.969
- & -0.004 & 0.110 & 0.117 & 0.012 & 0.964\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & -0.005 & 0.131 & 0.163 & 0.017 & 0.974
- & -0.001 & 0.109 & 0.127 & 0.012 & 0.969\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.004 & 0.131 & 0.206 & 0.017 & 0.973
- & -0.001 & 0.109 & 0.120 & 0.012 & 0.969\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & -0.020 & 0.134 & 0.172 & 0.018 & 0.978
- & -0.008 & 0.112 & 0.121 & 0.013 & 0.963\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & -0.005 & 0.131 & 0.208 & 0.017 & 0.974
- & -0.001 & 0.109 & 0.209 & 0.012 & 0.970\\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.001 & 0.089 & 0.088 & 0.008 & 0
-.957 & 0.000 & 0.072 & 0.070 & 0.005 & 0.939\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & 0.001 & 0.070 & 0.074 & 0.005 & 0.949 
-& 0.000 & 0.062 & 0.063 & 0.004 & 0.957\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & -0.092 & 0.091 & 0.094 & 0.017 & 0.850
- & -0.054 & 0.074 & 0.074 & 0.008 & 0.883\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & -0.004 & 0.071 & 0.075 & 0.005 & 0.953
- & -0.003 & 0.062 & 0.063 & 0.004 & 0.955\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & 0.001 & 0.070 & 0.074 & 0.005 & 0.949 
-& 0.001 & 0.062 & 0.063 & 0.004 & 0.957\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & 0.002 & 0.071 & 0.076 & 0.005 & 0.951 
-& 0.001 & 0.062 & 0.063 & 0.004 & 0.956\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & -0.009 & 0.071 & 0.080 & 0.005 & 0.958
- & -0.007 & 0.062 & 0.065 & 0.004 & 0.959\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & 0.002 & 0.071 & 0.076 & 0.005 & 0.951 
-& 0.001 & 0.062 & 0.067 & 0.004 & 0.957\\[] 
- []
-
-[21] [22]
-Overfull \hbox (244.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## \multicolumn{1}{c}{} & \multicolumn{5}{c}{\$50\textbacksla
-sh{}\%\$ missing} & \multicolumn{5}{c}{\$30\textbackslash{}\%\$ missing} \\[] 
- []
-
-
-Overfull \hbox (97.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & -0.002 & 0.055 & 0.054 & 0.003 & 
-0.950 & 0.000 & 0.041 & 0.043 & 0.002 & 0.960\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.003 & 0.067 & 0.077 & 0.005 & 0.945
- & -0.004 & 0.051 & 0.053 & 0.003 & 0.951\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & 0.012 & 0.075 & 0.081 & 0.006 & 0.932 
-& 0.006 & 0.055 & 0.057 & 0.003 & 0.923\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & 0.002 & 0.067 & 0.073 & 0.005 & 0.949 
-& -0.001 & 0.050 & 0.052 & 0.003 & 0.949\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & -0.003 & 0.067 & 0.077 & 0.004 & 0.946
- & -0.004 & 0.051 & 0.054 & 0.003 & 0.955\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.003 & 0.067 & 0.077 & 0.005 & 0.947
- & -0.004 & 0.050 & 0.053 & 0.003 & 0.958\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & -0.001 & 0.067 & 0.076 & 0.004 & 0.955
- & -0.001 & 0.050 & 0.053 & 0.003 & 0.954\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & -0.003 & 0.067 & 0.078 & 0.004 & 0.947
- & -0.004 & 0.050 & 0.054 & 0.003 & 0.962\\[] 
- []
-
-
-Overfull \hbox (97.24498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & -0.001 & 0.029 & 0.030 & 0.001 & 
-0.959 & 0.000 & 0.023 & 0.023 & 0.001 & 0.951\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.001 & 0.036 & 0.038 & 0.001 & 0.956
- & 0.000 & 0.027 & 0.028 & 0.001 & 0.965\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & 0.015 & 0.040 & 0.042 & 0.002 & 0.946 
-& 0.010 & 0.030 & 0.031 & 0.001 & 0.958\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & 0.004 & 0.036 & 0.037 & 0.001 & 0.951 
-& 0.003 & 0.027 & 0.028 & 0.001 & 0.965\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & -0.001 & 0.036 & 0.038 & 0.001 & 0.956
- & 0.000 & 0.027 & 0.028 & 0.001 & 0.964\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.001 & 0.036 & 0.038 & 0.001 & 0.956
- & 0.000 & 0.027 & 0.028 & 0.001 & 0.965\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & 0.006 & 0.036 & 0.037 & 0.001 & 0.950 
-& 0.005 & 0.027 & 0.028 & 0.001 & 0.965\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1360--1360
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & -0.001 & 0.036 & 0.038 & 0.001 & 0.956
- & 0.000 & 0.027 & 0.028 & 0.001 & 0.965\\[] 
- []
-
-[23] [24]
-Overfull \hbox (244.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## \multicolumn{1}{c}{} & \multicolumn{5}{c}{\$50\textbacksla
-sh{}\%\$ missing} & \multicolumn{5}{c}{\$30\textbackslash{}\%\$ missing} \\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.222 & 0.159 & 0.152 & 0.075 & 0
-.683 & 0.219 & 0.135 & 0.137 & 0.066 & 0.639\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & 0.001 & 0.136 & 0.145 & 0.018 & 0.953 
-& -0.003 & 0.112 & 0.114 & 0.013 & 0.963\\[] 
- []
-
-[25]
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & -0.094 & 0.180 & 0.218 & 0.041 & 0.953
- & -0.062 & 0.133 & 0.135 & 0.022 & 0.933\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & 0.007 & 0.137 & 0.145 & 0.019 & 0.949 
-& -0.006 & 0.113 & 0.115 & 0.013 & 0.960\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & 0.001 & 0.136 & 0.146 & 0.018 & 0.955 
-& -0.003 & 0.113 & 0.115 & 0.013 & 0.964\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & 0.000 & 0.136 & 0.159 & 0.019 & 0.957 
-& -0.003 & 0.112 & 0.116 & 0.013 & 0.963\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & -0.005 & 0.136 & 0.153 & 0.019 & 0.954
- & -0.012 & 0.113 & 0.119 & 0.013 & 0.966\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & 0.000 & 0.136 & 0.221 & 0.019 & 0.959 
-& -0.003 & 0.113 & 0.131 & 0.013 & 0.964\\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.114 & 0.084 & 0.082 & 0.020 & 0
-.702 & 0.115 & 0.072 & 0.074 & 0.018 & 0.663\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.001 & 0.071 & 0.072 & 0.005 & 0.946
- & -0.002 & 0.062 & 0.063 & 0.004 & 0.950\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & -0.099 & 0.093 & 0.096 & 0.018 & 0.848
- & -0.061 & 0.073 & 0.074 & 0.009 & 0.863\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & 0.004 & 0.071 & 0.073 & 0.005 & 0.947 
-& -0.005 & 0.062 & 0.063 & 0.004 & 0.948\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & -0.001 & 0.071 & 0.072 & 0.005 & 0.946
- & -0.002 & 0.062 & 0.063 & 0.004 & 0.950\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.002 & 0.071 & 0.080 & 0.005 & 0.947
- & -0.002 & 0.062 & 0.063 & 0.004 & 0.950\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & -0.003 & 0.071 & 0.073 & 0.005 & 0.950
- & -0.009 & 0.063 & 0.064 & 0.004 & 0.945\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & -0.002 & 0.071 & 0.075 & 0.005 & 0.948
- & -0.002 & 0.062 & 0.072 & 0.004 & 0.951\\[] 
- []
-
-[26] [27]
-Overfull \hbox (244.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## \multicolumn{1}{c}{} & \multicolumn{5}{c}{\$50\textbacksla
-sh{}\%\$ missing} & \multicolumn{5}{c}{\$30\textbackslash{}\%\$ missing} \\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.035 & 0.057 & 0.058 & 0.004 & 0
-.910 & 0.037 & 0.039 & 0.039 & 0.003 & 0.835\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.004 & 0.070 & 0.083 & 0.005 & 0.960
- & -0.004 & 0.048 & 0.051 & 0.002 & 0.955\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & 0.011 & 0.077 & 0.085 & 0.006 & 0.937 
-& 0.006 & 0.053 & 0.055 & 0.003 & 0.939\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & 0.000 & 0.069 & 0.077 & 0.005 & 0.963 
-& -0.001 & 0.048 & 0.050 & 0.002 & 0.952\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & -0.004 & 0.069 & 0.088 & 0.005 & 0.965
- & -0.004 & 0.049 & 0.069 & 0.002 & 0.955\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.005 & 0.069 & 0.081 & 0.005 & 0.962
- & -0.004 & 0.048 & 0.051 & 0.002 & 0.955\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & -0.003 & 0.068 & 0.080 & 0.005 & 0.969
- & -0.001 & 0.048 & 0.052 & 0.002 & 0.954\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & -0.005 & 0.068 & 0.086 & 0.005 & 0.965
- & -0.004 & 0.049 & 0.063 & 0.002 & 0.957\\[] 
- []
-
-
-Overfull \hbox (91.99498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_\text{IPW}$ & 0.021 & 0.032 & 0.032 & 0.001 & 0
-.906 & 0.020 & 0.022 & 0.021 & 0.001 & 0.844\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{100}$ & -0.001 & 0.038 & 0.039 & 0.001 & 0.960
- & -0.001 & 0.027 & 0.028 & 0.001 & 0.960\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{010}$ & 0.016 & 0.043 & 0.044 & 0.002 & 0.942 
-& 0.009 & 0.030 & 0.030 & 0.001 & 0.934\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{001}$ & 0.004 & 0.037 & 0.039 & 0.001 & 0.956 
-& 0.002 & 0.027 & 0.028 & 0.001 & 0.954\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{110}$ & 0.000 & 0.038 & 0.040 & 0.001 & 0.962 
-& -0.001 & 0.027 & 0.028 & 0.001 & 0.961\\[] 
- []
-
-
-Overfull \hbox (76.24498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{101}$ & -0.001 & 0.038 & 0.039 & 0.001 & 0.960
- & -0.001 & 0.027 & 0.028 & 0.001 & 0.960\\[] 
- []
-
-
-Overfull \hbox (65.74498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{011}$ & 0.006 & 0.038 & 0.039 & 0.001 & 0.957 
-& 0.004 & 0.028 & 0.028 & 0.001 & 0.953\\[] 
- []
-
-
-Overfull \hbox (70.99498pt too wide) in paragraph at lines 1609--1609
-[]\TU/lmtt/m/n/10 ## $\hat{\mu}_{111}$ & 0.000 & 0.038 & 0.040 & 0.001 & 0.962 
-& -0.001 & 0.027 & 0.028 & 0.001 & 0.961\\[] 
- []
-
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 1611.
-[28]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 1611.
+] [2] [3] [4] [5] [6] [7] [8] [9] [10]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 675.
 (./Simulation_results.aux)
-Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 1611.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 1611.
+Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 675.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 675.
+
+LaTeX Warning: There were multiply-defined labels.
+
  ) 
 Here is how much of TeX's memory you used:
- 21287 strings out of 479418
- 385327 string characters out of 5888105
- 850078 words of memory out of 5000000
- 38490 multiletter control sequences out of 15000+600000
- 536034 words of font info for 58 fonts, out of 8000000 for 9000
+ 21331 strings out of 479418
+ 386699 string characters out of 5888105
+ 1120202 words of memory out of 5000000
+ 38525 multiletter control sequences out of 15000+600000
+ 538855 words of font info for 73 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 59i,7n,118p,817b,878s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 59i,12n,118p,817b,339s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on Simulation_results.pdf (28 pages).
+Output written on Simulation_results.pdf (10 pages).

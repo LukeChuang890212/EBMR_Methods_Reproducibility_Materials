@@ -23,6 +23,7 @@ output:
   bookdown::pdf_document2:
     latex_engine: xelatex
     toc: no
+    keep_tex: true
 ---
 
 ```{r setup, include=FALSE}
@@ -33,83 +34,114 @@ knitr::opts_chunk$set(echo = FALSE, fig.height = 10, fig.width = 16, fig.align =
 library(EBMRalgorithm)
 
 library(dplyr)
+library(knitr)
 library(kableExtra)
 
-source("Simulation.r")
+source("Simulation_test.r")
 source("Basic_setup.r")
 ```
 
 ```{r}
-settings = c("setting1", "setting2")
+settings = c("setting1", "setting2", "setting3")
 missing_rates = c("miss50", "miss30")
 J = 3
 n.vector = c(300, 1000)
 ```
 
 ```{r}
-summarize_all_settings_with_all_missing_rates(settings = settings,
-                                              missing_rates = missing_rates,
-                                              scenario = 1,
-                                              J = J,
-                                              n.vector = n.vector,
-                                              correct_model_all_data_file.list,
-                                              version = "test2",
-                                              is.original = FALSE)
+summary_tbls = summarize_all_settings_with_all_missing_rates(
+  settings = settings,
+  missing_rates = missing_rates,
+  scenario = 1,
+  J = J,
+  n.vector = n.vector,
+  correct_model_all_data_file.list,
+  version = "test2",
+  is.original = FALSE
+)
+summary_tbls[[1]]
+summary_tbls[[2]]
+summary_tbls[[3]]
 ```
 
 ```{r}
-summarize_all_settings_with_all_missing_rates(settings = settings,
-                                              missing_rates = missing_rates,
-                                              scenario = 2,
-                                              J = J,
-                                              n.vector = n.vector,
-                                              misspecified_model_all_data_file.list,
-                                              version = "test2",
-                                              is.original = FALSE)
+summary_tbls = summarize_all_settings_with_all_missing_rates(
+  settings = settings,
+  missing_rates = missing_rates,
+  scenario = 2,
+  J = J,
+  n.vector = n.vector,
+  correct_model_all_data_file.list,
+  version = "test2",
+  is.original = FALSE
+)
+summary_tbls[[1]]
+summary_tbls[[2]]
+summary_tbls[[3]]
 ```
 
 ```{r}
-summarize_all_settings_with_all_missing_rates(settings = settings,
-                                              missing_rates = missing_rates,
-                                              scenario = 3,
-                                              J = J,
-                                              n.vector = n.vector,
-                                              correct_model_all_data_file.list,
-                                              version = "test2",
-                                              is.original = FALSE)
+summary_tbls = summarize_all_settings_with_all_missing_rates(
+  settings = settings,
+  missing_rates = missing_rates,
+  scenario = 3,
+  J = J,
+  n.vector = n.vector,
+  correct_model_all_data_file.list,
+  version = "test2",
+  is.original = FALSE
+)
+summary_tbls[[1]]
+summary_tbls[[2]]
+summary_tbls[[3]]
 ```
 
 ```{r}
-summarize_all_settings_with_all_missing_rates(settings = settings,
-                                              missing_rates = missing_rates,
-                                              scenario = 4,
-                                              J = J,
-                                              n.vector = n.vector,
-                                              misspecified_model_all_data_file.list,
-                                              version = "test2",
-                                              is.original = FALSE)
+summary_tbls = summarize_all_settings_with_all_missing_rates(
+  settings = settings,
+  missing_rates = missing_rates,
+  scenario = 4,
+  J = J,
+  n.vector = n.vector,
+  correct_model_all_data_file.list,
+  version = "test2",
+  is.original = FALSE
+)
+summary_tbls[[1]]
+summary_tbls[[2]]
+summary_tbls[[3]]
 ```
 
 ```{r}
-summarize_all_settings_with_all_missing_rates(settings = settings,
-                                              missing_rates = missing_rates,
-                                              scenario = 5,
-                                              J = J,
-                                              n.vector = n.vector,
-                                              correct_model_all_data_file.list,
-                                              version = "test2",
-                                              is.original = FALSE)
+summary_tbls = summarize_all_settings_with_all_missing_rates(
+  settings = settings,
+  missing_rates = missing_rates,
+  scenario = 5,
+  J = J,
+  n.vector = n.vector,
+  correct_model_all_data_file.list,
+  version = "test2",
+  is.original = FALSE
+)
+summary_tbls[[1]]
+summary_tbls[[2]]
+summary_tbls[[3]]
 ```
 
 ```{r}
-summarize_all_settings_with_all_missing_rates(settings = settings,
-                                              missing_rates = missing_rates,
-                                              scenario = 6,
-                                              J = J,
-                                              n.vector = n.vector,
-                                              misspecified_model_all_data_file.list,
-                                              version = "test2",
-                                              is.original = FALSE)
+summary_tbls = summarize_all_settings_with_all_missing_rates(
+  settings = settings,
+  missing_rates = missing_rates,
+  scenario = 6,
+  J = J,
+  n.vector = n.vector,
+  correct_model_all_data_file.list,
+  version = "test2",
+  is.original = FALSE
+)
+summary_tbls[[1]]
+summary_tbls[[2]]
+summary_tbls[[3]]
 ```
 
 

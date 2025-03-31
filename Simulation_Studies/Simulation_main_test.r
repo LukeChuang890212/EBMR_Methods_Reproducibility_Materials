@@ -22,7 +22,7 @@ full_ps_specifications = list(
   inv_link = function(eta) 1/(1+exp(eta))
 )
 
-settings = c("setting1", "setting2")
+settings = c("setting3")
 missing_rates = c("miss50", "miss30")
 replicate_num = 1000
 
@@ -128,4 +128,3 @@ simulate_all_settings_with_all_missing_rates(settings = settings,
 
 
 
-00 

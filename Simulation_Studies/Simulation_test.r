@@ -68,11 +68,11 @@ simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, r
   print(Sys.time()-start)
 
   if(!is.null(save_file)){
-    if(file.exists(save_file)){
-      sim_result_temp = sim_result
-      sim_result = readRDS(save_file)
-      sim_result = cbind(sim_result, sim_result_temp)
-    }
+    # if(file.exists(save_file)){
+    #   sim_result_temp = sim_result
+    #   sim_result = readRDS(save_file)
+    #   sim_result = cbind(sim_result, sim_result_temp)
+    # }
     saveRDS(sim_result, save_file)
   }
 
@@ -177,11 +177,11 @@ simulate_all_settings_with_all_missing_rates = function(settings,
 which.not.extreme = function(v){
   z.score = scale(v)
   extreme_num = sum(abs(z.score) > 3)
-  print(paste(extreme_num, length(v)))
+  # print(paste(extreme_num, length(v)))
   if(extreme_num == 0){
     return(1:length(v))
   }else{
-    return((1:length(v))[-order(abs(z.score), decreasing = TRUE)[1:min(extreme_num, extreme_num)]])
+    return((1:length(v))[-order(abs(z.score), decreasing = TRUE)[1:min(10, extreme_num)]])
   }
 }
 
@@ -191,7 +191,7 @@ summarize_results = function(sim_result, pe_index, ese_index, mu.true, is.origin
   #                                 `FALSE` = rm.extreme)
 
   if(!is.original){
-    print(ncol(sim_result)-length(which.not.extreme(sim_result[ese_index,])))
+    # print(ncol(sim_result)-length(which.not.extreme(sim_result[ese_index,])))
     sim_result = sim_result[, which.not.extreme(sim_result[ese_index,])]
   }
   # pe = rep(NA, length(pe_index))
@@ -267,7 +267,9 @@ summarize_all_settings_with_all_missing_rates = function(settings,
                                                          all_data_file.list,
                                                          version,
                                                          is.original = TRUE){
-  for(setting in settings){
+  summary_tbls = list()
+  for(j in 1:length(settings)){
+    setting = settings[j]
     results_with_all_missing_rates = matrix(NA, 8*length(n.vector), 5*length(missing_rates))
     mu.true = mean(readRDS(all_data_file.list[[setting]][[1]][[1]])$y)
     for(i in 1:length((missing_rates))){
@@ -283,7 +285,7 @@ summarize_all_settings_with_all_missing_rates = function(settings,
         version = version
       )
     }
-    estimator_names= rep(c("$\\hat{\\mu}_\\text{IPW}$",
+    estimator_names= rep(c("$\\Tilde{\\mu}$",
                            "$\\hat{\\mu}_{100}$", "$\\hat{\\mu}_{010}$", "$\\hat{\\mu}_{001}$",
                            "$\\hat{\\mu}_{110}$", "$\\hat{\\mu}_{101}$", "$\\hat{\\mu}_{011}$",
                            "$\\hat{\\mu}_{111}$"), length(n.vector))
@@ -293,15 +295,18 @@ summarize_all_settings_with_all_missing_rates = function(settings,
     colnames(results_with_all_missing_rates) = c("", rep(c("Bias", "ESD", "ESE", "MSE", "CP"), length(missing_rates)))
 
     # print(results_with_all_missing_rates)
-    print(
-      kable(results_with_all_missing_rates, align = "c", booktabs = TRUE, escape = FALSE, linesep = "") %>%
-        kable_styling(full_width = FALSE, latex_options = c("hold_position")) %>%
-        add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5))
-    )
-    # return(
-    #   kable(results_with_all_missing_rates, align = "c", booktabs = TRUE, escape = FALSE, linesep = "") %>%
+    
+    # print(
+    #   kable(results_with_all_missing_rates, align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
+    #         caption = paste(setting, "/ scenario", scenario)) %>%
     #     kable_styling(full_width = FALSE, latex_options = c("hold_position")) %>%
     #     add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5))
     # )
+    
+    summary_tbls[[j]] = kable(results_with_all_missing_rates, align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
+                              caption = paste(setting, "/ scenario", scenario)) %>%
+      kable_styling(full_width = FALSE, latex_options = c("hold_position", "scale_down")) %>%
+      add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5))
   }
+  return(summary_tbls)
 }
