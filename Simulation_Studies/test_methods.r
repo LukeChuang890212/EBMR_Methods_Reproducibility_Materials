@@ -1,3 +1,77 @@
+parse_formula = function(formula) {
+  # Convert the formula to a string
+  formula <- as.character(formula)
+  
+  # Extract the left-hand side of the formula (everything before the ~)
+  lhs <- formula[2]
+  
+  # Isolate r
+  r_names <- lhs
+  
+  # Extract the right-hand side of the formula (everything after the ~)
+  rhs <- formula[3]
+  
+  # Extract the variables inside o() using regular expressions
+  y_names <- str_extract(rhs, "o\\(([^)]+)\\)")   # Variables in o()
+  
+  if(is.na(y_names)){
+    y_names = character(0)
+  }else{
+    # Clean up: Remove 'o()' and split the variables (there's only one in this case)
+    y_names <- gsub("o\\(|\\)", "", y_names)
+    y_names <- unlist(strsplit(y_names, split = "\\+"))
+  }
+  
+  
+  # Extract the rest of the variables (excluding o())
+  x_names <- gsub("o\\([^)]+\\)\\s*\\+?", "", rhs)
+  
+  # Clean up: Split the rest of the variables by '+' and trim whitespace
+  x_names <- unlist(strsplit(x_names, split = "\\+"))
+  x_names <- trimws(x_names)
+  
+  # Return a list with r_names, y_names, x_names
+  return(list(r_names = r_names, y_names = y_names, x_names = x_names))
+}
+
+separate_variable_types = function(x) {
+  # Initialize empty lists to store continuous and discrete columns
+  x1 <- list()
+  x2 <- list()
+  
+  col_names = colnames(x)
+  x1_names = c()
+  x2_names = c()
+  
+  # Iterate through each column in the matrix 'x'
+  for (i in 1:ncol(x)) {
+    column <- x[, i]
+    
+    # Check if the column is numeric
+    if (is.numeric(column)) {
+      # If the column has more than 10 unique values, it's treated as continuous
+      if (length(unique(column)) > 10) {
+        x2[[colnames(x)[i]]] <- column
+        x2_names = c(x2_names, col_names[i])
+      } else {
+        x1[[colnames(x)[i]]] <- column
+        x1_names = c(x1_names, col_names[i])
+      }
+    } else {
+      # For non-numeric columns, treat them as discrete
+      x1[[colnames(x)[i]]] <- column
+      x1_names = c(x1_names, col_names[i])
+    }
+  }
+  
+  # Convert the lists to matrices (if you want matrices, otherwise keep them as lists)
+  x1 <- as.data.frame(x1)
+  x2 <- as.data.frame(x2)
+  
+  # Return the results
+  return(list(x1 = x1, x2 = x2, x1_names = x1_names, x2_names = x2_names))
+}
+
 WangShaoKim2014 = function(formula, h_x_names, inv_link, W, data, init = NULL) {
   # Basic setup
   result = parse_formula(formula)
@@ -518,13 +592,13 @@ WangShaoKim2014_perturb = function(formula, h_x_names, inv_link, W, data, wt, in
 
   alpha.hat = alpha_sol_path[, t]
   fitted_values = model(x, y, alpha.hat)
-
-  dot_nu.hat = Gamma.hat = g.matrix = W.hat = cov.hat = se = psi_alpha = NA
+  
+  Gamma.hat = Gamma(alpha.hat)
+  g.matrix = g(alpha.hat)
+  W.hat = W(g.matrix)
+  
+  Gamma.hat = W.hat = K = mu_s = psi_alpha = cov.hat = se = NA
   if(se.fit){
-    Gamma.hat = Gamma(alpha.hat)
-    g.matrix = g(alpha.hat)
-    W.hat = W(g.matrix)
-
     mu_s = apply(g.matrix, 2, mean)
     M_n = kronecker(mu_s%*%W.hat, diag(alpha_dim))%*%Gamma_2(alpha.hat)
     H_0n = -solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)
@@ -532,13 +606,14 @@ WangShaoKim2014_perturb = function(formula, h_x_names, inv_link, W, data, wt, in
     H_2n_2 = apply(t_Gamma_i(alpha.hat), 1, function(m) (m-t(Gamma.hat))%*%W.hat%*%mu_s)
     H_2n_3 = sapply(1:n, function(i) t(Gamma.hat)%*%(g.matrix[i, ]%*%t(g.matrix[i, ])-W.hat)%*%mu_s)
     psi_alpha = solve(diag(alpha_dim)-H_0n%*%M_n)%*%H_0n%*%(H_1n+H_2n_2+H_2n_3)
+    # psi_alpha = solve(diag(alpha_dim)-H_0n%*%M_n)%*%H_0n%*%(H_1n+H_2n_2+H_2n_3)
     cov.hat = var(t(psi_alpha))/n
-    # S = var(g.matrix)
-    # # cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/N
-    # cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat%*%S%*%W.hat%*%Gamma.hat%*%solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/n
+    S = var(g.matrix)
+    # cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/N
+    cov.hat = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat%*%S%*%W.hat%*%Gamma.hat%*%solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)/n
     se = sqrt(diag(cov.hat))
   }
-
+  
   results = list(coefficients = alpha.hat,
                  fitted.values = fitted_values,
                  sol.path = alpha_sol_path,
@@ -556,7 +631,7 @@ WangShaoKim2014_perturb = function(formula, h_x_names, inv_link, W, data, wt, in
   return(results)
 }
 
-estimate_nu_perturb = function(alpha, alpha_dim, ps_model.list, h_x, W, data, wt, init = NULL){
+estimate_nu_perturb = function(alpha, alpha_dim, ps_model.list, h_x, W, data, wt, init = NULL, se.fit){
   r = as.matrix(data$r)
   y = as.matrix(data$y)
   n = nrow(data)
@@ -677,14 +752,14 @@ ensemble_perturb = function(ps_fit.list, h_x, W, data, wt, init = NULL, se.fit) 
     return(jacobian(function(nu) as.vector(Gamma(nu)), nu))
   }
 
-  nu.hat = estimate_nu_perturb(alpha.hat, alpha_dim, ps_model.list, h_x, W, data, wt, init)
-
-  dot_nu.hat = Gamma.hat = g.matrix = W.hat = cov.hat = se = psi_nu = NA
+  nu.hat = estimate_nu_perturb(alpha.hat, alpha_dim, ps_model.list, h_x, W, data, wt, init, se.fit)
+  
+  Gamma.hat = Gamma(nu.hat)
+  g.matrix = g(nu.hat)
+  W.hat = W(g.matrix)
+  
+  Gamma.hat = W.hat = K = Q = mu_s = psi_nu = cov.hat = se = NA
   if(se.fit){
-    dot_nu.hat = jacobian(function(alpha) estimate_nu(alpha, alpha_dim, ps_model.list, h_x, data, init), alpha.hat)
-    Gamma.hat = Gamma(nu.hat)
-    g.matrix = g(nu.hat)
-    W.hat = W(g.matrix)
     mu_s = apply(g.matrix, 2, mean)
     M_n = kronecker(mu_s%*%W.hat, diag(J))%*%Gamma_2(nu.hat)
     H_0n = -solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)
@@ -708,8 +783,10 @@ ensemble_perturb = function(ps_fit.list, h_x, W, data, wt, init = NULL, se.fit) 
                  g.matrix = g.matrix,
                  Gamma = Gamma.hat,
                  W = W.hat,
-                 dot_nu.hat = dot_nu.hat,
-                 K = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat,
+                 # dot_nu.hat = dot_nu.hat,
+                 # K = solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)%*%t(Gamma.hat)%*%W.hat,
+                 # Q = solve(diag(J)-H_0n%*%M_n)%*%H_0n,
+                 mu_s = mu_s,
                  psi_nu = psi_nu,
                  h_x = cbind(d, h_x2))
 
@@ -738,6 +815,7 @@ EBMR_IPW_perturb = function(h_x_names, W, data, wt, se.fit = TRUE, true_ps = NUL
   # Ensemble step
   ################################################################################
   ensemble_fit = ensemble_perturb(ps_fit.list, data[h_x_names], W, data, wt, init = rep(1/J, J), se.fit)
+  # ensemble_fit = ensemble(ps_fit.list, data[h_x_names], W, data, init = rep(1/J, J), se.fit)
   # ensemble_fit = estimate_nu(ps.matrix, data[h_x_names], data, init = rep(1/J, J))
   nu.hat = ensemble_fit$coefficients
   # W = function(v) v^2/sum(v^2)
@@ -750,58 +828,69 @@ EBMR_IPW_perturb = function(h_x_names, W, data, wt, se.fit = TRUE, true_ps = NUL
   w.hat = nu.hat^2/sum(nu.hat^2)
   ensemble_ps = ps.matrix%*%w.hat
   ################################################################################
-
+  
   ################################################################################
   # IPW estimator for the population mean mu_0 with propensity score being estimated
   # by the methods of Wang, Shao and Kim (2014).
   ################################################################################
   mu_ipw = mean(wt*r/ensemble_ps*y)
-  ################################################################################
-
-  ################################################################################
-  # Compute the influence function and the variance
-  ################################################################################
+  # mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
+  #                        +(t(H_alpha.w)-t(w.H_nu)%*%K_nu%*%t(E_dot_g))%*%K_alpha%*%g_all
+  #                        +t(w.H_nu)%*%K_nu%*%g)
+  # mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
+  #                        +(t(H_alpha.w)-2*t(w.H_nu)%*%K_nu%*%t(E_dot_g))%*%K_alpha%*%g_all
+  #                        +t(w.H_nu)%*%K_nu%*%g)
   se_ipw = NA
   if(se.fit){
+    ################################################################################
+    # Compute necessary quantities to estimate the influence function:
+    # \psi(\bm{\alpha}_*, \bm{\nu}_*)
+    ################################################################################
     dot_pi = matrix(NA, n, sum(alpha_dim))
     for(j in 1:J){
       x = as.matrix(data[ps_fit.list[[j]]$model_x_names])
       dot_pi[, (sum(alpha_dim[0:(j-1)])+1):sum(alpha_dim[1:j])] = jacobian(function(alpha) ps_model.list[[j]](x, y, alpha), alpha.list[[j]])
     }
     # E_dot_g = -(t(dot_pi)*rep(nu.hat, alpha_dim))%*%(ensemble_fit$h_x*as.vector(r*((ensemble_ps)^(-2))))/n
-
-
+    
+    
     dot_W = function(nu){
       nu = as.vector(nu)
       (diag(2*nu)*sum(nu^2)-2*(nu)%*%t(nu^2))/(sum(nu^2)^2)
     }
     # dot_W_nu_hat = 0; if(length(nu.hat) > 1) dot_W_nu_hat = dot_W(W(V_inv%*%nu.hat))%*%dot_W(V_inv%*%nu.hat)%*%V_inv
     dot_W_nu_hat = 0; if(length(nu.hat) > 1) dot_W_nu_hat = dot_W(nu.hat)
-
+    
     H_alpha.w = apply(t((t(dot_pi)*rep(w.hat, alpha_dim)))*as.vector(r*y*((ensemble_ps)^(-2))), 2, mean)
     w.H_nu = apply(ps.matrix%*%t(dot_W_nu_hat)*as.vector(r*y*((ensemble_ps)^(-2))), 2, mean)
-
+    
     # K_alpha = c(lapply(ps_fit.list, function(ps_fit) ps_fit$K)) %>% bdiag()
     # g_all = do.call(rbind, lapply(ps_fit.list, function(ps_fit) t(ps_fit$g.matrix)))
     psi_alpha = do.call(rbind, lapply(ps_fit.list, function(ps_fit) ps_fit$psi_alpha))
     # K_nu = ensemble_fit$K
     # g = t(ensemble_fit$g.matrix)
     psi_nu = ensemble_fit$psi_nu
-
-    # mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
-    #                        +(t(H_alpha.w)-t(w.H_nu)%*%K_nu%*%t(E_dot_g))%*%K_alpha%*%g_all
-    #                        +t(w.H_nu)%*%K_nu%*%g)
-    # mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
-    #                        +(t(H_alpha.w)-2*t(w.H_nu)%*%K_nu%*%t(E_dot_g))%*%K_alpha%*%g_all
-    #                        +t(w.H_nu)%*%K_nu%*%g)
-
+    
+    Gamma_nu = ensemble_fit$Gamma
+    W_nu = ensemble_fit$W
+    f_n = ensemble_fit$g.matrix
+    h_nu = ensemble_fit$h_x
+    mu_s = ensemble_fit$mu_s
+    K_1 = t(Gamma_nu)%*%W_nu%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2))))/n)
+    K_2_1 = (t(dot_pi)*rep(nu.hat, alpha_dim))%*%(as.vector(2*((ps.matrix%*%nu.hat)^(-3)))*as.vector(r*h_nu%*%W_nu%*%mu_s)*ps.matrix)/n
+    K_2_2 = apply(as.vector((ps.matrix%*%nu.hat)^(-2))*as.vector(r*h_nu%*%W_nu%*%mu_s)*dot_pi, 2, mean)
+    K_2_2 = bdiag(lapply(1:length(alpha_dim), function(j) matrix(K_2_2[(1+sum(alpha_dim[0:(j-1)])):sum(alpha_dim[0:(j)])], ncol = 1)))
+    K_2 = t(K_2_1 - as.matrix(K_2_2))
+    K_3 = t(Gamma_nu)%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2)))*as.vector(f_n%*%mu_s))/n)
+    ################################################################################
+    
     mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
-                           +(t(H_alpha.w)+t(w.H_nu)%*%ensemble_fit$dot_nu.hat)%*%psi_alpha
-                           +t(w.H_nu)%*%psi_nu)
-    se_ipw = sqrt(var(mu_ipw.iid)/n)
+                           -(t(H_alpha.w)+t(w.H_nu)%*%ensemble_fit$Q%*%(K_1+K_2+K_3))%*%psi_alpha
+                           -t(w.H_nu)%*%psi_nu)
+    se_ipw = sqrt(var(wt*mu_ipw.iid)/n)
   }
   ################################################################################
-
+  
   ################################################################################
   # IPW estimator for the population mean mu_0 with known propensity score.
   ################################################################################

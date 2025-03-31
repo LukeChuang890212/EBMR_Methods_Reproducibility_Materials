@@ -31,13 +31,17 @@ knitr::opts_chunk$set(echo = FALSE, fig.height = 10, fig.width = 16, fig.align =
 
 # devtools::install_github("LukeChuang890212/EBMR_Methods_Reproducibility_Materials/EBMRalgorithm")
 library(EBMRalgorithm)
-library(torch)
+# library(torch)
 
 library(tidyverse)
 library(kableExtra)
 
 library(ggplot2)
 library(ggpubr)
+
+library(numDeriv)
+library(Matrix)
+library(nnet)
 ```
 
 # Read data
@@ -52,26 +56,36 @@ percent = original_data$Percentage
 n = 2486
 class_n = round(n*percent/100)
 
-dat = matrix(NA, n, 5)
-for(i in 1:nrow(original_data)){
-  dat[((sum(class_n[0:(i-1)]))+1):sum(class_n[1:i]),] = matrix(rep(unlist(original_data[i,]), each = class_n[i]), class_n[i], 5)
-}
-dat = as.data.frame(dat[, -5])
-
-dat[dat == "Yes"] = 1
-dat[dat == "No"] = 0
-dat[dat == "Abnormal"] = 1
-dat[dat == "Normal"] = 0
-dat[dat == "Missing"] = NA
-colnames(dat) = c("father", "health", "teacher_report", "parent_report")
-dat$r = ifelse(is.na(dat$teacher_report), 0, 1)
-dat$father = as.numeric(dat$father)
-dat$health = as.numeric(dat$health)
-dat$teacher_report = as.numeric(dat$teacher_report)
-dat$parent_report = as.numeric(dat$parent_report)
-dat$fp = dat$father*dat$parent_report
+gen_data = function(original_data, class_n){
+  dat = matrix(NA, n, 5)
+  for(i in 1:nrow(original_data)){
+    dat[((sum(class_n[0:(i-1)]))+1):sum(class_n[1:i]),] = matrix(rep(unlist(original_data[i,]), each = class_n[i]), class_n[i], 5)
+  }
+  dat = as.data.frame(dat[, -5])
   
-dat$teacher_report[dat$r == 0] = -1
+  dat[dat == "Yes"] = 1
+  dat[dat == "No"] = 0
+  dat[dat == "Abnormal"] = 1
+  dat[dat == "Normal"] = 0
+  dat[dat == "Missing"] = NA
+  colnames(dat) = c("father", "health", "teacher_report", "parent_report")
+  dat$r = ifelse(is.na(dat$teacher_report), 0, 1)
+  dat$father = as.numeric(dat$father)
+  dat$health = as.numeric(dat$health)
+  dat$parent_report = as.numeric(dat$parent_report)
+  dat$teacher_report = as.numeric(dat$teacher_report)
+  dat$fp = dat$father*(1-dat$parent_report)
+  dat$fp2 = (1-dat$father)*(1-dat$parent_report)
+  
+  dat$teacher_report[dat$r == 0] = -1
+  dat$y = dat$teacher_report
+  return(dat)
+}
+
+dat = gen_data(original_data, class_n)
+
+model = multinom(as.factor(y)~as.factor(father)+as.factor(parent_report)+as.factor(health), data = dat)
+outcome_distr = predict(model, newdata = dat, type = "probs")
 ```
 
 # Data description:
@@ -86,6 +100,201 @@ se_cc = sd(dat$teacher_report[dat$r == 1])/sqrt(sum(dat$r))
 ```
 
 # Analysis with our proposed methods
+
+```{r}
+parametric_bootstrap = function(outcome_distr, full_ps_specifications, W, data, B){
+  library(foreach)
+  library(doParallel)
+  library(doSNOW)
+  library(EBMRalgorithm)
+  
+  cores = detectCores()
+  cl = makeCluster(cores - 4) ## number of clusters 
+  registerDoSNOW(cl)
+  
+  pb = txtProgressBar(max = B, style = 3)
+  progress <- function(n) setTxtProgressBar(pb, n)
+  opts = list(progress = progress)
+  parallel_packages = c("EBMRalgorithm", "stringr", "Matrix", "numDeriv")
+  
+  boot_result = foreach(i= 1:B, .combine = 'cbind', .options.snow = opts, .packages = parallel_packages, .export = c("WangShaoKim2014", "EBMR_IPW", "estimate_nu", "ensemble", "parse_formula", "separate_variable_types", "effect.f", "delta_method", "gen_data")) %dopar% {
+    result = tryCatch({
+      # class_n = as.vector(rmultinom(1, size = n, percent))
+      # boot_dat = gen_data(original_data, class_n)
+      boot_dat = data
+      boot_dat$y = boot_dat$teacher_report = apply(outcome_distr, 1, function(p) {
+        which(rmultinom(1, 1, prob = p) == 1)-2
+      })
+      boot_dat$r = ifelse(boot_dat$y == -1, 0, 1)
+      
+      theta.hat = se_theta.hat = rep(NA, 7)
+      w.hat.list = list(w.hat1 = c(), w.hat2 = c(), w.hat3 = c(), w.hat4 = c(), w.hat5 = c(), w.hat6 = c(), w.hat7 = c())
+      nu.hat.list = list(nu.hat1 = c(), nu.hat2 = c(), nu.hat3 = c(), nu.hat4 = c(), nu.hat5 = c(), nu.hat6 = c(), nu.hat7 = c())
+      k = 1
+      for(model_num in 1:3){
+        model_combinations = combn(3, model_num)
+        for(i in 1:ncol(model_combinations)){
+          model_set = model_combinations[, i]
+          print(c(model_num, i))
+          
+          ps_specifications <- list(
+            formula.list = full_ps_specifications$formula.list[model_set],
+            h_x_names.list = full_ps_specifications$h_x_names.list[model_set],
+            inv_link = full_ps_specifications$inv_link
+          )
+          
+          p.hat = se_p.hat = p_cc = se_p_cc = rep(NA, 2)
+          w.hat = nu.hat = c()
+          for(l in 1:2){
+            sub_boot_dat = boot_dat[boot_dat$health == (l-1),]
+            ps_fit.list = list()
+            J = length(ps_specifications$formula.list)
+            for(j in 1:J){
+              formula = ps_specifications$formula.list[[j]]
+              h_x_names = ps_specifications$h_x_names.list[[j]]
+              inv_link = ps_specifications$inv_link
+              ps_fit.list[[j]] = WangShaoKim2014(formula, h_x_names, inv_link, W = W, data = sub_boot_dat)
+            }
+            
+            # if(model_num == 3) print(ps_fit.list[[2]]$coefficients)
+            result = EBMR_IPW(h_x_names = c("father", "parent_report"), W = W, data = sub_boot_dat, se.fit = TRUE)
+            
+            p.hat[l] = result$mu_ipw
+            p_cc[l] = mean(sub_boot_dat$teacher_report[sub_boot_dat$r == 1])
+            se_p.hat[l] = result$se_ipw
+            se_p_cc[l] = sd(sub_boot_dat$teacher_report[sub_boot_dat$r == 1])/sqrt(sum(sub_boot_dat$r == 1))
+            w.hat = c(w.hat, result$w.hat)
+            nu.hat = c(nu.hat, result$nu.hat)
+          }
+          
+          theta.hat[k] = effect.f(p.hat[1], p.hat[2])
+          theta_cc = effect.f(p_cc[1], p_cc[2])
+          se_theta.hat[k] = sqrt((delta_method(p.hat[1], p.hat[2])^2)%*%(se_p.hat^2))
+          se_theta_cc = sqrt(delta_method(p_cc[1], p_cc[2])%*%(se_p_cc^2))
+          w.hat.list[[k]] = w.hat
+          nu.hat.list[[k]] = nu.hat
+          
+          k = k + 1
+        }
+      }
+      
+      # ebmr = EBMRAlgorithm$new(y_names = "teacher_report",
+      #                          ps_specifications = ps_specifications,
+      #                          data = boot_dat)
+      # result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report"))
+      # result$w.hat
+      # cor(result$ps.matrix)
+      # ebmr$ps_fit.list[[3]]$coefficients
+      # ebmr$ps_fit.list[[3]]$se
+      # estimates = unlist(result[c(1, 3)])
+      # estimates
+      
+      c(theta.hat = theta.hat, theta_cc = theta_cc, se_theta.hat = se_theta.hat, se_theta_cc = se_theta_cc,
+        unlist(w.hat.list), unlist(nu.hat.list))
+    }, error = function(e){
+      NA
+    })
+  }
+  gc()
+  return(boot_result)
+}
+```
+
+```{r}
+bootstrap = function(full_ps_specifications, W, data, B){
+  library(foreach)
+  library(doParallel)
+  library(doSNOW)
+  library(EBMRalgorithm)
+  
+  n = nrow(data)
+  
+  cores = detectCores()
+  cl = makeCluster(cores - 4) ## number of clusters 
+  registerDoSNOW(cl)
+  
+  pb = txtProgressBar(max = B, style = 3)
+  progress <- function(n) setTxtProgressBar(pb, n)
+  opts = list(progress = progress)
+  parallel_packages = c("EBMRalgorithm", "stringr", "Matrix", "numDeriv")
+  
+  boot_result = foreach(i= 1:B, .combine = 'cbind', .options.snow = opts, .packages = parallel_packages, .export = c("WangShaoKim2014", "EBMR_IPW", "estimate_nu", "ensemble", "parse_formula", "separate_variable_types", "effect.f", "delta_method")) %dopar% {
+    result = tryCatch({
+      indices = sample(1:n, replace = TRUE)
+      boot_dat = data[indices,]
+      
+      theta.hat = se_theta.hat = rep(NA, 7)
+      w.hat.list = list(w.hat1 = c(), w.hat2 = c(), w.hat3 = c(), w.hat4 = c(), w.hat5 = c(), w.hat6 = c(), w.hat7 = c())
+      nu.hat.list = list(nu.hat1 = c(), nu.hat2 = c(), nu.hat3 = c(), nu.hat4 = c(), nu.hat5 = c(), nu.hat6 = c(), nu.hat7 = c())
+      k = 1
+      for(model_num in 1:3){
+        model_combinations = combn(3, model_num)
+        for(i in 1:ncol(model_combinations)){
+          model_set = model_combinations[, i]
+          print(c(model_num, i))
+          
+          ps_specifications <- list(
+            formula.list = full_ps_specifications$formula.list[model_set],
+            h_x_names.list = full_ps_specifications$h_x_names.list[model_set],
+            inv_link = full_ps_specifications$inv_link
+          )
+          
+          p.hat = se_p.hat = p_cc = se_p_cc = rep(NA, 2)
+          w.hat = nu.hat = c()
+          for(l in 1:2){
+            sub_boot_dat = boot_dat[boot_dat$health == (l-1),]
+            ps_fit.list = list()
+            J = length(ps_specifications$formula.list)
+            for(j in 1:J){
+              formula = ps_specifications$formula.list[[j]]
+              h_x_names = ps_specifications$h_x_names.list[[j]]
+              inv_link = ps_specifications$inv_link
+              ps_fit.list[[j]] = WangShaoKim2014(formula, h_x_names, inv_link, W = W, data = sub_boot_dat)
+            }
+            
+            # if(model_num == 3) print(ps_fit.list[[2]]$coefficients)
+            result = EBMR_IPW(h_x_names = c("father", "parent_report", "fp", "fp2"), W = W, data = sub_boot_dat, se.fit = TRUE)
+            
+            p.hat[l] = result$mu_ipw
+            p_cc[l] = mean(sub_boot_dat$teacher_report[sub_boot_dat$r == 1])
+            se_p.hat[l] = result$se_ipw
+            se_p_cc[l] = sd(sub_boot_dat$teacher_report[sub_boot_dat$r == 1])/sqrt(sum(sub_boot_dat$r == 1))
+            w.hat = c(w.hat, result$w.hat)
+            nu.hat = c(nu.hat, result$nu.hat)
+          }
+          
+          theta.hat[k] = effect.f(p.hat[1], p.hat[2])
+          theta_cc = effect.f(p_cc[1], p_cc[2])
+          se_theta.hat[k] = sqrt((delta_method(p.hat[1], p.hat[2])^2)%*%(se_p.hat^2))
+          se_theta_cc = sqrt(delta_method(p_cc[1], p_cc[2])%*%(se_p_cc^2))
+          w.hat.list[[k]] = w.hat
+          nu.hat.list[[k]] = nu.hat
+          
+          k = k + 1
+        }
+      }
+      
+      # ebmr = EBMRAlgorithm$new(y_names = "teacher_report",
+      #                          ps_specifications = ps_specifications,
+      #                          data = boot_dat)
+      # result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report"))
+      # result$w.hat
+      # cor(result$ps.matrix)
+      # ebmr$ps_fit.list[[3]]$coefficients
+      # ebmr$ps_fit.list[[3]]$se
+      # estimates = unlist(result[c(1, 3)])
+      # estimates
+      
+      c(theta.hat = theta.hat, theta_cc = theta_cc, se_theta.hat = se_theta.hat, se_theta_cc = se_theta_cc,
+        unlist(w.hat.list), unlist(nu.hat.list))
+    }, error = function(e){
+      c(theta.hat = NA, theta_cc = NA, se_theta.hat = NA, se_theta_cc = NA)
+    })
+  }
+  gc()
+  return(boot_result)
+}
+```
 
 ```{r}
 bootstrap = function(ps_specifications, W, data, B){
@@ -212,6 +421,105 @@ bootstrap = function(ps_specifications, W, data, B){
 ```
 
 ```{r}
+perturb_bootstrap = function(full_ps_specifications, W, data, B){
+  library(foreach)
+  library(doParallel)
+  library(doSNOW)
+  library(EBMRalgorithm)
+  
+  n = nrow(data)
+  # rgen = function(n) sample(c(-1, 1), size = n, replace = TRUE)
+  rgen = function(n) rexp(n)
+  
+  cores = detectCores()
+  cl = makeCluster(cores - 4) ## number of clusters 
+  registerDoSNOW(cl)
+  
+  pb = txtProgressBar(max = B, style = 3)
+  progress <- function(n) setTxtProgressBar(pb, n)
+  opts = list(progress = progress)
+  parallel_packages = c("EBMRalgorithm", "stringr", "Matrix", "numDeriv")
+  
+  boot_result = foreach(i= 1:B, .combine = 'cbind', .options.snow = opts, .packages = parallel_packages, .export = c("WangShaoKim2014", "ensemble", "estimate_nu", "WangShaoKim2014_perturb", "EBMR_IPW_perturb", "estimate_nu_perturb", "ensemble_perturb", "parse_formula", "separate_variable_types", "effect.f", "delta_method")) %dopar% {
+    result = tryCatch({
+      wt = rexp(n)
+      
+      theta.hat = se_theta.hat = rep(NA, 7)
+      w.hat.list = list(w.hat1 = c(), w.hat2 = c(), w.hat3 = c(), w.hat4 = c(), w.hat5 = c(), w.hat6 = c(), w.hat7 = c())
+      nu.hat.list = list(nu.hat1 = c(), nu.hat2 = c(), nu.hat3 = c(), nu.hat4 = c(), nu.hat5 = c(), nu.hat6 = c(), nu.hat7 = c())
+      k = 1
+      for(model_num in 1:3){
+        model_combinations = combn(3, model_num)
+        for(i in 1:ncol(model_combinations)){
+          model_set = model_combinations[, i]
+          print(c(model_num, i))
+          
+          ps_specifications <- list(
+            formula.list = full_ps_specifications$formula.list[model_set],
+            h_x_names.list = full_ps_specifications$h_x_names.list[model_set],
+            inv_link = full_ps_specifications$inv_link
+          )
+          
+          p.hat = se_p.hat = p_cc = se_p_cc = rep(NA, 2)
+          w.hat = nu.hat = c()
+          for(l in 1:2){
+            subdat = data[data$health == (l-1),]
+            subwt = wt[data$health == (l-1)]
+            ps_fit.list = list()
+            J = length(ps_specifications$formula.list)
+            for(j in 1:J){
+              formula = ps_specifications$formula.list[[j]]
+              h_x_names = ps_specifications$h_x_names.list[[j]]
+              inv_link = ps_specifications$inv_link
+              ps_fit.list[[j]] = WangShaoKim2014_perturb(formula, h_x_names, inv_link, W, data = subdat, subwt, se.fit = F)
+              # ps_fit.list[[j]] = WangShaoKim2014(formula, h_x_names, inv_link, W = W, data = subdat)
+            }
+            
+            result = EBMR_IPW_perturb(h_x_names = c("father", "parent_report"), W, data = subdat, subwt, se.fit = F)
+            
+            p.hat[l] = result$mu_ipw
+            se_p.hat[l] = result$se_ipw
+            w.hat = c(w.hat, result$w.hat)
+            nu.hat = c(nu.hat, result$nu.hat)
+            
+            subwt_cc = wt[data$health == (l-1) & data$r == 1]
+            p_cc[l] = mean(subwt_cc*subdat$teacher_report[subdat$r == 1])
+            se_p_cc[l] = sd(subdat$teacher_report[subdat$r == 1])/sqrt(sum(subdat$r == 1))
+          }
+          
+          theta.hat[k] = effect.f(p.hat[1], p.hat[2])
+          theta_cc = effect.f(p_cc[1], p_cc[2])
+          se_theta.hat[k] = sqrt((delta_method(p.hat[1], p.hat[2])^2)%*%(se_p.hat^2))
+          se_theta_cc = sqrt(delta_method(p_cc[1], p_cc[2])%*%(se_p_cc^2))
+          w.hat.list[[k]] = w.hat
+          nu.hat.list[[k]] = nu.hat
+          
+          k = k + 1
+        }
+      }
+      
+      # ebmr = EBMRAlgorithm$new(y_names = "teacher_report",
+      #                          ps_specifications = ps_specifications,
+      #                          data = boot_dat)
+      # result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report"))
+      # result$w.hat
+      # cor(result$ps.matrix)
+      # ebmr$ps_fit.list[[3]]$coefficients
+      # ebmr$ps_fit.list[[3]]$se
+      # estimates = unlist(result[c(1, 3)])
+      # estimates
+      
+      c(theta.hat = theta.hat, theta_cc = theta_cc, se_theta.hat = se_theta.hat, se_theta_cc = se_theta_cc,
+        unlist(w.hat.list), unlist(nu.hat.list))
+    }, error = function(e){
+      NA
+    })
+  }
+  return(boot_result)
+}
+```
+
+```{r}
 perturb_bootstrap = function(ps_specifications, W, data, mu_ipw, B){
   library(foreach)
   library(doParallel)
@@ -269,7 +577,7 @@ perturb_bootstrap = function(ps_specifications, W, data, mu_ipw, B){
 ```{r}
 rm.extreme = function(v){
   z.score = scale(v)
-  extreme_num = sum(abs(z.score) > 3)
+  extreme_num = sum(abs(z.score) > 4)
   print(paste(extreme_num, length(v)))
   if(extreme_num == 0){
     return(v)
@@ -302,10 +610,12 @@ show.alpha = function(est.all_results){
 ### Estimation
 
 ```{r}
-source("C:/Users/stat-pc/Desktop/NTHU_Research/EBMR_Methods_Reproducibility_Materials/Simulation_Studies/test_methods.r")
+source("/Users/luke/Library/CloudStorage/GoogleDrive-mingjuresearch@gmail.com/其他電腦/我的電腦/EBMR_Methods_Reproducibility_Materials/Simulation_Studies/test_methods.r")
+# source("C:/Users/stat-pc/Desktop/NTHU_Research/EBMR_Methods_Reproducibility_Materials/Simulation_Studies/test_methods.r")
 ```
 
 ```{r}
+getwd()
 #------------------------------------------------------------------------------#
 # Basic Setup ----
 #------------------------------------------------------------------------------#
@@ -349,7 +659,7 @@ W = function(g.matrix){
 
 # # OR4
 # W = function(g.matrix){
-#   return(solve(t(g.matrix)%*%g.matrix/n))
+#   return(solve(t(g.matrix)%*%g.matrix/nrow(g.matrix)))
 # }
 
 health = 0:1
@@ -400,7 +710,7 @@ for(model_num in 1:3){
       result = EBMR_IPW(h_x_names = c("father", "parent_report"), W = W, data = subdat)
       data = subdat
       h_x = data[h_x_names]
-      print(unlist(result[1:4]))
+      # print(unlist(result[1:4]))
       # print(ps_fit.list[[1]]$coefficients)
       # print(ps_fit.list[[1]]$se)
       # print(ps_fit.list[[2]]$coefficients)
@@ -435,6 +745,33 @@ for(model_num in 1:3){
 #------------------------------------------------------------------------------#
 dat$y = dat$teacher_report
 full_ps_specifications = full_ps_specifications.list[[1]]
+
+  
+boot_result = perturb_bootstrap(full_ps_specifications, W, dat, B)
+# boot_result = bootstrap(full_ps_specifications, W, dat, B)
+# boot_result = parametric_bootstrap(outcome_distr, full_ps_specifications, W, dat, B)
+save.file = paste0(c("MHD_results/EBMR_IPW_perturb_bootstrap_W_identity_OR8.RDS"), collapse = "")
+save.file = paste0(c("MHD_results/EBMR_IPW_perturb_bootstrap_W_identity_OR9.RDS"), collapse = "")
+save.file = paste0(c("MHD_results/EBMR_IPW_perturb_bootstrap_W_identity_OR10.RDS"), collapse = "")
+if(file.exists(save.file)){
+  boot_result = cbind(readRDS(save.file), boot_result)
+  saveRDS(boot_result, save.file)
+}else{
+  saveRDS(boot_result, save.file)
+}
+# saveRDS(boot_result, save.file)
+print(sum(is.na(boot_result[1,])))
+print(apply(boot_result, 1, mean, na.rm = T))
+print(apply(boot_result, 1, sd, na.rm = T))
+################################################################################
+```
+
+```{r}
+#------------------------------------------------------------------------------#
+# Bootstrap ----
+#------------------------------------------------------------------------------#
+dat$y = dat$teacher_report
+full_ps_specifications = full_ps_specifications.list[[1]]
 for(model_num in 1:3){
   model_combinations = combn(3, model_num)
   for(i in 1:ncol(model_combinations)){
@@ -461,122 +798,6 @@ for(model_num in 1:3){
     print(apply(boot_result, 1, mean, na.rm = T))
     print(apply(boot_result, 1, sd, na.rm = T))
     gc()
-  }
-}
-################################################################################
-```
-
-```{r}
-#------------------------------------------------------------------------------#
-# Bootstrap ----
-#------------------------------------------------------------------------------#
-dat$y = dat$teacher_report
-full_ps_specifications = full_ps_specifications.list[[1]]
-for(model_num in 1:3){
-  model_combinations = combn(3, model_num)
-  for(i in 1:ncol(model_combinations)){
-    model_set = model_combinations[, i]
-    print(c(model_num, i))
-    
-    ps_specifications <- list(
-      formula.list = full_ps_specifications$formula.list[model_set],
-      h_x_names.list = full_ps_specifications$h_x_names.list[model_set],
-      inv_link = full_ps_specifications$inv_link
-    )
-  
-    # boot_result = perturb_bootstrap(ps_specifications, W, subdat, result$mu_ipw, B)
-    boot_result = bootstrap(ps_specifications, W, dat, B)
-    save.file = paste0(c("MHD_results/EBMR_IPW_bootstrap_", model_set, "_OR7.RDS"), collapse = "")
-    if(file.exists(save.file)){
-      boot_result = cbind(readRDS(save.file), boot_result)
-      saveRDS(boot_result, save.file)
-    }else{
-      saveRDS(boot_result, save.file)
-    }
-    # saveRDS(boot_result, save.file)
-    print(sum(is.na(boot_result[1,])))
-    print(apply(boot_result, 1, mean, na.rm = T))
-    print(apply(boot_result, 1, sd, na.rm = T))
-    gc()
-  }
-}
-################################################################################
-```
-
-```{r}
-#------------------------------------------------------------------------------#
-# Bootstrap ----
-#------------------------------------------------------------------------------#
-dat$y = dat$teacher_report
-full_ps_specifications = full_ps_specifications.list[[1]]
-for(model_num in 1:3){
-  model_combinations = combn(3, model_num)
-  for(i in 1:ncol(model_combinations)){
-    model_set = model_combinations[, i]
-    print(c(model_num, i))
-    
-    ps_specifications <- list(
-      formula.list = full_ps_specifications$formula.list[model_set],
-      h_x_names.list = full_ps_specifications$h_x_names.list[model_set],
-      inv_link = full_ps_specifications$inv_link
-    )
-  
-    # boot_result = perturb_bootstrap(ps_specifications, W, subdat, result$mu_ipw, B)
-    boot_result = bootstrap(ps_specifications, W, dat, B)
-    save.file = paste0(c("MHD_results/EBMR_IPW_bootstrap_", model_set, "_OR8.RDS"), collapse = "")
-    # if(file.exists(save.file)){
-    #   boot_result = cbind(readRDS(save.file), boot_result)
-    #   saveRDS(boot_result, save.file)
-    # }else{
-    #   saveRDS(boot_result, save.file)
-    # }
-    saveRDS(boot_result, save.file)
-    print(sum(is.na(boot_result[1,])))
-    print(apply(boot_result, 1, mean, na.rm = T))
-    print(apply(boot_result, 1, sd, na.rm = T))
-    gc()
-  }
-}
-################################################################################
-```
-
-```{r eval = FALSE}
-#------------------------------------------------------------------------------#
-# Bootstrap ----
-#------------------------------------------------------------------------------#
-for(model_num in 1:3){
-  model_combinations = combn(3, model_num)
-  for(i in 1:ncol(model_combinations)){
-    model_set = model_combinations[, i]
-    for(k in 1:2) {
-      print(c(model_num, i, k))
-      subdat = dat[dat$health == health[k], ]
-      subdat$y = subdat$teacher_report
-      
-      read_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", model_set, "_OR4.RDS"), collapse = "")
-      result = readRDS(read_file)
-      
-      full_ps_specifications = full_ps_specifications.list[[k]]
-      ps_specifications <- list(
-          formula.list = full_ps_specifications$formula.list[model_set],
-          h_x_names.list = full_ps_specifications$h_x_names.list[model_set],
-          inv_link = full_ps_specifications$inv_link
-        )
-      # boot_result = perturb_bootstrap(ps_specifications, W, subdat, result$mu_ipw, B)
-      boot_result = bootstrap(ps_specifications, W, subdat, B)
-      save.file = paste0(c("MHD_results/EBMR_IPW_bootstrap_", subset_names[k], "_", model_set, "_OR4.RDS"), collapse = "")
-      if(file.exists(save.file)){
-        boot_result = cbind(readRDS(save.file), boot_result)
-        saveRDS(boot_result, save.file)
-      }else{
-        saveRDS(boot_result, save.file)
-      }
-      # saveRDS(boot_result, save.file)
-      print(sum(is.na(boot_result[1,])))
-      print(apply(boot_result, 1, mean, na.rm = T))
-      print(apply(boot_result, 1, sd, na.rm = T))
-      gc()
-    }
   }
 }
 ################################################################################
@@ -1110,10 +1331,10 @@ for(model_num in 1:3){
     all_estimates = matrix(NA, length(health), 2)
     model_set = model_combinations[, i]
     # if((4 %in% model_set0) || !(1 %in% model_set0)) next
-    result0 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[1], "_", model_set, "_OR4.RDS"), collapse = ""))
+    result0 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[1], "_", model_set, "_W_optimal_OR4.RDS"), collapse = ""))
     all_estimates[1, ] = unlist(result0[c(1, 3)])
 
-    result1 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[2], "_", model_set, "_OR4.RDS"), collapse = ""))
+    result1 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[2], "_", model_set, "_W_optimal_OR4.RDS"), collapse = ""))
     all_estimates[2, ] = unlist(result1[c(1, 3)])
 
     effect = effect.f(all_estimates[1, 1], all_estimates[2, 1])
@@ -1141,33 +1362,70 @@ all_results
 # res.tmp = res
 ```
 
-```{r, fig.width=10, fig.height=10}
+```{r, fig.width=10, fig.height=20}
 rm.extreme_se = function(v){
   v = v[v < quantile(v, 0.98)]
   return(v)
 }
+make_w_labels <- function(num_str) {
+  nums <- as.integer(strsplit(num_str, "")[[1]])
+  parse(text = paste0("w[", nums, "]"))
+}
+
+make_nu_labels <- function(num_str) {
+  nums <- as.integer(strsplit(num_str, "")[[1]])
+  parse(text = paste0("nu[", nums, "]"))
+}
+
+boot_result = readRDS(paste0(c("MHD_results/EBMR_IPW_parametric_bootstrap_W_optimal_OR8.RDS"), collapse = ""))
+model_combinations = c("1", "2", "3", "12", "13", "23", "123")
 boot_effect_se = rep(NA, 8)
 # boot_se_se = rep(NA, 8)
-par(mfrow = c(4, 4))
-k = 1
-for(model_num in 1:3){
-  model_combinations = combn(3, model_num)
-  for(i in 1:ncol(model_combinations)){
-    print(c(model_num, i))
-    model_set = model_combinations[, i]
-    boot_result = readRDS(paste0(c("MHD_results/EBMR_IPW_bootstrap_", model_set, "_OR6.RDS"), collapse = ""))
-    qqnorm(rm.extreme(boot_result[1, !is.na(boot_result[1,])]), main = paste(c("Estimator", paste0(model_set))))
-    boot_effect_se[k] = sd(rm.extreme(boot_result[1, !is.na(boot_result[1,])]))
-    # boot_result = readRDS(paste0(c("MHD_results/EBMR_IPW_bootstrap_", model_set, "_OR8.RDS"), collapse = ""))
-    # hist(rm.extreme(boot_result[3, !is.na(boot_result[3,])]), main = paste(c("SE", paste0(model_set))))
-    # abline(v = all_results[k, 2], col = 2, lwd = 2.5)
-    # boot_se_se[k] = quantile(rm.extreme_se(boot_result[3, !is.na(boot_result[3,])]), .95)
-    k = k + 1
-  }
+layout_matrix = matrix(nrow = 14, ncol = 6)
+for(i in 1:7){
+  layout_matrix[2*(i-1)+1, 1:6] = i+6*(i-1)
+  layout_matrix[2*(i-1)+2,] = (i+6*(i-1)+1):(i+6*(i-1)+6)
 }
-boot_effect_se[8] = sd(rm.extreme(boot_result[2, !is.na(boot_result[2,])]))
-# boot_se_se[8] = quantile(rm.extreme_se(boot_result[4, !is.na(boot_result[4,])]), .95)
-# boot_effect_se
+layout(layout_matrix, heights = rep(c(1, 5), 7))
+for(k in 1:7){
+  par(mar = c(0, 0, 2, 0)) 
+  plot.new()
+  title(paste("model set:", model_combinations[k]), cex.main = 1.5)
+  
+  par(mar = c(4, 2, 2, 2), pty = "s") 
+  theta.hat = paste0("theta.hat", k)
+  se_theta.hat = paste0("se_theta.hat", k)
+  w.hat = rownames(boot_result)[grepl(paste0("w.hat", k), rownames(boot_result))]
+  nu.hat = rownames(boot_result)[grepl(paste0("nu.hat", k), rownames(boot_result))]
+  w.hat1 = w.hat[1:(length(w.hat)/2)]
+  w.hat2 = w.hat[(length(w.hat)/2+1):length(w.hat)]
+  nu.hat1 = nu.hat[1:(length(nu.hat)/2)]
+  nu.hat2 = nu.hat[(length(nu.hat)/2+1):length(nu.hat)]
+  qqnorm(rm.extreme(boot_result[theta.hat, !is.na(boot_result[theta.hat,])]), main = expression(hat(theta)))
+  boot_effect_se[k] = sd(rm.extreme(boot_result[theta.hat, !is.na(boot_result[theta.hat,])]))
+  qqnorm(rm.extreme(boot_result[se_theta.hat, !is.na(boot_result[se_theta.hat,])]), main = expression(widehat("SE")(hat(theta))))
+  if(length(w.hat) == 2){
+    plot.new()
+    plot.new()
+    plot.new()
+    plot.new()
+  }else{
+    boxplot(t(boot_result[w.hat1,]), main = expression(paste(hat(bold(w)), " for ", p[0])), 
+            names = make_w_labels(model_combinations[k]))
+    boxplot(t(boot_result[w.hat2,]), main = expression(paste(hat(bold(w)), " for ", p[1])),
+            names = make_w_labels(model_combinations[k]))
+    boxplot(t(boot_result[nu.hat1,]), main = expression(paste(hat(bold(nu)), " for ", p[0])), 
+            names = make_nu_labels(model_combinations[k]))
+    boxplot(t(boot_result[nu.hat2,]), main = expression(paste(hat(bold(nu)), " for ", p[1])),
+            names = make_nu_labels(model_combinations[k]))
+  }
+  
+  # abline(v = all_results[k, 2], col = 2, lwd = 2.5)
+  # boot_se_se[k] = quantile(rm.extreme_se(boot_result[3, !is.na(boot_result[3,])]), .95)
+}
+boot_effect_se[8] = sd(rm.extreme(boot_result["theta_cc", !is.na(boot_result["theta_cc",])]))
+# boot_se_se[8] = quantile(rm.extreme_se(boot_result["se_theta_cc", !is.na(boot_result["se_theta_cc",])]), .95)
+boot_effect_se
 # boot_se_se
 ```
 
@@ -1240,6 +1498,167 @@ all_results
 # res.tmp = res
 ```
 
+```{r, fig.width=10, fig.height=20}
+rm.extreme_se = function(v){
+  v = v[v < quantile(v, 0.98)]
+  return(v)
+}
+make_w_labels <- function(num_str) {
+  nums <- as.integer(strsplit(num_str, "")[[1]])
+  parse(text = paste0("w[", nums, "]"))
+}
+
+make_nu_labels <- function(num_str) {
+  nums <- as.integer(strsplit(num_str, "")[[1]])
+  parse(text = paste0("nu[", nums, "]"))
+}
+
+boot_result = readRDS(paste0(c("MHD_results/EBMR_IPW_parametric_bootstrap_W_identity_OR8.RDS"), collapse = ""))
+model_combinations = c("1", "2", "3", "12", "13", "23", "123")
+boot_effect_se = rep(NA, 8)
+# boot_se_se = rep(NA, 8)
+layout_matrix = matrix(nrow = 14, ncol = 6)
+for(i in 1:7){
+  layout_matrix[2*(i-1)+1, 1:6] = i+6*(i-1)
+  layout_matrix[2*(i-1)+2,] = (i+6*(i-1)+1):(i+6*(i-1)+6)
+}
+layout(layout_matrix, heights = rep(c(1, 5), 7))
+for(k in 1:7){
+  par(mar = c(0, 0, 2, 0)) 
+  plot.new()
+  title(paste("model set:", model_combinations[k]), cex.main = 1.5)
+  
+  par(mar = c(4, 2, 2, 2), pty = "s") 
+  theta.hat = paste0("theta.hat", k)
+  se_theta.hat = paste0("se_theta.hat", k)
+  w.hat = rownames(boot_result)[grepl(paste0("w.hat", k), rownames(boot_result))]
+  nu.hat = rownames(boot_result)[grepl(paste0("nu.hat", k), rownames(boot_result))]
+  w.hat1 = w.hat[1:(length(w.hat)/2)]
+  w.hat2 = w.hat[(length(w.hat)/2+1):length(w.hat)]
+  nu.hat1 = nu.hat[1:(length(nu.hat)/2)]
+  nu.hat2 = nu.hat[(length(nu.hat)/2+1):length(nu.hat)]
+  hist(rm.extreme(boot_result[theta.hat, !is.na(boot_result[theta.hat,])]), main = expression(hat(theta)))
+  boot_effect_se[k] = sd(boot_result[theta.hat, !is.na(boot_result[theta.hat,])])
+  qqnorm(rm.extreme(boot_result[se_theta.hat, !is.na(boot_result[se_theta.hat,])]), main = expression(widehat("SE")(hat(theta))))
+  if(length(w.hat) == 2){
+    plot.new()
+    plot.new()
+    plot.new()
+    plot.new()
+  }else{
+    boxplot(t(boot_result[w.hat1,]), main = expression(paste(hat(bold(w)), " for ", p[0])), 
+            names = make_w_labels(model_combinations[k]))
+    boxplot(t(boot_result[w.hat2,]), main = expression(paste(hat(bold(w)), " for ", p[1])),
+            names = make_w_labels(model_combinations[k]))
+    boxplot(t(boot_result[nu.hat1,]), main = expression(paste(hat(bold(nu)), " for ", p[0])), 
+            names = make_nu_labels(model_combinations[k]))
+    boxplot(t(boot_result[nu.hat2,]), main = expression(paste(hat(bold(nu)), " for ", p[1])),
+            names = make_nu_labels(model_combinations[k]))
+  }
+  
+  # abline(v = all_results[k, 2], col = 2, lwd = 2.5)
+  # boot_se_se[k] = quantile(rm.extreme_se(boot_result[3, !is.na(boot_result[3,])]), .95)
+}
+boot_effect_se[8] = sd(boot_result["theta_cc", !is.na(boot_result["theta_cc",])])
+# boot_se_se[8] = quantile(rm.extreme_se(boot_result["se_theta_cc", !is.na(boot_result["se_theta_cc",])]), .95)
+boot_effect_se
+# boot_se_se
+```
+
+```{r, fig.width=10, fig.height=20}
+rm.extreme_se = function(v){
+  v = v[v < quantile(v, 0.98)]
+  return(v)
+}
+make_w_labels <- function(num_str) {
+  nums <- as.integer(strsplit(num_str, "")[[1]])
+  parse(text = paste0("w[", nums, "]"))
+}
+
+make_nu_labels <- function(num_str) {
+  nums <- as.integer(strsplit(num_str, "")[[1]])
+  parse(text = paste0("nu[", nums, "]"))
+}
+
+boot_result = readRDS(paste0(c("MHD_results/EBMR_IPW_perturb_bootstrap_W_identity_OR9.RDS"), collapse = ""))
+model_combinations = c("1", "2", "3", "12", "13", "23", "123")
+boot_effect_se = rep(NA, 8)
+# boot_se_se = rep(NA, 8)
+layout_matrix = matrix(nrow = 14, ncol = 6)
+for(i in 1:7){
+  layout_matrix[2*(i-1)+1, 1:6] = i+6*(i-1)
+  layout_matrix[2*(i-1)+2,] = (i+6*(i-1)+1):(i+6*(i-1)+6)
+}
+layout(layout_matrix, heights = rep(c(1, 5), 7))
+for(k in 1:7){
+  par(mar = c(0, 0, 2, 0)) 
+  plot.new()
+  title(paste("model set:", model_combinations[k]), cex.main = 1.5)
+  
+  par(mar = c(4, 2, 2, 2), pty = "s") 
+  theta.hat = paste0("theta.hat", k)
+  se_theta.hat = paste0("se_theta.hat", k)
+  w.hat = rownames(boot_result)[grepl(paste0("w.hat", k), rownames(boot_result))]
+  nu.hat = rownames(boot_result)[grepl(paste0("nu.hat", k), rownames(boot_result))]
+  w.hat1 = w.hat[1:(length(w.hat)/2)]
+  w.hat2 = w.hat[(length(w.hat)/2+1):length(w.hat)]
+  nu.hat1 = nu.hat[1:(length(nu.hat)/2)]
+  nu.hat2 = nu.hat[(length(nu.hat)/2+1):length(nu.hat)]
+  hist(rm.extreme(boot_result[theta.hat, !is.na(boot_result[theta.hat,])]), main = expression(hat(theta)))
+  boot_effect_se[k] = sd(rm.extreme(boot_result[theta.hat, !is.na(boot_result[theta.hat,])]))
+  # hist(rm.extreme(boot_result[se_theta.hat, !is.na(boot_result[se_theta.hat,])]), main = expression(widehat("SE")(hat(theta))))
+  plot.new()
+  if(length(w.hat) == 2){
+    plot.new()
+    plot.new()
+    plot.new()
+    plot.new()
+  }else{
+    boxplot(t(boot_result[w.hat1,]), main = expression(paste(hat(bold(w)), " for ", p[0])), 
+            names = make_w_labels(model_combinations[k]))
+    boxplot(t(boot_result[w.hat2,]), main = expression(paste(hat(bold(w)), " for ", p[1])),
+            names = make_w_labels(model_combinations[k]))
+    boxplot(t(boot_result[nu.hat1,]), main = expression(paste(hat(bold(nu)), " for ", p[0])), 
+            names = make_nu_labels(model_combinations[k]))
+    boxplot(t(boot_result[nu.hat2,]), main = expression(paste(hat(bold(nu)), " for ", p[1])),
+            names = make_nu_labels(model_combinations[k]))
+  }
+  
+  # abline(v = all_results[k, 2], col = 2, lwd = 2.5)
+  # boot_se_se[k] = quantile(rm.extreme_se(boot_result[3, !is.na(boot_result[3,])]), .95)
+}
+boot_effect_se[8] = sd(boot_result["theta_cc", !is.na(boot_result["theta_cc",])])
+# boot_se_se[8] = quantile(rm.extreme_se(boot_result["se_theta_cc", !is.na(boot_result["se_theta_cc",])]), .95)
+boot_effect_se
+# boot_se_se
+```
+
+```{r, fig.height=4}
+w.hat1 = rownames(boot_result)[grepl(paste0("w.hat", 6), rownames(boot_result))]
+w.hat2 = rownames(boot_result)[grepl(paste0("w.hat", 7), rownames(boot_result))]
+w.hat11 = w.hat1[1:(length(w.hat1)/2)]
+w.hat12 = w.hat1[(length(w.hat1)/2+1):length(w.hat1)]
+w.hat21 = w.hat2[1:(length(w.hat2)/2)]
+w.hat22 = w.hat2[(length(w.hat2)/2+1):length(w.hat2)]
+par(mfrow = c(2, 2), mar = c(5, 5, 4, 2) + 0.1)
+plot(1:ncol(boot_result), apply(t(boot_result[c(w.hat11[1], w.hat21[2]),]), 1, diff),
+     type = "l", lty = 1, lwd = 1.5, xlab = "b", ylab = expression(hat(w)[2]^"123"-hat(w)[2]^"23"), 
+     main = "health = 0")
+abline(h = 0, lwd = 2, col = 2)
+plot(1:ncol(boot_result), apply(t(boot_result[c(w.hat12[1], w.hat22[2]),]), 1, diff),
+        type = "l",lty = 1, lwd = 1.5, xlab = "b", ylab = expression(hat(w)[2]^"123"-hat(w)[2]^"23"), 
+     main = "health = 1")
+abline(h = 0, lwd = 2, col = 2)
+plot(1:ncol(boot_result), apply(t(boot_result[c(w.hat11[2], w.hat21[3]),]), 1, diff),
+        type = "l", lty = 1, lwd = 1.5, xlab = "b", ylab = expression(hat(w)[3]^"123"-hat(w)[3]^"23"), 
+     main = "health = 0")
+abline(h = 0, lwd = 2, col = 2)
+plot(1:ncol(boot_result), apply(t(boot_result[c(w.hat12[2], w.hat22[3]),]), 1, diff), 
+        type = "l", lty = 1, lwd = 1.5, xlab = "b", ylab = expression(hat(w)[3]^"123"-hat(w)[3]^"23"), 
+     main = "health = 1")
+abline(h = 0, lwd = 2, col = 2)
+```
+
 ```{r, fig.width=10, fig.height=10}
 rm.extreme_se = function(v){
   v = v[v < quantile(v, 0.98)]
@@ -1273,10 +1692,27 @@ boot_effect_se
 ```{r}
 full_results = cbind(all_results, boot_effect_se)
 full_results = as.data.frame(full_results)
-full_results = cbind(round(full_results, 3),
+full_results = cbind(format(full_results, digits = 3),
                     apply(cbind(full_results[, 1] - qnorm(0.975)*full_results[, 2], 
                                 full_results[, 1] + qnorm(0.975)*full_results[, 2]), 1, 
-                          function(v) paste0("[", round(v[1], 3) , ", ", round(v[2], 3), "]")))
+                          function(v) paste0("[", format(v[1], digits = 2, nsmall = 3) , ", ", format(v[2], digits = 2, nsmall = 3), "]")))
+
+rownames(full_results) = c("$\\hat{\\theta}_{100}$","$\\hat{\\theta}_{010}$", "$\\hat{\\theta}_{001}$",
+                          "$\\hat{\\theta}_{110}$", "$\\hat{\\theta}_{101}$", "$\\hat{\\theta}_{011}$",
+                          "$\\hat{\\theta}_{111}$", "$\\hat{\\theta}_\\text{CC}$")
+colnames(full_results) = c("PE", "SE", "Bootstrap SE", "$95\\%$ CI")
+kable(full_results, align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
+      caption = "") %>%
+  kable_styling(full_width = F, latex_options = c("hold_position")) 
+```
+
+```{r}
+full_results = cbind(all_results, boot_effect_se)
+full_results = as.data.frame(full_results)
+full_results = cbind(format(full_results, digits = 3),
+                    apply(cbind(full_results[, 1] - qnorm(0.975)*full_results[, 2], 
+                                full_results[, 1] + qnorm(0.975)*full_results[, 2]), 1, 
+                          function(v) paste0("[", format(v[1], digits = 2, nsmall = 3) , ", ", format(v[2], digits = 2, nsmall = 3), "]")))
 
 rownames(full_results) = c("$\\hat{\\theta}_{100}$","$\\hat{\\theta}_{010}$", "$\\hat{\\theta}_{001}$",
                           "$\\hat{\\theta}_{110}$", "$\\hat{\\theta}_{101}$", "$\\hat{\\theta}_{011}$",
@@ -1339,32 +1775,69 @@ all_results
 # res.tmp = res
 ```
 
-```{r, fig.width=10, fig.height=10}
+```{r, fig.width=10, fig.height=20}
 rm.extreme_se = function(v){
   v = v[v < quantile(v, 0.98)]
   return(v)
 }
+make_w_labels <- function(num_str) {
+  nums <- as.integer(strsplit(num_str, "")[[1]])
+  parse(text = paste0("w[", nums, "]"))
+}
+
+make_nu_labels <- function(num_str) {
+  nums <- as.integer(strsplit(num_str, "")[[1]])
+  parse(text = paste0("nu[", nums, "]"))
+}
+
+boot_result = readRDS(paste0(c("MHD_results/EBMR_IPW_bootstrap_W_identity_fp_OR8.RDS"), collapse = ""))
+model_combinations = c("1", "2", "3", "12", "13", "23", "123")
 boot_effect_se = rep(NA, 8)
 # boot_se_se = rep(NA, 8)
-par(mfrow = c(4, 4))
-k = 1
-for(model_num in 1:3){
-  model_combinations = combn(3, model_num)
-  for(i in 1:ncol(model_combinations)){
-    print(c(model_num, i))
-    model_set = model_combinations[, i]
-    boot_result = readRDS(paste0(c("MHD_results/EBMR_IPW_bootstrap_", model_set, "_W_identity_OR6.RDS"), collapse = ""))
-    qqnorm(rm.extreme(boot_result[1, !is.na(boot_result[1,])]), main = paste(c("Estimator", paste0(model_set))))
-    boot_effect_se[k] = sd(rm.extreme(boot_result[1, !is.na(boot_result[1,])]))
-    # boot_result = readRDS(paste0(c("MHD_results/EBMR_IPW_bootstrap_", model_set, "_OR8.RDS"), collapse = ""))
-    # hist(rm.extreme(boot_result[3, !is.na(boot_result[3,])]), main = paste(c("SE", paste0(model_set))))
-    # abline(v = all_results[k, 2], col = 2, lwd = 2.5)
-    # boot_se_se[k] = quantile(rm.extreme_se(boot_result[3, !is.na(boot_result[3,])]), .95)
-    k = k + 1
-  }
+layout_matrix = matrix(nrow = 14, ncol = 6)
+for(i in 1:7){
+  layout_matrix[2*(i-1)+1, 1:6] = i+6*(i-1)
+  layout_matrix[2*(i-1)+2,] = (i+6*(i-1)+1):(i+6*(i-1)+6)
 }
-boot_effect_se[8] = sd(rm.extreme(boot_result[2, !is.na(boot_result[2,])]))
-# boot_se_se[8] = quantile(rm.extreme_se(boot_result[4, !is.na(boot_result[4,])]), .95)
+layout(layout_matrix, heights = rep(c(1, 5), 7))
+for(k in 1:7){
+  par(mar = c(0, 0, 2, 0)) 
+  plot.new()
+  title(paste("model set:", model_combinations[k]), cex.main = 1.5)
+  
+  par(mar = c(4, 2, 2, 2), pty = "s") 
+  theta.hat = paste0("theta.hat", k)
+  se_theta.hat = paste0("se_theta.hat", k)
+  w.hat = rownames(boot_result)[grepl(paste0("w.hat", k), rownames(boot_result))]
+  nu.hat = rownames(boot_result)[grepl(paste0("nu.hat", k), rownames(boot_result))]
+  w.hat1 = w.hat[1:(length(w.hat)/2)]
+  w.hat2 = w.hat[(length(w.hat)/2+1):length(w.hat)]
+  nu.hat1 = nu.hat[1:(length(nu.hat)/2)]
+  nu.hat2 = nu.hat[(length(nu.hat)/2+1):length(nu.hat)]
+  qqnorm(rm.extreme(boot_result[theta.hat, !is.na(boot_result[theta.hat,])]), main = expression(hat(theta)))
+  boot_effect_se[k] = sd(rm.extreme(boot_result[theta.hat, !is.na(boot_result[theta.hat,])]))
+  qqnorm(rm.extreme(boot_result[se_theta.hat, !is.na(boot_result[se_theta.hat,])]), main = expression(widehat("SE")(hat(theta))))
+  if(length(w.hat) == 2){
+    plot.new()
+    plot.new()
+    plot.new()
+    plot.new()
+  }else{
+    boxplot(t(boot_result[w.hat1,]), main = expression(paste(hat(bold(w)), " for ", p[0])), 
+            names = make_w_labels(model_combinations[k]))
+    boxplot(t(boot_result[w.hat2,]), main = expression(paste(hat(bold(w)), " for ", p[1])),
+            names = make_w_labels(model_combinations[k]))
+    boxplot(t(boot_result[nu.hat1,]), main = expression(paste(hat(bold(nu)), " for ", p[0])), 
+            names = make_nu_labels(model_combinations[k]))
+    boxplot(t(boot_result[nu.hat2,]), main = expression(paste(hat(bold(nu)), " for ", p[1])),
+            names = make_nu_labels(model_combinations[k]))
+  }
+  
+  # abline(v = all_results[k, 2], col = 2, lwd = 2.5)
+  # boot_se_se[k] = quantile(rm.extreme_se(boot_result[3, !is.na(boot_result[3,])]), .95)
+}
+boot_effect_se[8] = sd(rm.extreme(boot_result["theta_cc", !is.na(boot_result["theta_cc",])]))
+# boot_se_se[8] = quantile(rm.extreme_se(boot_result["se_theta_cc", !is.na(boot_result["se_theta_cc",])]), .95)
 boot_effect_se
 # boot_se_se
 ```
