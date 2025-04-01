@@ -1,3 +1,45 @@
+#' Wang, Shao, and Kim (2014) Method for Propensity Score Estimation
+#'
+#' Implements the Wang, Shao, and Kim (2014) approach for estimating propensity score models in the presence of missing-not-at-random (MNAR) data.
+#'
+#' @import numDeriv
+#'
+#' @param formula A formula specifying the relationship between the response and predictors.
+#' @param h_x_names A character vector of variable names to be balanced.
+#' @param inv_link An inverse link function applied to the linear predictor.
+#' @param init (Optional) A numeric vector specifying the initial values for the model parameters. Defaults to `NULL`.
+#'
+#' @return A list containing the following elements:
+#' \describe{
+#'   \item{\code{coefficients}}{Estimated model coefficients.}
+#'   \item{\code{fitted.values}}{Predicted propensity scores.}
+#'   \item{\code{sol.path}}{Solution path of parameter estimates across iterations.}
+#'   \item{\code{cov.hat}}{Estimated covariance matrix of the coefficients.}
+#'   \item{\code{se}}{Standard errors of the estimated coefficients.}
+#'   \item{\code{lower}}{Lower bound of the 95% confidence intervals.}
+#'   \item{\code{upper}}{Upper bound of the 95% confidence intervals.}
+#'   \item{\code{g.matrix}}{Matrix of moment conditions used in the estimation.}
+#'   \item{\code{K}}{Matrix related to the influence function.}
+#'   \item{\code{model}}{The propensity score model function.}
+#'   \item{\code{is.mnar}}{Logical indicator of whether the outcome is missing-not-at-random.}
+#'   \item{\code{model_x_names}}{Names of the predictor variables used in the model.}
+#'   \item{\code{h_x}}{Matrix of covariates to be balanced.}
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' data <- data.frame(x = rnorm(100), y = rnorm(100), r = rbinom(100, 1, 0.5))
+#' ebmr <- EBMRAlgorithm$new(data = data)
+#' result <- ebmr$WangShaoKim2014(
+#'   formula = r ~ x,
+#'   h_x_names = c("x"),
+#'   inv_link = function(eta) 1 / (1 + exp(-eta))
+#' )
+#' print(result$coefficients)
+#' }
+#'
+#' @references Wang, Shao, & Kim (2014). "An instrumental variable approach for identification and estimation with nonignorable nonresponse."
+
 WangShaoKim2014 = function(formula, h_x_names, inv_link, W, wt = NULL, se.fit = T, init = NULL) {
   # Basic setup
   result = private$parse_formula(formula)
@@ -17,7 +59,7 @@ WangShaoKim2014 = function(formula, h_x_names, inv_link, W, wt = NULL, se.fit = 
   d = NULL
   if(ncol(h_x1) > 0){
     for(j in 1:ncol(h_x1)) h_x1[, j] = as.factor(h_x1[, j])
-    d = model.matrix(lm(rep(1, n)~., self$data =  h_x1))
+    d = model.matrix(lm(rep(1, n)~., data = h_x1))
   }
 
   if(ncol(h_x2) == 0){
@@ -48,6 +90,38 @@ WangShaoKim2014 = function(formula, h_x_names, inv_link, W, wt = NULL, se.fit = 
   return(results)
 }
 
+#' Estimate the Coefficients for the Propensity Score Model
+#'
+#' This method estimates the coefficients \eqn{\nu} using an Generalized Method of Moments (GMM) procedure.
+#'
+#' @import Matrix
+#' @import numDeriv
+#'
+#' @param ps.matrix A matrix of propensity scores for each observation and model.
+#' @param h_x A matrix of covariates, which includes both continuous and discrete variables.
+#' @param init (optional) A vector of initial values for the optimization. Default is \eqn{\bf{0}}.
+#'
+#' @return A list containing the following elements:
+#' \describe{
+#'   \item{\code{coefficients}}{The estimated coefficients \eqn{\nu}.}
+#'   \item{\code{sol.path}}{Solution path for \eqn{\nu} across iterations.}
+#'   \item{\code{cov.hat}}{Estimated covariance matrix for \eqn{\nu}.}
+#'   \item{\code{se}}{Standard errors of the estimated coefficients.}
+#'   \item{\code{lower}}{Lower bound of the 95% confidence interval for \eqn{\nu}.}
+#'   \item{\code{upper}}{Upper bound of the 95% confidence interval for \eqn{\nu}.}
+#'   \item{\code{g.matrix}}{Matrix of moment conditions used in the estimation.}
+#'   \item{\code{K}}{Matrix related to the influence function.}
+#'   \item{\code{h_x}}{Matrix of covariates to be balanced.}
+#' }
+#'
+#' @keywords internal
+#' @examples
+#' \dontrun{
+#' ebmr <- EBMRAlgorithm$new(data = data)
+#' nu_estimates <- ebmr$estimate_nu(ps.matrix = ps_data, h_x = covariates)
+#' print(nu_estimates)
+#' }
+
 ensemble = function(ps_fit.list, h_x_names, W, init = NULL, se.fit = T, wt = NULL) {
   # Basic setup
   r = as.matrix(private$r)
@@ -61,7 +135,7 @@ ensemble = function(ps_fit.list, h_x_names, W, init = NULL, se.fit = T, wt = NUL
   d = NULL
   if(ncol(h_x1) > 0){
     for(j in 1:ncol(h_x1)) h_x1[, j] = as.factor(h_x1[, j])
-    d = model.matrix(lm(rep(1, n)~., self$data =  h_x1))
+    d = model.matrix(lm(rep(1, n)~., data =  h_x1))
   }
 
   if(ncol(h_x2) == 0){
@@ -83,6 +157,37 @@ ensemble = function(ps_fit.list, h_x_names, W, init = NULL, se.fit = T, wt = NUL
 
   return(results)
 }
+
+#' Compute the proposed Inverse Probability Weighting (IPW) Estimator
+#'
+#' This method computes the Inverse Probability Weighting (IPW) estimator for
+#' the population mean \eqn{\mu_0}, using the propensity scores estimated by
+#' the ensemble method. It also computes standard errors and other related
+#' quantities for the estimator, including the estimator when the true propensity
+#' score is provided.
+#'
+#' @param h_x_names A character vector of variable names to be balanced.
+#' @param true_ps (optional) A vector of true propensity scores. If provided, the IPW estimator
+#'        will also be computed using the true propensity scores.
+#'
+#' @return A list containing the following elements:
+#' \describe{
+#'   \item{\code{mu_ipw}}{The IPW estimator for the population mean \eqn{\mu_0} using estimated propensity scores.}
+#'   \item{\code{mu_ipw.true}}{The IPW estimator using the true propensity scores (if provided).}
+#'   \item{\code{se_ipw}}{The standard error of the IPW estimator using estimated propensity scores.}
+#'   \item{\code{se_ipw.true}}{The standard error of the IPW estimator using true propensity scores (if provided).}
+#'   \item{\code{ps.matrix}}{The matrix of estimated propensity scores for each observation and model.}
+#'   \item{\code{nu.hat}}{The estimated coefficients \eqn{\nu} from the ensemble method.}
+#'   \item{\code{w.hat}}{The estimated weights for the propensity score models.}
+#'   \item{\code{imbalance}}{A measure of imbalance provided by the ensemble propensity scores.}
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' ebmr <- EBMRAlgorithm$new(data = data)
+#' ipw_estimates <- ebmr$EBMR_IPW(h_x_names = covariates, true_ps = true_ps_data)
+#' print(ipw_estimates)
+#' }
 
 EBMR_IPW = function(h_x_names, W, se.fit = TRUE, true_ps = NULL, wt = NULL) {
   # Basic setup
@@ -185,18 +290,60 @@ EBMR_IPW = function(h_x_names, W, se.fit = TRUE, true_ps = NULL, wt = NULL) {
   return(result)
 }
 
+#' Compute the IPW Estimator with Locally Misspecified Model
+#'
+#' This function computes the Inverse Probability Weighting (IPW) estimator for
+#' the population mean \eqn{\mu_0}, incorporating a sensitivity analysis by
+#' perturbing a specified propensity score model using an exponential tilt model.
+#' The method allows users to assess the impact of local model misspecification
+#' on the estimator.
+#'
+#' @param ps.matrix A matrix of estimated propensity scores for each observation and model.
+#' @param perturb_ps An integer specifying the index of the propensity score model to be perturbed.
+#'        This model is typically assumed to be the well-specified model among the candidate models.
+#' @param exp_tilt A function defining the exponential tilt model.
+#' @param exp_tilt_x_names A character vector specifying the covariates used in the exponential tilt model.
+#'
+#' @return A list containing the following elements:
+#' \describe{
+#'   \item{\code{mu_ipw}}{The IPW estimator for the population mean \eqn{\mu_0} using the perturbed propensity scores.}
+#'   \item{\code{se_ipw}}{The standard error of the IPW estimator.}
+#'   \item{\code{ps.matrix}}{The updated matrix of estimated propensity scores after perturbation.}
+#'   \item{\code{nu.hat}}{The estimated coefficients \eqn{\nu} from the ensemble method.}
+#'   \item{\code{w.hat}}{The estimated weights for the propensity score models.}
+#'   \item{\code{imbalance}}{A measure of imbalance provided by the ensemble propensity scores.}
+#' }
+#'
+#' @details
+#' The function perturbs the designated propensity score model using an exponential tilt model,
+#' which is a sensitivity analysis technique for assessing local model misspecification. The
+#' impact of perturbation on the IPW estimator is then examined. The ensemble method is used
+#' to estimate the optimal weights for the propensity score models, ensuring balance across covariates.
+#'
+#' @examples
+#' \dontrun{
+#' ebmr <- EBMRAlgorithm$new(data = data)
+#' ipw_sensitivity <- ebmr$EBMR_IPW_with_locally_misspecified_model(
+#'   ps.matrix = estimated_ps_matrix,
+#'   perturb_ps = 2,
+#'   exp_tilt = function(y, data) exp(y * data$covariate),
+#'   exp_tilt_x_names = c("covariate")
+#' )
+#' print(ipw_sensitivity)
+#' }
+
 EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_tilt, exp_tilt_x_names, h_x_names){
   # Basic setup
   r = as.matrix(private$r)
   y = as.matrix(private$y)
   n = private$n
 
-  ################################################################################
+  #-----------------------------------------------------------------------------#
   # Perturb the designated propensity score model with the exponential tilt model
-  ################################################################################
+  #-----------------------------------------------------------------------------#
   J = ncol(ps.matrix)
   ps.matrix[, perturb_ps] = exp_tilt(y, self$data[, exp_tilt_x_names])*ps.matrix[, perturb_ps]
-  ################################################################################
+  #-----------------------------------------------------------------------------#
 
   #-----------------------------------------------------------------------------#
   # Ensemble step

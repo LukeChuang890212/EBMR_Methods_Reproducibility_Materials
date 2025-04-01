@@ -54,8 +54,9 @@ library(Matrix)
 library(dplyr)
 library(numDeriv)
 
-source("./R/WangShaoKim2014.r")
-source("./R/Methods.r")
+# source("./R/WangShaoKim2014.r")
+source("./R/GMM_functions.r")
+source("./R/test_Methods.r")
 source("./R/Preprocessor.r")
 source("./R/Fool_proofing.r")
 
@@ -122,6 +123,9 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
 #  ---------- Test ----------------
 ###################################
 
+# devtools::install_github("LukeChuang890212/EBMR_Methods_Reproducibility_Materials/EBMRalgorithm")
+# library(EBMRalgorithm)
+#
 # Chuang2023.1.1 = function(n){
 #   z1 = rbinom(n, size = 1, prob = 0.3)
 #   z2 = rnorm(n, mean = 0, sd = 2)
