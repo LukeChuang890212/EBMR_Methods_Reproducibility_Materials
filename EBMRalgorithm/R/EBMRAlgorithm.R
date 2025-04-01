@@ -66,35 +66,25 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                      ps_fit.list = list(),
                      WangShaoKim2014 = WangShaoKim2014,
                      EBMR_IPW = EBMR_IPW,
-                     WangShaoKim2014_perturb = WangShaoKim2014_perturb,
-                     EBMR_IPW_perturb = EBMR_IPW_perturb,
                      EBMR_IPW_with_locally_misspecified_model = EBMR_IPW_with_locally_misspecified_model,
 
                      # Constructor to initialize fields
-                     initialize = function(y_names, ps_specifications, data, is.perturb = FALSE, rgen = NULL) {
+                     initialize = function(y_names, ps_specifications, data, W, wt = NULL) {
                        self$data = private$check_data(y_names, data)
                        # self$EBMR_IPW = ifelse(is.perturb, EBMR_IPW_perturb, EBMR_IPW)
                        private$r = self$data$r
                        private$y = self$data[y_names]
                        private$n = nrow(self$data)
+                       private$J = length(ps_specifications$formula.list)
 
-                       J = length(ps_specifications$formula.list)
-                       # WangShaoKim2014 = ifelse(is.perturb, self$WangShaoKim2014_perturb, self$WangShaoKim2014)
-                       if(is.perturb){
-                         private$wt = rgen(private$n)
-                         # private$wt = private$wt/sum(private$wt)*private$n
-                         for(j in 1:J){
-                           formula = ps_specifications$formula.list[[j]]
-                           h_x_names = ps_specifications$h_x_names.list[[j]]
-                           inv_link = ps_specifications$inv_link
-                           self$ps_fit.list[[j]] = self$WangShaoKim2014_perturb(formula, h_x_names, inv_link)
-                         }
-                       }else{
-                         for(j in 1:J){
-                           formula = ps_specifications$formula.list[[j]]
-                           h_x_names = ps_specifications$h_x_names.list[[j]]
-                           inv_link = ps_specifications$inv_link
-                           self$ps_fit.list[[j]] = self$WangShaoKim2014(formula, h_x_names, inv_link)
+                       for(j in 1:private$J){
+                         formula = ps_specifications$formula.list[[j]]
+                         h_x_names = ps_specifications$h_x_names.list[[j]]
+                         inv_link = ps_specifications$inv_link
+                         if(is.null(wt)){
+                           self$ps_fit.list[[j]] = self$WangShaoKim2014(formula, h_x_names, inv_link, W)
+                         }else{
+                           self$ps_fit.list[[j]] = self$WangShaoKim2014(formula, h_x_names, inv_link, W, wt, se.fit = F)
                          }
                        }
 
@@ -108,14 +98,22 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                      r = NULL,
                      y = NULL,
                      n = NULL,
+                     J = NULL,
                      wt = NULL,
 
                      # private methods
                      check_data = check_data,
                      parse_formula = parse_formula,
                      separate_variable_types = separate_variable_types,
-                     estimate_nu = estimate_nu,
-                     estimate_nu_perturb = estimate_nu_perturb
+                     ensemble = ensemble,
+                     Phi_alpha = Phi_alpha,
+                     Phi_nu = Phi_nu,
+                     G = G,
+                     t_Gamma_i = t_Gamma_i,
+                     Gamma = Gamma,
+                     Gamma_2 = Gamma_2,
+                     obj = obj,
+                     gmm = gmm
                    )
 
 )
