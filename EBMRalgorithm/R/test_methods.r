@@ -80,8 +80,8 @@ WangShaoKim2014 = function(formula, h_x_names, inv_link, W, wt = NULL, se.fit = 
   if(!is.null(wt)) Phi_alpha = function(param) wt*private$Phi_alpha(param)
   gmm_fit = private$gmm(private$Phi_alpha, private$W, alpha_dim, init, se.fit)
 
-  results = list(coefficients = alpha.hat,
-                 fitted.values = fitted_values,
+  results = list(coefficients = gmm_fit$estimates,
+                 fitted.values = model(x, y, gmm_fit$estimates),
                  model = model,
                  model_x_names = model_x_names,
                  h_x = h_x,
