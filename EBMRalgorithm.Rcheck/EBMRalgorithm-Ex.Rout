@@ -92,6 +92,34 @@ Type 'q()' to quit R.
 > base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
 > base::cat("EBMR_IPW", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
+> nameEx("EBMR_IPW_with_locally_misspecified_model")
+> ### * EBMR_IPW_with_locally_misspecified_model
+> 
+> flush(stderr()); flush(stdout())
+> 
+> base::assign(".ptime", proc.time(), pos = "CheckExEnv")
+> ### Name: EBMR_IPW_with_locally_misspecified_model
+> ### Title: Compute the IPW Estimator with Locally Misspecified Model
+> ### Aliases: EBMR_IPW_with_locally_misspecified_model
+> 
+> ### ** Examples
+> 
+> ## Not run: 
+> ##D ebmr <- EBMRAlgorithm$new(data = data)
+> ##D ipw_sensitivity <- ebmr$EBMR_IPW_with_locally_misspecified_model(
+> ##D   ps.matrix = estimated_ps_matrix,
+> ##D   perturb_ps = 2,
+> ##D   exp_tilt = function(y, data) exp(y * data$covariate),
+> ##D   exp_tilt_x_names = c("covariate")
+> ##D )
+> ##D print(ipw_sensitivity)
+> ## End(Not run)
+> 
+> 
+> 
+> base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
+> base::cat("EBMR_IPW_with_locally_misspecified_model", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> cleanEx()
 > nameEx("WangShaoKim2014")
 > ### * WangShaoKim2014
 > 
@@ -104,6 +132,17 @@ Type 'q()' to quit R.
 > ### Aliases: WangShaoKim2014
 > 
 > ### ** Examples
+> 
+> ## Not run: 
+> ##D data <- data.frame(x = rnorm(100), y = rnorm(100), r = rbinom(100, 1, 0.5))
+> ##D ebmr <- EBMRAlgorithm$new(data = data)
+> ##D result <- ebmr$WangShaoKim2014(
+> ##D   formula = r ~ x,
+> ##D   h_x_names = c("x"),
+> ##D   inv_link = function(eta) 1 / (1 + exp(-eta))
+> ##D )
+> ##D print(result$coefficients)
+> ## End(Not run)
 > 
 > ## Not run: 
 > ##D data <- data.frame(x = rnorm(100), y = rnorm(100), r = rbinom(100, 1, 0.5))
@@ -147,15 +186,15 @@ Type 'q()' to quit R.
 > base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
 > base::cat("check_data", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
-> nameEx("estimate_nu")
-> ### * estimate_nu
+> nameEx("ensemble")
+> ### * ensemble
 > 
 > flush(stderr()); flush(stdout())
 > 
 > base::assign(".ptime", proc.time(), pos = "CheckExEnv")
-> ### Name: estimate_nu
+> ### Name: ensemble
 > ### Title: Estimate the Coefficients for the Propensity Score Model
-> ### Aliases: estimate_nu
+> ### Aliases: ensemble
 > ### Keywords: internal
 > 
 > ### ** Examples
@@ -169,7 +208,7 @@ Type 'q()' to quit R.
 > 
 > 
 > base::assign(".dptime", (proc.time() - get(".ptime", pos = "CheckExEnv")), pos = "CheckExEnv")
-> base::cat("estimate_nu", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
+> base::cat("ensemble", base::get(".format_ptime", pos = 'CheckExEnv')(get(".dptime", pos = "CheckExEnv")), "\n", file=base::get(".ExTimings", pos = 'CheckExEnv'), append=TRUE, sep="\t")
 > cleanEx()
 > nameEx("parse_formula")
 > ### * parse_formula
@@ -230,7 +269,7 @@ Type 'q()' to quit R.
 > cleanEx()
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  0.22 0.01 0.24 NA NA 
+Time elapsed:  1.44 0.06 1.51 NA NA 
 > grDevices::dev.off()
 null device 
           1 

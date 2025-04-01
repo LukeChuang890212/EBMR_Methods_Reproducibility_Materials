@@ -1,15 +1,16 @@
 Package: EBMRalgorithm
 Type: Package
 Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Who wrote it
+Version: 1.1.0
+Author: Ming-Ju Chuang
 Maintainer: The package maintainer <yourself@somewhere.net>
 Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+License: Hello
 Encoding: UTF-8
-Imports: R6, stringr, Matrix, dplyr, numDeriv,
+Imports: R6, stringr, Matrix, dplyr, numDeriv
+Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 NeedsCompilation: no
-Packaged: 2025-02-12 14:27:37 UTC; stat-pc
-Built: R 4.4.2; ; 2025-02-12 14:27:40 UTC; windows
+Packaged: 2025-04-01 16:27:40 UTC; stat-pc
+Built: R 4.4.2; ; 2025-04-01 16:28:01 UTC; windows

@@ -9,26 +9,33 @@
 * using options '--no-manual --as-cran'
 * checking for file 'EBMRalgorithm/DESCRIPTION' ... OK
 * checking extension type ... Package
-* this is package 'EBMRalgorithm' version '0.1.0'
+* this is package 'EBMRalgorithm' version '1.1.0'
 * package encoding: UTF-8
 * checking package namespace information ... OK
 * checking package dependencies ... OK
 * checking if this is a source package ... OK
 * checking if there is a namespace ... OK
 * checking for executable files ... OK
-* checking for hidden files and directories ... OK
+* checking for hidden files and directories ... NOTE
+Found the following hidden files and directories:
+  .RDataTmp
+  .RDataTmp1
+  .RDataTmp2
+These were most likely included in error. See section 'Package
+structure' in the 'Writing R Extensions' manual.
 * checking for portable file names ... OK
 * checking serialization versions ... OK
 * checking whether package 'EBMRalgorithm' can be installed ... OK
 * checking installed package size ... OK
 * checking package directory ... OK
-* checking for future file timestamps ... NOTE
-unable to verify current time
+* checking for future file timestamps ... OK
 * checking DESCRIPTION meta-information ... WARNING
 Non-standard license specification:
-  What license is it under?
+  Hello
 Standardizable: FALSE
-* checking top-level files ... OK
+* checking top-level files ... NOTE
+Non-standard file/directory found at top level:
+  'Methods.r'
 * checking for left-over files ... OK
 * checking index information ... OK
 * checking package subdirectories ... OK
@@ -41,8 +48,7 @@ Standardizable: FALSE
 * checking whether the namespace can be unloaded cleanly ... OK
 * checking loading without being on the library search path ... OK
 * checking dependencies in R code ... NOTE
-Namespaces in Imports field not imported from:
-  'Matrix' 'R6' 'dplyr' 'numDeriv' 'stringr'
+Namespace in Imports field not imported from: 'dplyr'
   All declared Imports should be used.
 * checking S3 generic/method consistency ... OK
 * checking replacement functions ... OK
@@ -50,47 +56,110 @@ Namespaces in Imports field not imported from:
 * checking R code for possible problems ... NOTE
 EBMR_IPW: no visible binding for global variable 'private'
 EBMR_IPW: no visible binding for global variable 'self'
-EBMR_IPW: no visible global function definition for 'jacobian'
-EBMR_IPW: no visible global function definition for '%>%'
-EBMR_IPW: no visible global function definition for 'bdiag'
 EBMR_IPW: no visible global function definition for 'var'
+EBMR_IPW_with_locally_misspecified_model: no visible binding for global
+  variable 'private'
+EBMR_IPW_with_locally_misspecified_model: no visible binding for global
+  variable 'self'
+EBMR_IPW_with_locally_misspecified_model: no visible binding for global
+  variable 'ps_fit.list'
+EBMR_IPW_with_locally_misspecified_model: no visible binding for global
+  variable 'se.fit'
+EBMR_IPW_with_locally_misspecified_model: no visible binding for global
+  variable 'wt'
+EBMR_IPW_with_locally_misspecified_model: no visible binding for global
+  variable 'alpha_dim'
+EBMR_IPW_with_locally_misspecified_model : <anonymous>: no visible
+  binding for global variable 'ps_model.list'
+EBMR_IPW_with_locally_misspecified_model: no visible binding for global
+  variable 'alpha.list'
+EBMR_IPW_with_locally_misspecified_model : <anonymous>: no visible
+  binding for global variable 'alpha_dim'
+EBMR_IPW_with_locally_misspecified_model: no visible global function
+  definition for 'var'
+EBMR_IPW_with_locally_misspecified_model: no visible binding for global
+  variable 'true_ps'
+G: no visible global function definition for 'g'
+G: no visible binding for global variable 'h_dim'
+Gamma: no visible binding for global variable 'private'
+Phi_alpha: no visible binding for global variable 'r'
+Phi_alpha: no visible global function definition for 'model'
+Phi_alpha: no visible binding for global variable 'x'
+Phi_alpha: no visible binding for global variable 'y'
+Phi_alpha: no visible binding for global variable 'h_x'
+Phi_nu: no visible binding for global variable 'r'
+Phi_nu: no visible binding for global variable 'ps.matrix'
+Phi_nu: no visible binding for global variable 'nu'
+Phi_nu: no visible binding for global variable 'h_x'
 WangShaoKim2014: no visible binding for global variable 'private'
 WangShaoKim2014: no visible binding for global variable 'self'
 WangShaoKim2014: no visible global function definition for
   'model.matrix'
 WangShaoKim2014: no visible global function definition for 'lm'
-WangShaoKim2014 : Gamma: no visible global function definition for
-  'jacobian'
-WangShaoKim2014: no visible global function definition for 'optim'
-WangShaoKim2014: no visible global function definition for 'var'
-WangShaoKim2014: no visible global function definition for 'qnorm'
-estimate_nu: no visible binding for global variable 'private'
-estimate_nu: no visible global function definition for 'model.matrix'
-estimate_nu: no visible global function definition for 'lm'
-estimate_nu : Gamma: no visible global function definition for
-  'jacobian'
-estimate_nu: no visible global function definition for 'optim'
-estimate_nu: no visible global function definition for 'var'
-estimate_nu: no visible global function definition for 'qnorm'
-parse_formula: no visible global function definition for 'str_extract'
+WangShaoKim2014 : Phi_alpha: no visible binding for global variable
+  'private'
+WangShaoKim2014_perturb: no visible binding for global variable
+  'private'
+WangShaoKim2014_perturb: no visible binding for global variable 'self'
+WangShaoKim2014_perturb: no visible global function definition for
+  'model.matrix'
+WangShaoKim2014_perturb: no visible global function definition for 'lm'
+WangShaoKim2014_perturb: no visible global function definition for
+  'optim'
+WangShaoKim2014_perturb: no visible global function definition for
+  'var'
+WangShaoKim2014_perturb: no visible global function definition for
+  'qnorm'
+ensemble: no visible binding for global variable 'private'
+ensemble: no visible binding for global variable 'self'
+ensemble: no visible global function definition for 'model.matrix'
+ensemble: no visible global function definition for 'lm'
+ensemble : Phi_nu: no visible binding for global variable 'private'
+gmm: no visible binding for global variable 'private'
+gmm: no visible global function definition for 'optim'
+gmm : obj: no visible binding for global variable 'private'
+gmm: no visible binding for global variable 'n'
+gmm: no visible global function definition for 'var'
+obj: no visible global function definition for 'g'
+obj: no visible binding for global variable 'private'
+t_Gamma_i: no visible binding for global variable 'n'
+t_Gamma_i: no visible binding for global variable 'h_dim'
+t_Gamma_i : <anonymous>: no visible global function definition for 'g'
 Undefined global functions or variables:
-  %>% bdiag jacobian lm model.matrix optim private qnorm self
-  str_extract var
+  alpha.list alpha_dim g h_dim h_x lm model model.matrix n nu optim
+  private ps.matrix ps_fit.list ps_model.list qnorm r se.fit self
+  true_ps var wt x y
 Consider adding
   importFrom("stats", "lm", "model.matrix", "optim", "qnorm", "var")
 to your NAMESPACE file.
-* checking Rd files ... NOTE
-prepare_Rd: estimate_nu.Rd:16-18: Dropping empty section \value
+* checking Rd files ... OK
 * checking Rd metadata ... OK
 * checking Rd line widths ... OK
 * checking Rd cross-references ... OK
 * checking for missing documentation entries ... OK
 * checking for code/documentation mismatches ... OK
-* checking Rd \usage sections ... OK
+* checking Rd \usage sections ... WARNING
+Undocumented arguments in Rd file 'EBMR_IPW.Rd'
+  'W' 'se.fit' 'wt'
+
+Undocumented arguments in Rd file 'EBMR_IPW_with_locally_misspecified_model.Rd'
+  'h_x_names'
+
+Undocumented arguments in Rd file 'WangShaoKim2014.Rd'
+  'W' 'wt' 'se.fit'
+
+Documented arguments not in \usage in Rd file 'ensemble.Rd':
+  'ps.matrix' 'h_x'
+
+Functions with \usage entries need to have the appropriate \alias
+entries, and all their arguments documented.
+The \usage entries must correspond to syntactically valid R code.
+See chapter 'Writing R documentation files' in the 'Writing R
+Extensions' manual.
 * checking Rd contents ... OK
 * checking for unstated dependencies in examples ... OK
 * checking examples ... OK
 * checking for non-standard things in the check directory ... OK
 * checking for detritus in the temp directory ... OK
 * DONE
-Status: 1 WARNING, 4 NOTEs
+Status: 2 WARNINGs, 4 NOTEs

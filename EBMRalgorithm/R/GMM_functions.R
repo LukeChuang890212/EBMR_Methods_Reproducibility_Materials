@@ -5,12 +5,12 @@ Phi_alpha = function(param){
 }
 
 Phi_nu = function(param){
-  rw = r/(ps.matrix%*%nu)
+  rw = r/(ps.matrix%*%param)
   g.matrix = as.vector(rw-1)*h_x
   return(g.matrix)
 }
 
-G = function(g, param){
+G = function(param){
   g.matrix = g(param)
   return(matrix(apply(g.matrix, 2, mean), h_dim, 1))
 }
@@ -40,12 +40,12 @@ obj = function(param){
 
 gmm = function(g, W, param_dim, init, se.fit = T){
   obj = private$obj
-  
+
   if(is.null(init)) init = rep(0, param_dim)
   sol_path = matrix(init, param_dim)
   conv_err = 10^8
   t = 1
-  
+
   while (conv_err > 10^(-8) & t < 1000){
     opt = optim(sol_path[, t], obj, method = "L-BFGS-B",
                 lower = rep(-Inf, param_dim), upper = rep(Inf, param_dim))
@@ -53,22 +53,22 @@ gmm = function(g, W, param_dim, init, se.fit = T){
     g.matrix = g(sol_path[,t+1]); W.hat = W(g.matrix);
     obj = function(param){
       g.matrix = g(param)
-      G.hat = private$G(g, param)
+      G.hat = private$G(param)
       value = t(G.hat)%*%W.hat%*%G.hat
       return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
     }
     conv_err = max(abs(sol_path[,t+1]-sol_path[, t]))
     t = t + 1
   }
-  
+
   estimates = sol_path[, t]
-  
+
   Gamma.hat = W.hat = g.matrix = eta_s = Q = h_x = NA
   if(se.fit){
     Gamma.hat = Gamma(estimates)
     g.matrix = g(estimates)
     W.hat = W(estimates)
-    
+
     eta_s = apply(g.matrix, 2, mean)
     M_n = kronecker(eta_s%*%W.hat, diag(param_dim))%*%Gamma_2(estimates)
     H_0n = -solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)
@@ -78,9 +78,9 @@ gmm = function(g, W, param_dim, init, se.fit = T){
     psi = solve(diag(param_dim)-H_0n%*%M_n)%*%H_0n%*%(H_1n+H_2n_2+H_2n_3)
     # psi_alpha = solve(diag(alpha_dim)-H_0n%*%M_n)%*%H_0n%*%(H_1n+H_2n_2+H_2n_3)
     cov.hat = var(t(psi))/n
-    se = sqrt(diag(cov.hat)) 
+    se = sqrt(diag(cov.hat))
   }
-  
+
   result = list(
     estimates = estimates,
     Gamma.hat = Gamma.hat,
@@ -90,6 +90,6 @@ gmm = function(g, W, param_dim, init, se.fit = T){
     Q = Q,
     h_x = h_x
   )
-  
+
   return(result)
 }
