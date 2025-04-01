@@ -76,11 +76,16 @@ WangShaoKim2014 = function(formula, h_x_names, inv_link, W, wt = NULL, se.fit = 
     inv_link(cbind(rep(1, n), y, x)%*%alpha)
   }
 
-  Phi_alpha = private$Phi_alpha
-  if(!is.null(wt)) Phi_alpha = function(param) wt*private$Phi_alpha(param)
-  gmm_fit = private$gmm(Phi_alpha, private$W, alpha_dim, init, se.fit)
+  Phi_alpha = function(param){
+    rw = r/model(x, y, param)
+    g.matrix = as.vector(rw-1)*h_x
+    return(g.matrix)
+  }
+  if(!is.null(wt)) Phi_alpha = function(param) wt*Phi_alpha(param)
+  gmm_fit = private$gmm(Phi_alpha, private$W, n, h_dim, alpha_dim, init, se.fit)
 
   results = list(coefficients = gmm_fit$estimates,
+                 se = gmm_fit$se,
                  fitted.values = model(x, y, gmm_fit$estimates),
                  model = model,
                  model_x_names = model_x_names,
@@ -147,9 +152,13 @@ ensemble = function(ps_fit.list, h_x_names, W, init = NULL, se.fit = T, wt = NUL
   h_x = cbind(d, h_x2)
   h_dim = ncol(h_x)
 
-  Phi_nu = private$Phi_nu
-  if(!is.null(wt)) Phi_nu = function(param) wt*private$Phi_nu(param)
-  gmm_fit = private$gmm(Phi_nu, private$W, J, init, se.fit)
+  Phi_nu = function(param){
+    rw = r/(ps.matrix%*%param)
+    g.matrix = as.vector(rw-1)*h_x
+    return(g.matrix)
+  }
+  if(!is.null(wt)) Phi_nu = function(param) wt*Phi_nu(param)
+  gmm_fit = private$gmm(Phi_nu, private$W, n, h_dim, J, init, se.fit)
 
   results = list(coefficients = gmm_fit$estimates,
                  h_x = h_x,
@@ -189,7 +198,7 @@ ensemble = function(ps_fit.list, h_x_names, W, init = NULL, se.fit = T, wt = NUL
 #' print(ipw_estimates)
 #' }
 
-EBMR_IPW = function(h_x_names, W, se.fit = TRUE, true_ps = NULL, wt = NULL) {
+EBMR_IPW = function(h_x_names, se.fit = TRUE, true_ps = NULL, wt = NULL) {
   # Basic setup
   r = as.matrix(private$r)
   y = as.matrix(private$y)

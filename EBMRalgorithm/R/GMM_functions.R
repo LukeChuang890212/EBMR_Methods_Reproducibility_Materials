@@ -1,45 +1,43 @@
-Phi_alpha = function(param){
-  rw = r/model(x, y, param)
-  g.matrix = as.vector(rw-1)*h_x
-  return(g.matrix)
-}
+# Phi_alpha = function(param){
+#   rw = r/model(x, y, param)
+#   g.matrix = as.vector(rw-1)*h_x
+#   return(g.matrix)
+# }
+#
+# Phi_nu = function(param){
+#   rw = r/(ps.matrix%*%param)
+#   g.matrix = as.vector(rw-1)*h_x
+#   return(g.matrix)
+# }
 
-Phi_nu = function(param){
-  rw = r/(ps.matrix%*%param)
-  g.matrix = as.vector(rw-1)*h_x
-  return(g.matrix)
-}
-
-G = function(param){
-  g.matrix = g(param)
-  return(matrix(apply(g.matrix, 2, mean), h_dim, 1))
-}
-
-t_Gamma_i = function(param){
-  Gamma.arr = array(NA, dim = c(n, length(param), h_dim))
-  for(l in 1:h_dim){
-    Gamma.arr[,,l] = jacobian(function(param) g(param)[, l], param)
+gmm = function(g, W, n, h_dim, param_dim, init, se.fit = T){
+  G = function(param){
+    g.matrix = g(param)
+    return(matrix(apply(g.matrix, 2, mean), h_dim, 1))
   }
-  return(Gamma.arr)
-}
 
-Gamma = function(param){
-  return(t(apply(private$t_Gamma_i(param), c(2, 3), mean)))
-}
+  t_Gamma_i = function(param){
+    Gamma.arr = array(NA, dim = c(n, param_dim, h_dim))
+    for(l in 1:h_dim){
+      Gamma.arr[,,l] = jacobian(function(param) g(param)[, l], param)
+    }
+    return(Gamma.arr)
+  }
 
-Gamma_2 = function(param){
-  return(jacobian(function(param) as.vector(t(Gamma(param))), param))
-}
+  Gamma = function(param){
+    return(t(apply(t_Gamma_i(param), c(2, 3), mean)))
+  }
 
-obj = function(param){
-  g.matrix = g(param)
-  G.hat = private$G(param)
-  value = t(G.hat)%*%G.hat
-  return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
-}
+  Gamma_2 = function(param){
+    return(jacobian(function(param) as.vector(t(Gamma(param))), param))
+  }
 
-gmm = function(g, W, param_dim, init, se.fit = T){
-  obj = private$obj
+  obj = function(param){
+    g.matrix = g(param)
+    G.hat = G(param)
+    value = t(G.hat)%*%G.hat
+    return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
+  }
 
   if(is.null(init)) init = rep(0, param_dim)
   sol_path = matrix(init, param_dim)
@@ -53,7 +51,7 @@ gmm = function(g, W, param_dim, init, se.fit = T){
     g.matrix = g(sol_path[,t+1]); W.hat = W(g.matrix);
     obj = function(param){
       g.matrix = g(param)
-      G.hat = private$G(param)
+      G.hat = G(param)
       value = t(G.hat)%*%W.hat%*%G.hat
       return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
     }
@@ -67,7 +65,7 @@ gmm = function(g, W, param_dim, init, se.fit = T){
   if(se.fit){
     Gamma.hat = Gamma(estimates)
     g.matrix = g(estimates)
-    W.hat = W(estimates)
+    W.hat = W(g.matrix)
 
     eta_s = apply(g.matrix, 2, mean)
     M_n = kronecker(eta_s%*%W.hat, diag(param_dim))%*%Gamma_2(estimates)
@@ -83,6 +81,7 @@ gmm = function(g, W, param_dim, init, se.fit = T){
 
   result = list(
     estimates = estimates,
+    se = se,
     Gamma.hat = Gamma.hat,
     W.hat = W.hat,
     g.matrix = g.matrix,

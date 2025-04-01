@@ -77,6 +77,7 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                        private$y = self$data[y_names]
                        private$n = nrow(self$data)
                        private$J = length(ps_specifications$formula.list)
+                       private$W = W
 
                        for(j in 1:private$J){
                          formula = ps_specifications$formula.list[[j]]
@@ -100,6 +101,7 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                      y = NULL,
                      n = NULL,
                      J = NULL,
+                     W = NULL,
                      wt = NULL,
 
                      # private methods
@@ -107,13 +109,13 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                      parse_formula = parse_formula,
                      separate_variable_types = separate_variable_types,
                      ensemble = ensemble,
-                     Phi_alpha = Phi_alpha,
-                     Phi_nu = Phi_nu,
-                     G = G,
-                     t_Gamma_i = t_Gamma_i,
-                     Gamma = Gamma,
-                     Gamma_2 = Gamma_2,
-                     obj = obj,
+                     # Phi_alpha = Phi_alpha,
+                     # Phi_nu = Phi_nu,
+                     # G = G,
+                     # t_Gamma_i = t_Gamma_i,
+                     # Gamma = Gamma,
+                     # Gamma_2 = Gamma_2,
+                     # obj = obj,
                      gmm = gmm
                    )
 
