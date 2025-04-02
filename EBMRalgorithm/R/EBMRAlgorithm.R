@@ -84,9 +84,9 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                          h_x_names = ps_specifications$h_x_names.list[[j]]
                          inv_link = ps_specifications$inv_link
                          if(is.null(wt)){
-                           self$ps_fit.list[[j]] = self$WangShaoKim2014(formula, h_x_names, inv_link, W)
+                           self$ps_fit.list[[j]] = self$WangShaoKim2014(formula, h_x_names, inv_link)
                          }else{
-                           self$ps_fit.list[[j]] = self$WangShaoKim2014(formula, h_x_names, inv_link, W, wt, se.fit = F)
+                           self$ps_fit.list[[j]] = self$WangShaoKim2014(formula, h_x_names, inv_link, wt, se.fit = F)
                          }
                        }
 

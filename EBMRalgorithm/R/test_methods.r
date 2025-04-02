@@ -40,7 +40,7 @@
 #'
 #' @references Wang, Shao, & Kim (2014). "An instrumental variable approach for identification and estimation with nonignorable nonresponse."
 
-WangShaoKim2014 = function(formula, h_x_names, inv_link, W, wt = NULL, se.fit = T, init = NULL) {
+WangShaoKim2014 = function(formula, h_x_names, inv_link, wt = NULL, se.fit = T, init = NULL) {
   # Basic setup
   result = private$parse_formula(formula)
   r = as.matrix(self$data[result$r_names])
@@ -127,7 +127,7 @@ WangShaoKim2014 = function(formula, h_x_names, inv_link, W, wt = NULL, se.fit = 
 #' print(nu_estimates)
 #' }
 
-ensemble = function(ps_fit.list, h_x_names, W, init = NULL, se.fit = T, wt = NULL) {
+ensemble = function(ps.matrix, h_x_names, init = NULL, se.fit = T, wt = NULL) {
   # Basic setup
   r = as.matrix(private$r)
   n = private$n
@@ -220,7 +220,7 @@ EBMR_IPW = function(h_x_names, se.fit = TRUE, true_ps = NULL, wt = NULL) {
   #-----------------------------------------------------------------------------#
   # Ensemble step
   #-----------------------------------------------------------------------------#
-  ensemble_fit = ensemble(ps_fit.list, h_x_names, private$W, init = rep(1/J, J), se.fit)
+  ensemble_fit = private$ensemble(ps.matrix, h_x_names, init = rep(1/J, J), se.fit)
   nu.hat = ensemble_fit$coefficients
   w.hat = nu.hat^2/sum(nu.hat^2)
   ensemble_ps = ps.matrix%*%w.hat
@@ -253,13 +253,13 @@ EBMR_IPW = function(h_x_names, se.fit = TRUE, true_ps = NULL, wt = NULL) {
     w.H_nu = apply(ps.matrix%*%t(dot_W_nu_hat)*as.vector(r*y*((ensemble_ps)^(-2))), 2, mean)
 
     psi_alpha = do.call(rbind, lapply(ps_fit.list, function(ps_fit) ps_fit$gmm_fit$psi))
-    psi_nu = ensemble_fit$gmm_fit$psi_nu
+    psi_nu = ensemble_fit$gmm_fit$psi
 
     Gamma_nu = ensemble_fit$gmm_fit$Gamma.hat
     W_nu = ensemble_fit$gmm_fit$W.hat
     f_n = ensemble_fit$gmm_fit$g.matrix
-    h_nu = ensemble_fit$gmm_fit$h_x
     eta_s = ensemble_fit$gmm_fit$eta_s
+    h_nu = ensemble_fit$h_x
     K_1 = t(Gamma_nu)%*%W_nu%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2))))/n)
     K_2_1 = (t(dot_pi)*rep(nu.hat, alpha_dim))%*%(as.vector(2*((ps.matrix%*%nu.hat)^(-3)))*as.vector(r*h_nu%*%W_nu%*%eta_s)*ps.matrix)/n
     K_2_2 = apply(as.vector((ps.matrix%*%nu.hat)^(-2))*as.vector(r*h_nu%*%W_nu%*%eta_s)*dot_pi, 2, mean)

@@ -61,7 +61,7 @@ gmm = function(g, W, n, h_dim, param_dim, init, se.fit = T){
 
   estimates = sol_path[, t]
 
-  Gamma.hat = W.hat = g.matrix = eta_s = Q = h_x = NA
+  Gamma.hat = W.hat = g.matrix = eta_s = Q = h_x = psi = NA
   if(se.fit){
     Gamma.hat = Gamma(estimates)
     g.matrix = g(estimates)
@@ -73,7 +73,8 @@ gmm = function(g, W, n, h_dim, param_dim, init, se.fit = T){
     H_1n = t(Gamma.hat)%*%W.hat%*%(t(g.matrix)-eta_s)
     H_2n_2 = apply(t_Gamma_i(estimates), 1, function(m) (m-t(Gamma.hat))%*%W.hat%*%eta_s)
     H_2n_3 = sapply(1:n, function(i) t(Gamma.hat)%*%(g.matrix[i, ]%*%t(g.matrix[i, ])-W.hat)%*%eta_s)
-    psi = solve(diag(param_dim)-H_0n%*%M_n)%*%H_0n%*%(H_1n+H_2n_2+H_2n_3)
+    Q = solve(diag(param_dim)-H_0n%*%M_n)%*%H_0n
+    psi = Q%*%(H_1n+H_2n_2+H_2n_3)
     # psi_alpha = solve(diag(alpha_dim)-H_0n%*%M_n)%*%H_0n%*%(H_1n+H_2n_2+H_2n_3)
     cov.hat = var(t(psi))/n
     se = sqrt(diag(cov.hat))
@@ -87,7 +88,8 @@ gmm = function(g, W, n, h_dim, param_dim, init, se.fit = T){
     g.matrix = g.matrix,
     eta_s = eta_s,
     Q = Q,
-    h_x = h_x
+    h_x = h_x,
+    psi = psi
   )
 
   return(result)
