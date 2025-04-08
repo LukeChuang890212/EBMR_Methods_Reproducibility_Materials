@@ -61,7 +61,7 @@ gmm = function(g, W, n, h_dim, param_dim, init, se.fit = T){
 
   estimates = sol_path[, t]
 
-  Gamma.hat = W.hat = g.matrix = eta_s = Q = h_x = psi = NA
+  Gamma.hat = W.hat = g.matrix = eta_s = Q = h_x = psi = se = NA
   if(se.fit){
     Gamma.hat = Gamma(estimates)
     g.matrix = g(estimates)

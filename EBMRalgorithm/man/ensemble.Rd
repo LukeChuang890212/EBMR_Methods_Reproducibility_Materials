@@ -4,12 +4,12 @@
 \alias{ensemble}
 \title{Estimate the Coefficients for the Propensity Score Model}
 \usage{
-ensemble(ps_fit.list, h_x_names, W, init = NULL, se.fit = T, wt = NULL)
+ensemble(ps.matrix, h_x_names, init = NULL, se.fit = T, wt = NULL)
 }
 \arguments{
-\item{init}{(optional) A vector of initial values for the optimization. Default is \eqn{\bf{0}}.}
-
 \item{ps.matrix}{A matrix of propensity scores for each observation and model.}
+
+\item{init}{(optional) A vector of initial values for the optimization. Default is \eqn{\bf{0}}.}
 
 \item{h_x}{A matrix of covariates, which includes both continuous and discrete variables.}
 }

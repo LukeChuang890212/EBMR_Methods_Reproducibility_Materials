@@ -341,7 +341,7 @@ EBMR_IPW = function(h_x_names, se.fit = TRUE, true_ps = NULL, wt = NULL) {
 #' print(ipw_sensitivity)
 #' }
 
-EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_tilt, exp_tilt_x_names, h_x_names){
+EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_tilt, exp_tilt_x_names, h_x_names, se.fit = FALSE){
   # Basic setup
   r = as.matrix(private$r)
   y = as.matrix(private$y)
@@ -357,7 +357,7 @@ EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_t
   #-----------------------------------------------------------------------------#
   # Ensemble step
   #-----------------------------------------------------------------------------#
-  ensemble_fit = ensemble(ps_fit.list, h_x_names, private$W, init = rep(1/J, J), se.fit)
+  ensemble_fit = private$ensemble(ps.matrix, h_x_names, init = rep(1/J, J), se.fit)
   nu.hat = ensemble_fit$coefficients
   w.hat = nu.hat^2/sum(nu.hat^2)
   ensemble_ps = ps.matrix%*%w.hat
@@ -367,7 +367,7 @@ EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_t
   # IPW estimator for the population mean mu_0 with propensity score being estimated
   # by the methods of Wang, Shao and Kim (2014).
   #-----------------------------------------------------------------------------#
-  mu_ipw = ifelse(is.null(wt), mean(r/ensemble_ps*y), mean(wt*r/ensemble_ps*y))
+  mu_ipw = mean(r/ensemble_ps*y)
   se_ipw = NA
   if(se.fit){
     #--------------------------------------------------------------------------#
@@ -390,13 +390,13 @@ EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_t
     w.H_nu = apply(ps.matrix%*%t(dot_W_nu_hat)*as.vector(r*y*((ensemble_ps)^(-2))), 2, mean)
 
     psi_alpha = do.call(rbind, lapply(ps_fit.list, function(ps_fit) ps_fit$gmm_fit$psi))
-    psi_nu = ensemble_fit$gmm_fit$psi_nu
+    psi_nu = ensemble_fit$gmm_fit$psi
 
     Gamma_nu = ensemble_fit$gmm_fit$Gamma.hat
     W_nu = ensemble_fit$gmm_fit$W.hat
     f_n = ensemble_fit$gmm_fit$g.matrix
-    h_nu = ensemble_fit$gmm_fit$h_x
     eta_s = ensemble_fit$gmm_fit$eta_s
+    h_nu = ensemble_fit$h_x
     K_1 = t(Gamma_nu)%*%W_nu%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2))))/n)
     K_2_1 = (t(dot_pi)*rep(nu.hat, alpha_dim))%*%(as.vector(2*((ps.matrix%*%nu.hat)^(-3)))*as.vector(r*h_nu%*%W_nu%*%eta_s)*ps.matrix)/n
     K_2_2 = apply(as.vector((ps.matrix%*%nu.hat)^(-2))*as.vector(r*h_nu%*%W_nu%*%eta_s)*dot_pi, 2, mean)
@@ -412,22 +412,8 @@ EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_t
   }
   #-----------------------------------------------------------------------------#
 
-  #-----------------------------------------------------------------------------#
-  # IPW estimator for the population mean mu_0 with known propensity score.
-  #-----------------------------------------------------------------------------#
-  mu_ipw.true = NA
-  se_ipw.true = NA
-  if(!is.null(true_ps)){
-    mu_ipw.true = mean(r/true_ps*y)
-    mu_ipw.true.iid = as.vector(r/true_ps*y)
-    se_ipw.true = sqrt(var(mu_ipw.true.iid)/n)
-  }
-  #-----------------------------------------------------------------------------#
-
   result = list(mu_ipw = mu_ipw,
-                mu_ipw.true = mu_ipw.true,
                 se_ipw = se_ipw,
-                se_ipw.true = se_ipw.true,
                 ps.matrix = ps.matrix,
                 nu.hat = nu.hat,
                 w.hat = w.hat

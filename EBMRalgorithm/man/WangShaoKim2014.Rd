@@ -8,7 +8,6 @@ WangShaoKim2014(
   formula,
   h_x_names,
   inv_link,
-  W,
   wt = NULL,
   se.fit = T,
   init = NULL
@@ -18,7 +17,6 @@ WangShaoKim2014(
   formula,
   h_x_names,
   inv_link,
-  W,
   wt = NULL,
   se.fit = T,
   init = NULL

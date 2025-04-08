@@ -1,7 +1,6 @@
 #------------------------------------------------------------------------------#
 # Basic Setup ----
 #------------------------------------------------------------------------------#
-setwd("C:/Users/stat-pc/Desktop/NTHU_Research/EBMR_Methods_Reproducibility_Materials/Simulation_Studies")
 data_root = "E:/Other computers/我的電腦/MNAR-Simulation/MNAR_2023/ChuangData_SM/"
 replicate_num = 1000
 ps_model.true = function(y, u1, u2, r, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
@@ -36,6 +35,14 @@ correct_model_all_data_file.list = list(
     miss30 =list(
       paste0(data_root, "Setting3.A2_n1000_replicate1000.RDS")
     )
+  ),
+  setting4 = list(
+    miss50 =list(
+      paste0(data_root, "Setting4.A1_n1000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Setting4.A2_n1000_replicate1000.RDS")
+    )
   )
 )
 
@@ -69,6 +76,16 @@ misspecified_model_all_data_file.list = list(
       paste0(data_root, "Setting3.B2_n1000_replicate1000.RDS"),
       paste0(data_root, "Setting3.B2_n300_replicate1000.RDS")
     )
+  ),
+  setting4 = list(
+    miss50 =list(
+      paste0(data_root, "Setting4.B1_n1000_replicate1000.RDS"),
+      paste0(data_root, "Setting4.B1_n300_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Setting4.B2_n1000_replicate1000.RDS"),
+      paste0(data_root, "Setting4.B2_n300_replicate1000.RDS")
+    )
   )
 )
 
@@ -92,10 +109,10 @@ correct_model_alpha.true.list = list(
   ),
   setting3 = list(
     miss50 =list(
-      setting2_1 = c(-0.2, 0.1, 0.1, 0.1)
+      setting3_1 = c(-0.2, 0.1, 0.1, 0.1)
     ),
     miss30 =list(
-      setting2_2 = c(-1.1, 0.1, 0.1, 0.1)
+      setting3_2 = c(-1.1, 0.1, 0.1, 0.1)
     )
   )
 )
@@ -123,12 +140,12 @@ misspecified_model_alpha.true.list = list(
   ),
   setting3 = list(
     miss50 =list(
-      setting2_1_mild_1000 = c(-0.15, 0.1, 0.1, 0.1),
-      setting2_1_mild_300 = c(-0.15, 0.1, 0.1, 0.1)
+      setting3_1_mild_1000 = c(-0.15, 0.1, 0.1, 0.1),
+      setting3_1_mild_300 = c(-0.15, 0.1, 0.1, 0.1)
     ),
     miss30 =list(
-      setting2_2_mild_1000 = c(-0.9, 0.1, 0.1, 0.1),
-      setting2_2_mild_300 = c(-0.9, 0.1, 0.1, 0.1)
+      setting3_2_mild_1000 = c(-0.9, 0.1, 0.1, 0.1),
+      setting3_2_mild_300 = c(-0.9, 0.1, 0.1, 0.1)
     )
   )
 )

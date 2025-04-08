@@ -21,7 +21,8 @@ simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, r
   parallel_packages = c("EBMRalgorithm", "stringr", "Matrix", "numDeriv")
 
   start = Sys.time()
-  sim_result = foreach(i= 1:replicate_num, .combine = 'cbind', .options.snow = opts, .packages = parallel_packages, .export = c("WangShaoKim2014", "EBMR_IPW", "estimate_nu", "ensemble", "parse_formula", "separate_variable_types")) %dopar% {
+  # sim_result = foreach(i= 1:replicate_num, .combine = 'cbind', .options.snow = opts, .packages = parallel_packages, .export = c("WangShaoKim2014", "EBMR_IPW", "estimate_nu", "ensemble", "parse_formula", "separate_variable_types")) %dopar% {
+  sim_result = foreach(i= 1:replicate_num, .combine = 'cbind', .options.snow = opts, .packages = parallel_packages) %dopar% {
     tryCatch({
       dat = all_data[((i-1)*n+1):(i*n), ]
 
@@ -35,30 +36,35 @@ simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, r
         return(solve(t(g.matrix)%*%g.matrix/n))
       }
 
-      ps_fit.list = list()
-      J = length(ps_specifications$formula.list)
-      for(j in 1:J){
-        formula = ps_specifications$formula.list[[j]]
-        h_x_names = ps_specifications$h_x_names.list[[j]]
-        inv_link = ps_specifications$inv_link
-        ps_fit.list[[j]] = WangShaoKim2014(formula, h_x_names, inv_link, W, data = dat)
-      }
-
-      # j = 1
-      # formula = ps_specifications$formula.list[[j]]
-      # h_x_names = ps_specifications$h_x_names.list[[j]]
-      # inv_link = ps_specifications$inv_link
-      # ps_fit.list[[j]] = WangShaoKim2014(formula, h_x_names, inv_link, data = dat)
-      # ps_fit.list[[j]]$coefficients
-      # ps_fit.list[[j]]$se
-
-      result = EBMR_IPW(h_x_names = c("u1", "u2"), W, dat, se.fit = TRUE,
-                        true_ps = ps_model.true(dat$y, dat$u1, dat$u2, dat$r, alpha.true))
+      ebmr = EBMRAlgorithm$new("y", ps_specifications, dat, W)
+      result = ebmr$EBMR_IPW(h_x_names = c("u1", "u2"),
+                             true_ps =  ps_model.true(dat$y, dat$u1, dat$u2, dat$r, alpha.true))
       estimates = unlist(result[1:4])
 
+      # ps_fit.list = list()
+      # J = length(ps_specifications$formula.list)
+      # for(j in 1:J){
+      #   formula = ps_specifications$formula.list[[j]]
+      #   h_x_names = ps_specifications$h_x_names.list[[j]]
+      #   inv_link = ps_specifications$inv_link
+      #   ps_fit.list[[j]] = WangShaoKim2014(formula, h_x_names, inv_link, W, data = dat)
+      # }
+      #
+      # # j = 1
+      # # formula = ps_specifications$formula.list[[j]]
+      # # h_x_names = ps_specifications$h_x_names.list[[j]]
+      # # inv_link = ps_specifications$inv_link
+      # # ps_fit.list[[j]] = WangShaoKim2014(formula, h_x_names, inv_link, data = dat)
+      # # ps_fit.list[[j]]$coefficients
+      # # ps_fit.list[[j]]$se
+      #
+      # result = EBMR_IPW(h_x_names = c("u1", "u2"), W, dat, se.fit = TRUE,
+      #                   true_ps = ps_model.true(dat$y, dat$u1, dat$u2, dat$r, alpha.true))
+      # estimates = unlist(result[1:4])
+
       c(estimates,
-        alpha.hat = unlist(lapply(ps_fit.list, function(ps_fit) ps_fit$coefficients)),
-        se_alpha.hat = unlist(lapply(ps_fit.list, function(ps_fit) ps_fit$se)),
+        alpha.hat = unlist(lapply(ebmr$ps_fit.list, function(ps_fit) ps_fit$coefficients)),
+        se_alpha.hat = unlist(lapply(ebmr$ps_fit.list, function(ps_fit) ps_fit$se)),
         nu.hat = result$nu.hat,
         w.hat = result$w.hat
       )
@@ -265,6 +271,7 @@ summarize_all_settings_with_all_missing_rates = function(settings,
                                                          J,
                                                          n.vector,
                                                          all_data_file.list,
+                                                         alpha_true.list,
                                                          version,
                                                          is.original = TRUE){
   summary_tbls = list()
@@ -272,12 +279,13 @@ summarize_all_settings_with_all_missing_rates = function(settings,
     setting = settings[j]
     results_with_all_missing_rates = matrix(NA, 8*length(n.vector), 5*length(missing_rates))
     mu.true = mean(readRDS(all_data_file.list[[setting]][[1]][[1]])$y)
-    for(i in 1:length((missing_rates))){
+    for(i in 1:length(missing_rates)){
+      missing_rate = missing_rates[i]
       results_with_all_missing_rates[, ((i-1)*5+1):((i-1)*5+5)] = summarize_all_model_combinations_and_sample_sizes(
         setting = setting,
         scenario = scenario,
         J = J,
-        missing_rate = missing_rates[i],
+        missing_rate = missing_rate,
         n.vector = n.vector,
         replicate_num = replicate_num,
         mu.true = mu.true,
@@ -285,7 +293,7 @@ summarize_all_settings_with_all_missing_rates = function(settings,
         version = version
       )
     }
-    estimator_names= rep(c("$\\Tilde{\\mu}$",
+    estimator_names= rep(c("$\\tilde{\\mu}$",
                            "$\\hat{\\mu}_{100}$", "$\\hat{\\mu}_{010}$", "$\\hat{\\mu}_{001}$",
                            "$\\hat{\\mu}_{110}$", "$\\hat{\\mu}_{101}$", "$\\hat{\\mu}_{011}$",
                            "$\\hat{\\mu}_{111}$"), length(n.vector))
@@ -294,19 +302,29 @@ summarize_all_settings_with_all_missing_rates = function(settings,
       as.data.frame
     colnames(results_with_all_missing_rates) = c("", rep(c("Bias", "ESD", "ESE", "MSE", "CP"), length(missing_rates)))
 
-    # print(results_with_all_missing_rates)
-    
-    # print(
-    #   kable(results_with_all_missing_rates, align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
-    #         caption = paste(setting, "/ scenario", scenario)) %>%
-    #     kable_styling(full_width = FALSE, latex_options = c("hold_position")) %>%
-    #     add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5))
-    # )
-    
-    summary_tbls[[j]] = kable(results_with_all_missing_rates, align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
-                              caption = paste(setting, "/ scenario", scenario)) %>%
-      kable_styling(full_width = FALSE, latex_options = c("hold_position", "scale_down")) %>%
-      add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5))
+    print(kable(results_with_all_missing_rates, format = "latex", align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
+                caption = paste0(
+                  "Comparison between different estimators under the Scenario ", scenario,
+                  " of Setting ", substr(setting, 8, 8),
+                  " with $\\mu_0$ approximately ", round(mu.true, 3), ". ",
+                  "The $\\bm{\\alpha}_0$ in $\\pi(\\bm{U}, Y; \\bm{\\alpha}_0)$ that leads to $50\\%$ of missingness in $Y$ is $(",
+                  paste(alpha_true.list[[setting]][[1]][[1]], collapse = ", "), ")^{\\top}$ and that leads to $30\\%$ of missingness is $(",
+                  paste(alpha_true.list[[setting]][[2]][[1]], collapse = ", "), ")^{\\top}$."
+                )) %>%
+            kable_styling(full_width = FALSE, latex_options = c("hold_position", "scale_down")) %>%
+            add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5)))
+
+    # summary_tbls[[j]] = kable(results_with_all_missing_rates, format = "latex", align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
+    #                           caption = paste0(
+    #                             "Comparison between different estimators under the Scenario ", scenario,
+    #                             " of Setting ", substr(setting, 8, 8),
+    #                             " with $\\mu_0$ approximately ", round(mu.true, 3), ". ",
+    #                             "The $\\bm{\\alpha}_0$ in $\\pi(\\bm{U}, Y; \\bm{\\alpha}_0)$ that leads to $50\\%$ of missingness in $Y$ is $(",
+    #                             paste(alpha_true.list[[setting]][[1]][[1]], collapse = ", "), ")^{\\top}$ and that leads to $30\\%$ of missingness is $(",
+    #                             paste(alpha_true.list[[setting]][[2]][[1]], collapse = ", "), ")^{\\top}$."
+    #                           )) %>%
+    #   kable_styling(full_width = FALSE, latex_options = c("hold_position", "scale_down")) %>%
+    #   add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5))
   }
   return(summary_tbls)
 }

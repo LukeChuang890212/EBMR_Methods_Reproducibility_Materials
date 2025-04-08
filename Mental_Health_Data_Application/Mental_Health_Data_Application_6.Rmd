@@ -29,7 +29,7 @@ output:
 options(knitr.kable.NA = '')
 knitr::opts_chunk$set(echo = FALSE, fig.height = 10, fig.width = 16, fig.align = "center")
 
-devtools::install_github("LukeChuang890212/EBMR_Methods_Reproducibility_Materials/EBMRalgorithm")
+# devtools::install_github("LukeChuang890212/EBMR_Methods_Reproducibility_Materials/EBMRalgorithm")
 library(EBMRalgorithm)
 # library(torch)
 
@@ -119,7 +119,7 @@ bootstrap = function(full_ps_specifications, W, data, B){
   opts = list(progress = progress)
   parallel_packages = c("EBMRalgorithm", "stringr", "Matrix", "numDeriv")
   
-  boot_result = foreach(i= 1:B, .combine = 'cbind', .options.snow = opts, .packages = parallel_packages, .export = c("WangShaoKim2014", "EBMR_IPW", "estimate_nu", "ensemble", "parse_formula", "separate_variable_types", "effect.f", "delta_method")) %dopar% {
+  boot_result = foreach(i= 1:B, .combine = 'cbind', .options.snow = opts, .packages = parallel_packages, .export = c("effect.f", "delta_method")) %dopar% {
     result = tryCatch({
       indices = sample(1:n, replace = TRUE)
       boot_dat = data[indices,]
@@ -144,17 +144,21 @@ bootstrap = function(full_ps_specifications, W, data, B){
           w.hat = nu.hat = c()
           for(l in 1:2){
             sub_boot_dat = boot_dat[boot_dat$health == (l-1),]
-            ps_fit.list = list()
-            J = length(ps_specifications$formula.list)
-            for(j in 1:J){
-              formula = ps_specifications$formula.list[[j]]
-              h_x_names = ps_specifications$h_x_names.list[[j]]
-              inv_link = ps_specifications$inv_link
-              ps_fit.list[[j]] = WangShaoKim2014(formula, h_x_names, inv_link, W = W, data = sub_boot_dat)
-            }
-            
-            # if(model_num == 3) print(ps_fit.list[[2]]$coefficients)
-            result = EBMR_IPW(h_x_names = c("father", "parent_report"), W = W, data = sub_boot_dat, se.fit = TRUE)
+            ebmr = EBMRAlgorithm$new("teacher_report", ps_specifications, sub_boot_dat, W)
+            result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report"),
+                                   true_ps =  NULL)
+      
+            # ps_fit.list = list()
+            # J = length(ps_specifications$formula.list)
+            # for(j in 1:J){
+            #   formula = ps_specifications$formula.list[[j]]
+            #   h_x_names = ps_specifications$h_x_names.list[[j]]
+            #   inv_link = ps_specifications$inv_link
+            #   ps_fit.list[[j]] = WangShaoKim2014(formula, h_x_names, inv_link, W = W, data = sub_boot_dat)
+            # }
+            # 
+            # # if(model_num == 3) print(ps_fit.list[[2]]$coefficients)
+            # result = EBMR_IPW(h_x_names = c("father", "parent_report"), W = W, data = sub_boot_dat, se.fit = TRUE)
             
             p.hat[l] = result$mu_ipw
             p_cc[l] = mean(sub_boot_dat$teacher_report[sub_boot_dat$r == 1])
@@ -399,18 +403,23 @@ for(model_num in 1:3){
           inv_link = full_ps_specifications$inv_link
         )
       
-      ps_fit.list = list()
-      J = length(ps_specifications$formula.list)
-      for(j in 1:J){
-       formula = ps_specifications$formula.list[[j]]
-       h_x_names = ps_specifications$h_x_names.list[[j]]
-       inv_link = ps_specifications$inv_link
-       ps_fit.list[[j]] = WangShaoKim2014(formula, h_x_names, inv_link, W = W, data = subdat)
-      }
-
-      result = EBMR_IPW(h_x_names = c("father", "parent_report"), W = W, data = subdat)
-      data = subdat
-      h_x = data[h_x_names]
+      # ps_fit.list = list()
+      # J = length(ps_specifications$formula.list)
+      # for(j in 1:J){
+      #  formula = ps_specifications$formula.list[[j]]
+      #  h_x_names = ps_specifications$h_x_names.list[[j]]
+      #  inv_link = ps_specifications$inv_link
+      #  ps_fit.list[[j]] = WangShaoKim2014(formula, h_x_names, inv_link, W = W, data = subdat)
+      # }
+      # 
+      # result = EBMR_IPW(h_x_names = c("father", "parent_report"), W = W, data = subdat)
+      # data = subdat
+      # h_x = data[h_x_names]
+      
+      ebmr = EBMRAlgorithm$new("teacher_report", ps_specifications, subdat, W)
+            result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report"),
+                                   true_ps =  NULL)
+      
       # print(unlist(result[1:4]))
       # print(ps_fit.list[[1]]$coefficients)
       # print(ps_fit.list[[1]]$se)
@@ -433,7 +442,7 @@ for(model_num in 1:3){
       # print(as.vector(result$w.hat))
       # print(cor(result$ps.matrix))
 
-      save_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", model_set, "_W_optimal_OR6.RDS"), collapse = "")
+      save_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", model_set, "_W_optimal_OR7.RDS"), collapse = "")
       saveRDS(result, save_file)
     }
   }
@@ -447,19 +456,19 @@ for(model_num in 1:3){
 dat$y = dat$teacher_report
 
   
-boot_result = perturb_bootstrap(full_ps_specifications, W, dat, B)
-# boot_result = bootstrap(full_ps_specifications, W, dat, B)
+# boot_result = perturb_bootstrap(full_ps_specifications, W, dat, B)
+boot_result = bootstrap(full_ps_specifications, W, dat, B)
 # boot_result = parametric_bootstrap(outcome_distr, full_ps_specifications, W, dat, B)
-save.file = paste0(c("MHD_results/EBMR_IPW_perturb_bootstrap_W_optimal_OR6.RDS"), collapse = "")
+save.file = paste0(c("MHD_results/EBMR_IPW_bootstrap_W_optimal_OR7.RDS"), collapse = "")
 # save.file = paste0(c("MHD_results/EBMR_IPW_perturb_bootstrap_W_identity_OR9.RDS"), collapse = "")
 # save.file = paste0(c("MHD_results/EBMR_IPW_perturb_bootstrap_W_identity_OR10.RDS"), collapse = "")
-# if(file.exists(save.file)){
-#   boot_result = cbind(readRDS(save.file), boot_result)
-#   saveRDS(boot_result, save.file)
-# }else{
-#   saveRDS(boot_result, save.file)
-# }
-saveRDS(boot_result, save.file)
+if(file.exists(save.file)){
+  boot_result = cbind(readRDS(save.file), boot_result)
+  saveRDS(boot_result, save.file)
+}else{
+  saveRDS(boot_result, save.file)
+}
+# saveRDS(boot_result, save.file)
 print(sum(is.na(boot_result[1,])))
 print(apply(boot_result, 1, mean, na.rm = T))
 print(apply(boot_result, 1, sd, na.rm = T))
@@ -487,10 +496,10 @@ for(model_num in 1:3){
     all_estimates = matrix(NA, length(health), 2)
     model_set = model_combinations[, i]
     # if((4 %in% model_set0) || !(1 %in% model_set0)) next
-    result0 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[1], "_", model_set, "_W_optimal_OR6.RDS"), collapse = ""))
+    result0 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[1], "_", model_set, "_W_optimal_OR7.RDS"), collapse = ""))
     all_estimates[1, ] = unlist(result0[c(1, 3)])
 
-    result1 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[2], "_", model_set, "_W_optimal_OR6.RDS"), collapse = ""))
+    result1 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[2], "_", model_set, "_W_optimal_OR7.RDS"), collapse = ""))
     all_estimates[2, ] = unlist(result1[c(1, 3)])
 
     effect = effect.f(all_estimates[1, 1], all_estimates[2, 1])
@@ -533,7 +542,7 @@ make_nu_labels <- function(num_str) {
   parse(text = paste0("nu[", nums, "]"))
 }
 
-boot_result = readRDS(paste0(c("MHD_results/EBMR_IPW_bootstrap_W_optimal_OR6.RDS"), collapse = ""))
+boot_result = readRDS(paste0(c("MHD_results/EBMR_IPW_bootstrap_W_optimal_OR7.RDS"), collapse = ""))
 model_combinations = c("1", "2", "3", "12", "13", "23", "123")
 boot_effect_se = rep(NA, 8)
 # boot_se_se = rep(NA, 8)
@@ -753,21 +762,18 @@ xi.vector.list = list(
 ```
 
 ```{r}
-for(k in 1:length(health)){
-  subdat = dat[dat$health == health[k], ]
+for(k in 1:2){
+  subdat = dat[dat$health == k-1, ]
   xi.vector = xi.vector.list[[k]]
   for(xi in xi.vector){
     print(c(xi, k))
       
-    full_ps_specifications = full_ps_specifications.list[[k]]
     ps_specifications <- list(
-        formula.list = full_ps_specifications$formula.list[model_set],
-        h_x_names.list = full_ps_specifications$h_x_names.list[model_set],
+        formula.list = full_ps_specifications$formula.list[1:3],
+        h_x_names.list = full_ps_specifications$h_x_names.list[1:3],
         inv_link = full_ps_specifications$inv_link
       )
-    ebmr = EBMRAlgorithm$new(y_names = "teacher_report",
-                             ps_specifications = ps_specifications,
-                             data = subdat)
+    ebmr = EBMRAlgorithm$new("teacher_report", ps_specifications, subdat, W)
     result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report"))
     
     exp_tilt = function(y, x) exp(xi*as.matrix(cbind(y))%*%rep(1, ncol(cbind(y))))
@@ -778,7 +784,7 @@ for(k in 1:length(health)){
       exp_tilt_x_names = exp_tilt_x_names,
       h_x_names = c("father", "parent_report")
     )
-    save_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", 1:3, "_mild", round(xi, 3), "_OR6.RDS"), collapse = "")
+    save_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", 1:3, "_mild", round(xi, 3), "_OR7.RDS"), collapse = "")
     saveRDS(sa_result, save_file)
   }
 }
@@ -799,7 +805,7 @@ for(i in 1:30){
     print(sa_result$w.hat)
     all_estimates[k, ] = unlist(sa_result[1:2])
   }
-  effect = odds_ratio(all_estimates[1, 1], all_estimates[2, 1])
+  effect = effect.f(all_estimates[1, 1], all_estimates[2, 1])
   Sigma = matrix(c(all_estimates[1, 2]^2, 0, 0, all_estimates[2, 2]^2), 2, 2)
   se = sqrt(delta_method(all_estimates[1, 1], all_estimates[2, 1])%*%Sigma%*%delta_method(all_estimates[1, 1], all_estimates[2, 1]))
   all_results[m, ] = c(effect, se)
