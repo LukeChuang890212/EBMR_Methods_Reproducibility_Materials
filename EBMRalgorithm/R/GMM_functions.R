@@ -66,7 +66,6 @@ gmm = function(g, W, n, h_dim, param_dim, init, se.fit = T){
     Gamma.hat = Gamma(estimates)
     g.matrix = g(estimates)
     W.hat = W(g.matrix)
-    W.hat_inv = solve(W.hat)
 
     eta_s = apply(g.matrix, 2, mean)
     M_n = kronecker(eta_s%*%W.hat, diag(param_dim))%*%Gamma_2(estimates)

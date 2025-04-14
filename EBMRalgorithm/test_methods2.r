@@ -42,14 +42,14 @@
 
 WangShaoKim2014 = function(formula, h_x_names, inv_link, wt = NULL, se.fit = T, init = NULL) {
   # Basic setup
-  result = private$parse_formula(formula)
-  r = as.matrix(self$data[result$r_names])
-  y = as.matrix(self$data[result$y_names])
-  x = as.matrix(self$data[result$x_names])
-  n = nrow(self$data)
+  result = parse_formula(formula)
+  r = as.matrix(data[result$r_names])
+  y = as.matrix(data[result$y_names])
+  x = as.matrix(data[result$x_names])
+  n = nrow(data)
   model_x_names = colnames(x)
 
-  result = private$separate_variable_types(self$data[h_x_names])
+  result = separate_variable_types(data[h_x_names])
   h_x1 = result$x1
   h_x2 = result$x2
 
@@ -82,7 +82,7 @@ WangShaoKim2014 = function(formula, h_x_names, inv_link, wt = NULL, se.fit = T, 
     return(g.matrix)
   }
   if(!is.null(wt)) Phi_alpha = function(param) wt*Phi_alpha(param)
-  gmm_fit = private$gmm(Phi_alpha, private$W, n, h_dim, alpha_dim, init, se.fit)
+  gmm_fit = gmm(Phi_alpha, W, n, h_dim, alpha_dim, init, se.fit)
 
   results = list(coefficients = gmm_fit$estimates,
                  se = gmm_fit$se,
@@ -129,11 +129,11 @@ WangShaoKim2014 = function(formula, h_x_names, inv_link, wt = NULL, se.fit = T, 
 
 ensemble = function(ps.matrix, h_x_names, init = NULL, se.fit = T, wt = NULL) {
   # Basic setup
-  r = as.matrix(private$r)
-  n = private$n
-  J = private$J
+  r = as.matrix(r)
+  n = length(r)
+  J = ncol(ps.matrix)
 
-  result = private$separate_variable_types(self$data[h_x_names])
+  result = separate_variable_types(data[h_x_names])
   h_x1 = result$x1
   h_x2 = result$x2
 
@@ -158,7 +158,7 @@ ensemble = function(ps.matrix, h_x_names, init = NULL, se.fit = T, wt = NULL) {
     return(g.matrix)
   }
   if(!is.null(wt)) Phi_nu = function(param) wt*Phi_nu(param)
-  gmm_fit = private$gmm(Phi_nu, private$W, n, h_dim, J, init, se.fit)
+  gmm_fit = gmm(Phi_nu, W, n, h_dim, J, init, se.fit)
 
   results = list(coefficients = gmm_fit$estimates,
                  h_x = h_x,
@@ -200,11 +200,10 @@ ensemble = function(ps.matrix, h_x_names, init = NULL, se.fit = T, wt = NULL) {
 
 EBMR_IPW = function(h_x_names, se.fit = TRUE, true_ps = NULL, wt = NULL) {
   # Basic setup
-  r = as.matrix(private$r)
-  y = as.matrix(private$y)
-  n = private$n
-  J = private$J
-  ps_fit.list = self$ps_fit.list
+  r = as.matrix(r)
+  y = as.matrix(y)
+  n = n
+  J = J
 
   #-----------------------------------------------------------------------------#
   # Collect the propensity score models
@@ -220,7 +219,7 @@ EBMR_IPW = function(h_x_names, se.fit = TRUE, true_ps = NULL, wt = NULL) {
   #-----------------------------------------------------------------------------#
   # Ensemble step
   #-----------------------------------------------------------------------------#
-  ensemble_fit = private$ensemble(ps.matrix, h_x_names, init = rep(1/J, J), se.fit)
+  ensemble_fit = ensemble(ps.matrix, h_x_names, init = rep(1/J, J), se.fit)
   nu.hat = ensemble_fit$coefficients
   w.hat = nu.hat^2/sum(nu.hat^2)
   ensemble_ps = ps.matrix%*%w.hat
@@ -239,7 +238,7 @@ EBMR_IPW = function(h_x_names, se.fit = TRUE, true_ps = NULL, wt = NULL) {
     #--------------------------------------------------------------------------#
     dot_pi = matrix(NA, n, sum(alpha_dim))
     for(j in 1:J){
-      x = as.matrix(self$data[ps_fit.list[[j]]$model_x_names])
+      x = as.matrix(data[ps_fit.list[[j]]$model_x_names])
       dot_pi[, (sum(alpha_dim[0:(j-1)])+1):sum(alpha_dim[1:j])] = jacobian(function(alpha) ps_model.list[[j]](x, y, alpha), alpha.list[[j]])
     }
 
@@ -346,21 +345,21 @@ EBMR_IPW = function(h_x_names, se.fit = TRUE, true_ps = NULL, wt = NULL) {
 
 EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_tilt, exp_tilt_x_names, h_x_names, se.fit = FALSE){
   # Basic setup
-  r = as.matrix(private$r)
-  y = as.matrix(private$y)
-  n = private$n
+  r = as.matrix(r)
+  y = as.matrix(y)
+  n = length(r)
 
   #-----------------------------------------------------------------------------#
   # Perturb the designated propensity score model with the exponential tilt model
   #-----------------------------------------------------------------------------#
   J = ncol(ps.matrix)
-  ps.matrix[, perturb_ps] = exp_tilt(y, self$data[, exp_tilt_x_names])*ps.matrix[, perturb_ps]
+  ps.matrix[, perturb_ps] = exp_tilt(y, data[, exp_tilt_x_names])*ps.matrix[, perturb_ps]
   #-----------------------------------------------------------------------------#
 
   #-----------------------------------------------------------------------------#
   # Ensemble step
   #-----------------------------------------------------------------------------#
-  ensemble_fit = private$ensemble(ps.matrix, h_x_names, init = rep(1/J, J), se.fit)
+  ensemble_fit = ensemble(ps.matrix, h_x_names, init = rep(1/J, J), se.fit)
   nu.hat = ensemble_fit$coefficients
   w.hat = nu.hat^2/sum(nu.hat^2)
   ensemble_ps = ps.matrix%*%w.hat
@@ -379,7 +378,7 @@ EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_t
     #--------------------------------------------------------------------------#
     dot_pi = matrix(NA, n, sum(alpha_dim))
     for(j in 1:J){
-      x = as.matrix(self$data[ps_fit.list[[j]]$model_x_names])
+      x = as.matrix(data[ps_fit.list[[j]]$model_x_names])
       dot_pi[, (sum(alpha_dim[0:(j-1)])+1):sum(alpha_dim[1:j])] = jacobian(function(alpha) ps_model.list[[j]](x, y, alpha), alpha.list[[j]])
     }
 
@@ -405,10 +404,7 @@ EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_t
     K_2_2 = apply(as.vector((ps.matrix%*%nu.hat)^(-2))*as.vector(r*h_nu%*%W_nu%*%eta_s)*dot_pi, 2, mean)
     K_2_2 = bdiag(lapply(1:length(alpha_dim), function(j) matrix(K_2_2[(1+sum(alpha_dim[0:(j-1)])):sum(alpha_dim[0:(j)])], ncol = 1)))
     K_2 = t(K_2_1 - as.matrix(K_2_2))
-    # K_3 = t(Gamma_nu)%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2)))*as.vector(f_n%*%eta_s))/n)
-    K_3 = -W_nu%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2)))*as.vector(f_n%*%W_nu%*%eta_s)))/n
-    K_3 = K_3-W_nu%*%t(f_n)%*%(t(t(dot_pi)*rep(nu.hat, alpha_dim))*as.vector(h_nu%*%W_nu%*%eta_s*(-r*((ps.matrix%*%nu.hat)^(-2)))))/n
-    K_3 = t(Gamma_nu)%*%K_3
+    K_3 = t(Gamma_nu)%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2)))*as.vector(f_n%*%eta_s))/n)
     #--------------------------------------------------------------------------#
 
     mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
