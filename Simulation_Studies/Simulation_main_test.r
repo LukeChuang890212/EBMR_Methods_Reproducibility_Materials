@@ -39,7 +39,7 @@ simulate_all_settings_with_all_missing_rates(settings = settings,
                                              n.vector.list$correct_model,
                                              correct_model_all_data_file.list,
                                              correct_model_alpha.true.list,
-                                             version = "test3")
+                                             version = "test4")
 
 ##  Scenario 2 ----
 simulate_all_settings_with_all_missing_rates(settings = settings,
@@ -49,7 +49,7 @@ simulate_all_settings_with_all_missing_rates(settings = settings,
                                              n.vector.list$misspecified_model,
                                              misspecified_model_all_data_file.list,
                                              misspecified_model_alpha.true.list,
-                                             version = "test3")
+                                             version = "test4")
 
 #------------------------------------------------------------------------------#
 # Run the simulations for Scenario 3, 4 ----
@@ -76,7 +76,7 @@ simulate_all_settings_with_all_missing_rates(settings = settings,
                                              n.vector.list$correct_model,
                                              correct_model_all_data_file.list,
                                              correct_model_alpha.true.list,
-                                             version = "test3")
+                                             version = "test4")
 
 ##  Scenario 4 ----
 simulate_all_settings_with_all_missing_rates(settings = settings,
@@ -86,7 +86,7 @@ simulate_all_settings_with_all_missing_rates(settings = settings,
                                              n.vector.list$misspecified_model,
                                              misspecified_model_all_data_file.list,
                                              misspecified_model_alpha.true.list,
-                                             version = "test3")
+                                             version = "test4")
 
 #------------------------------------------------------------------------------#
 # Run the simulations for Scenario 5, 6 ----
@@ -113,7 +113,7 @@ simulate_all_settings_with_all_missing_rates(settings = settings,
                                              n.vector.list$correct_model,
                                              correct_model_all_data_file.list,
                                              correct_model_alpha.true.list,
-                                             version = "test3")
+                                             version = "test4")
 
 ##  Scenario 6 ----
 simulate_all_settings_with_all_missing_rates(settings = settings,
@@ -123,7 +123,7 @@ simulate_all_settings_with_all_missing_rates(settings = settings,
                                              n.vector.list$misspecified_model,
                                              misspecified_model_all_data_file.list,
                                              misspecified_model_alpha.true.list,
-                                             version = "test3")
+                                             version = "test4")
 
 #------------------------------------------------------------------------------#
 # Run the simulations for Scenario 7, 8 ----
@@ -150,7 +150,7 @@ simulate_all_settings_with_all_missing_rates(settings = settings,
                                              n.vector.list$correct_model,
                                              correct_model_all_data_file.list,
                                              correct_model_alpha.true.list,
-                                             version = "test3")
+                                             version = "test4")
 
 ##  Scenario 8 ----
 simulate_all_settings_with_all_missing_rates(settings = settings,
@@ -160,7 +160,7 @@ simulate_all_settings_with_all_missing_rates(settings = settings,
                                              n.vector.list$misspecified_model,
                                              misspecified_model_all_data_file.list,
                                              misspecified_model_alpha.true.list,
-                                             version = "test3")
+                                             version = "test4")
 
 
 
