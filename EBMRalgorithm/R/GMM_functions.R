@@ -72,7 +72,7 @@ gmm = function(g, W, n, h_dim, param_dim, init, se.fit = T){
     H_0n = -solve(t(Gamma.hat)%*%W.hat%*%Gamma.hat)
     H_1n = t(Gamma.hat)%*%W.hat%*%(t(g.matrix)-eta_s)
     H_2n_2 = apply(t_Gamma_i(estimates), 1, function(m) (m-t(Gamma.hat))%*%W.hat%*%eta_s)
-    H_2n_3 = sapply(1:n, function(i) t(Gamma.hat)%*%(g.matrix[i, ]%*%t(g.matrix[i, ])-W.hat)%*%eta_s)
+    H_2n_3 = sapply(1:n, function(i) t(Gamma.hat)%*%(solve(g.matrix[i, ]%*%t(g.matrix[i, ]))-W.hat)%*%eta_s)
     Q = solve(diag(param_dim)-H_0n%*%M_n)%*%H_0n
     psi = Q%*%(H_1n+H_2n_2+H_2n_3)
     # psi_alpha = solve(diag(alpha_dim)-H_0n%*%M_n)%*%H_0n%*%(H_1n+H_2n_2+H_2n_3)
