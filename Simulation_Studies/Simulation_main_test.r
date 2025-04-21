@@ -162,6 +162,43 @@ simulate_all_settings_with_all_missing_rates(settings = settings,
                                              misspecified_model_alpha.true.list,
                                              version = "test4")
 
+#------------------------------------------------------------------------------#
+# Run the simulations for Scenario 9, 10 ----
+#------------------------------------------------------------------------------#
+full_ps_specifications = list(
+  formula.list = list(
+    r ~ o(y) + u1 + u2,
+    r ~ o(y) + u1 + u2,
+    r ~ o(y) + u1 + u2
+  ),
+  h_x_names.list = list(
+    c("u1", "u2", "z1", "z2"),
+    c("u1", "u2", "z1"),
+    c("u1", "u2", "z2")
+  ),
+  inv_link = function(eta) 1/(1+exp(eta))
+)
+
+##  Scenario 9 ----
+simulate_all_settings_with_all_missing_rates(settings = settings,
+                                             missing_rates = missing_rates,
+                                             scenario = 9,
+                                             full_ps_specifications,
+                                             n.vector.list$correct_model,
+                                             correct_model_all_data_file.list,
+                                             correct_model_alpha.true.list,
+                                             version = "test4")
+
+##  Scenario 10 ----
+simulate_all_settings_with_all_missing_rates(settings = settings,
+                                             missing_rates = missing_rates,
+                                             scenario = 10,
+                                             full_ps_specifications,
+                                             n.vector.list$misspecified_model,
+                                             misspecified_model_all_data_file.list,
+                                             misspecified_model_alpha.true.list,
+                                             version = "test4")
+
 
 
 

@@ -417,8 +417,8 @@ for(model_num in 1:3){
       # h_x = data[h_x_names]
       
       ebmr = EBMRAlgorithm$new("teacher_report", ps_specifications, subdat, W)
-            result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report"),
-                                   true_ps =  NULL)
+      result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report"),
+                             true_ps =  NULL)
       
       # print(unlist(result[1:4]))
       # print(ps_fit.list[[1]]$coefficients)
@@ -442,7 +442,7 @@ for(model_num in 1:3){
       # print(as.vector(result$w.hat))
       # print(cor(result$ps.matrix))
 
-      save_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", model_set, "_W_optimal_OR7.RDS"), collapse = "")
+      save_file = paste0(c("MHD_results/EBMR_IPW_", subset_names[k], "_", model_set, "_W_optimal_OR8.RDS"), collapse = "")
       saveRDS(result, save_file)
     }
   }
@@ -496,10 +496,10 @@ for(model_num in 1:3){
     all_estimates = matrix(NA, length(health), 2)
     model_set = model_combinations[, i]
     # if((4 %in% model_set0) || !(1 %in% model_set0)) next
-    result0 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[1], "_", model_set, "_W_optimal_OR7.RDS"), collapse = ""))
+    result0 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[1], "_", model_set, "_W_optimal_OR8.RDS"), collapse = ""))
     all_estimates[1, ] = unlist(result0[c(1, 3)])
 
-    result1 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[2], "_", model_set, "_W_optimal_OR7.RDS"), collapse = ""))
+    result1 = readRDS(paste0(c("MHD_results/EBMR_IPW_", subset_names[2], "_", model_set, "_W_optimal_OR8.RDS"), collapse = ""))
     all_estimates[2, ] = unlist(result1[c(1, 3)])
 
     effect = effect.f(all_estimates[1, 1], all_estimates[2, 1])
