@@ -1,7 +1,7 @@
 #------------------------------------------------------------------------------#
 # Basic Setup ----
 #------------------------------------------------------------------------------#
-data_root = "E:/Other computers/我的電腦/MNAR-Simulation/MNAR_2023/ChuangData_SM/"
+data_root = "G:/Other computers/我的電腦/MNAR-Simulation/MNAR_2023/ChuangData_SM/"
 replicate_num = 1000
 ps_model.true = function(y, u1, u2, r, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
 # miss.ps_model.true = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*y)
