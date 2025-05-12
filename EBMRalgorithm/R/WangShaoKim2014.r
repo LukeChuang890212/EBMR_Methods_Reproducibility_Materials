@@ -47,7 +47,6 @@ WangShaoKim2014 = function(formula, h_x_names, inv_link, init = NULL) {
   y = as.matrix(self$data[result$y_names])
   x = as.matrix(self$data[result$x_names])
   n = private$n
-
   model_x_names = colnames(x)
 
   # result = separate_variable_types(x)
