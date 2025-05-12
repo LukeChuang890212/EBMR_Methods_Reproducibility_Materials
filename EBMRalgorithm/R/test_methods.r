@@ -257,22 +257,33 @@ EBMR_IPW = function(h_x_names, se.fit = TRUE, true_ps = NULL, wt = NULL) {
 
     Gamma_nu = ensemble_fit$gmm_fit$Gamma.hat
     W_nu = ensemble_fit$gmm_fit$W.hat
-    f_n = ensemble_fit$gmm_fit$g.matrix
-    eta_s = ensemble_fit$gmm_fit$eta_s
+    Phi_nu = ensemble_fit$gmm_fit$g.matrix
     h_nu = ensemble_fit$h_x
-    K_1 = t(Gamma_nu)%*%W_nu%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2)))))/n
-    K_2_1 = (t(dot_pi)*rep(nu.hat, alpha_dim))%*%(as.vector(2*((ps.matrix%*%nu.hat)^(-3)))*as.vector(r*h_nu%*%W_nu%*%eta_s)*ps.matrix)/n
-    K_2_2 = apply(as.vector((ps.matrix%*%nu.hat)^(-2))*as.vector(r*h_nu%*%W_nu%*%eta_s)*dot_pi, 2, mean)
-    K_2_2 = bdiag(lapply(1:length(alpha_dim), function(j) matrix(K_2_2[(1+sum(alpha_dim[0:(j-1)])):sum(alpha_dim[0:(j)])], ncol = 1)))
-    K_2 = t(K_2_1 - as.matrix(K_2_2))
-    # K_3 = t(Gamma_nu)%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2)))*as.vector(f_n%*%eta_s))/n)
-    K_3 = -W_nu%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2)))*as.vector(f_n%*%W_nu%*%eta_s)))/n
-    K_3 = K_3-W_nu%*%t(f_n)%*%(t(t(dot_pi)*rep(nu.hat, alpha_dim))*as.vector(h_nu%*%W_nu%*%eta_s*(-r*((ps.matrix%*%nu.hat)^(-2)))))/n
-    K_3 = t(Gamma_nu)%*%K_3
+
+    # f_n = ensemble_fit$gmm_fit$g.matrix
+    # eta_s = ensemble_fit$gmm_fit$eta_s
+    # h_nu = ensemble_fit$h_x
+    # K_1 = t(Gamma_nu)%*%W_nu%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2)))))/n
+    # K_2_1 = (t(dot_pi)*rep(nu.hat, alpha_dim))%*%(as.vector(2*((ps.matrix%*%nu.hat)^(-3)))*as.vector(r*h_nu%*%W_nu%*%eta_s)*ps.matrix)/n
+    # K_2_2 = apply(as.vector((ps.matrix%*%nu.hat)^(-2))*as.vector(r*h_nu%*%W_nu%*%eta_s)*dot_pi, 2, mean)
+    # K_2_2 = bdiag(lapply(1:length(alpha_dim), function(j) matrix(K_2_2[(1+sum(alpha_dim[0:(j-1)])):sum(alpha_dim[0:(j)])], ncol = 1)))
+    # K_2 = t(K_2_1 - as.matrix(K_2_2))
+    # # K_3 = t(Gamma_nu)%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2)))*as.vector(f_n%*%eta_s))/n)
+    # K_3 = -W_nu%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2)))*as.vector(f_n%*%W_nu%*%eta_s)))/n
+    # K_3 = K_3-W_nu%*%t(f_n)%*%(t(t(dot_pi)*rep(nu.hat, alpha_dim))*as.vector(h_nu%*%W_nu%*%eta_s*(-r*((ps.matrix%*%nu.hat)^(-2)))))/n
+    # K_3 = t(Gamma_nu)%*%K_3
+
+    Phi_nu.alpha = ((t(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2))))%*%t(t(dot_pi)*rep(nu.hat, alpha_dim)))/n)
+    dot_nu = -solve(t(Gamma_nu)%*%W_nu%*%Gamma_nu)%*%t(Gamma_nu)%*%W_nu%*%Phi_nu.alpha
     #--------------------------------------------------------------------------#
 
+    # mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
+    #                        -(t(H_alpha.w)+t(w.H_nu)%*%ensemble_fit$gmm_fit$Q%*%(K_1+K_2+K_3))%*%psi_alpha
+    #                        -t(w.H_nu)%*%psi_nu)
+    # se_ipw = sqrt(var(mu_ipw.iid)/n)
+
     mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
-                           -(t(H_alpha.w)+t(w.H_nu)%*%ensemble_fit$gmm_fit$Q%*%(K_1+K_2+K_3))%*%psi_alpha
+                           -(t(H_alpha.w)+t(w.H_nu)%*%dot_nu)%*%psi_alpha
                            -t(w.H_nu)%*%psi_nu)
     se_ipw = sqrt(var(mu_ipw.iid)/n)
   }
@@ -397,22 +408,33 @@ EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_t
 
     Gamma_nu = ensemble_fit$gmm_fit$Gamma.hat
     W_nu = ensemble_fit$gmm_fit$W.hat
-    f_n = ensemble_fit$gmm_fit$g.matrix
-    eta_s = ensemble_fit$gmm_fit$eta_s
+    Phi_nu = ensemble_fit$gmm_fit$g.matrix
     h_nu = ensemble_fit$h_x
-    K_1 = t(Gamma_nu)%*%W_nu%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2))))/n)
-    K_2_1 = (t(dot_pi)*rep(nu.hat, alpha_dim))%*%(as.vector(2*((ps.matrix%*%nu.hat)^(-3)))*as.vector(r*h_nu%*%W_nu%*%eta_s)*ps.matrix)/n
-    K_2_2 = apply(as.vector((ps.matrix%*%nu.hat)^(-2))*as.vector(r*h_nu%*%W_nu%*%eta_s)*dot_pi, 2, mean)
-    K_2_2 = bdiag(lapply(1:length(alpha_dim), function(j) matrix(K_2_2[(1+sum(alpha_dim[0:(j-1)])):sum(alpha_dim[0:(j)])], ncol = 1)))
-    K_2 = t(K_2_1 - as.matrix(K_2_2))
-    # K_3 = t(Gamma_nu)%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2)))*as.vector(f_n%*%eta_s))/n)
-    K_3 = -W_nu%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2)))*as.vector(f_n%*%W_nu%*%eta_s)))/n
-    K_3 = K_3-W_nu%*%t(f_n)%*%(t(t(dot_pi)*rep(nu.hat, alpha_dim))*as.vector(h_nu%*%W_nu%*%eta_s*(-r*((ps.matrix%*%nu.hat)^(-2)))))/n
-    K_3 = t(Gamma_nu)%*%K_3
+
+    # f_n = ensemble_fit$gmm_fit$g.matrix
+    # eta_s = ensemble_fit$gmm_fit$eta_s
+    # h_nu = ensemble_fit$h_x
+    # K_1 = t(Gamma_nu)%*%W_nu%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2)))))/n
+    # K_2_1 = (t(dot_pi)*rep(nu.hat, alpha_dim))%*%(as.vector(2*((ps.matrix%*%nu.hat)^(-3)))*as.vector(r*h_nu%*%W_nu%*%eta_s)*ps.matrix)/n
+    # K_2_2 = apply(as.vector((ps.matrix%*%nu.hat)^(-2))*as.vector(r*h_nu%*%W_nu%*%eta_s)*dot_pi, 2, mean)
+    # K_2_2 = bdiag(lapply(1:length(alpha_dim), function(j) matrix(K_2_2[(1+sum(alpha_dim[0:(j-1)])):sum(alpha_dim[0:(j)])], ncol = 1)))
+    # K_2 = t(K_2_1 - as.matrix(K_2_2))
+    # # K_3 = t(Gamma_nu)%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2)))*as.vector(f_n%*%eta_s))/n)
+    # K_3 = -W_nu%*%t((t(dot_pi)*rep(nu.hat, alpha_dim))%*%(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2)))*as.vector(f_n%*%W_nu%*%eta_s)))/n
+    # K_3 = K_3-W_nu%*%t(f_n)%*%(t(t(dot_pi)*rep(nu.hat, alpha_dim))*as.vector(h_nu%*%W_nu%*%eta_s*(-r*((ps.matrix%*%nu.hat)^(-2)))))/n
+    # K_3 = t(Gamma_nu)%*%K_3
+
+    Phi_nu.alpha = ((t(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2))))%*%t(t(dot_pi)*rep(nu.hat, alpha_dim)))/n)
+    dot_nu = -solve(t(Gamma_nu)%*%W_nu%*%Gamma_nu)%*%t(Gamma_nu)%*%W_nu%*%Phi_nu.alpha
     #--------------------------------------------------------------------------#
 
+    # mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
+    #                        -(t(H_alpha.w)+t(w.H_nu)%*%ensemble_fit$gmm_fit$Q%*%(K_1+K_2+K_3))%*%psi_alpha
+    #                        -t(w.H_nu)%*%psi_nu)
+    # se_ipw = sqrt(var(mu_ipw.iid)/n)
+
     mu_ipw.iid = as.vector(t(r/ensemble_ps*y)
-                           -(t(H_alpha.w)+t(w.H_nu)%*%ensemble_fit$gmm_fit$Q%*%(K_1+K_2+K_3))%*%psi_alpha
+                           -(t(H_alpha.w)+t(w.H_nu)%*%dot_nu)%*%psi_alpha
                            -t(w.H_nu)%*%psi_nu)
     se_ipw = sqrt(var(mu_ipw.iid)/n)
   }

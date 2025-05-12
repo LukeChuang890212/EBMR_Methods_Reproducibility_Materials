@@ -1,21 +1,24 @@
+# A: include correct model
+# B: all models are misspecifed
+
 setting1.A1 = function(n){
   z1 = rbinom(n, size = 1, prob = 0.3)
   z2 = rnorm(n, mean = 0, sd = 2)
-  
+
   u1 = rbinom(n, size = 1, prob = 0.7)
   u2 = rnorm(n, mean = 0, sd = 2)
-  
+
   m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
   response.prob = function(y, u1, u2)  1/(1+exp(-0.2+0.1*y+0.1*u1+0.1*u2))
-  
+
   y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
   mean(y)
-  
+
   r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
   mean(r)
-  
+
   mean(y[r == 1]); mean(y[r == 0]);
-  
+
   dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
   return(dat)
 }
@@ -23,10 +26,10 @@ setting1.A1 = function(n){
 setting1.B1 = function(n){
   z1 = rbinom(n, size = 1, prob = 0.3)
   z2 = rnorm(n, mean = 0, sd = 2)
-  
+
   u1 = rbinom(n, size = 1, prob = 0.7)
   u2 = rnorm(n, mean = 0, sd = 2)
-  
+
   m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
   response.prob = function(y, u1, u2){
     propensity = 1/(1+exp(0.1-0.1*y-0.1*u1+0.1*u2))*exp(n^(-1/2)*(y))
@@ -35,14 +38,14 @@ setting1.B1 = function(n){
   }
   y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
   mean(y)
-  
+
   propensity = response.prob(y, u1, u2)
   # propensity[propensity > 1] = 0.95
   r = rbinom(n, size = 1, prob = propensity)
   mean(r)
-  
+
   mean(y[r == 1]); mean(y[r == 0]);
-  
+
   dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
   return(dat)
 }
@@ -50,21 +53,21 @@ setting1.B1 = function(n){
 setting1.A2 = function(n){
   z1 = rbinom(n, size = 1, prob = 0.3)
   z2 = rnorm(n, mean = 0, sd = 2)
-  
+
   u1 = rbinom(n, size = 1, prob = 0.7)
   u2 = rnorm(n, mean = 0, sd = 2)
-  
+
   m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
   response.prob = function(y, u1, u2)  1/(1+exp(-1.1+0.1*y+0.1*u1+0.1*u2))
-  
+
   y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
   mean(y)
-  
+
   r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
   mean(r)
-  
+
   mean(y[r == 1]); mean(y[r == 0]);
-  
+
   dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
   return(dat)
 }
@@ -72,10 +75,10 @@ setting1.A2 = function(n){
 setting1.B2 = function(n){
   z1 = rbinom(n, size = 1, prob = 0.3)
   z2 = rnorm(n, mean = 0, sd = 2)
-  
+
   u1 = rbinom(n, size = 1, prob = 0.7)
   u2 = rnorm(n, mean = 0, sd = 2)
-  
+
   m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
   response.prob = function(y, u1, u2){
     propensity = 1/(1+exp(-1+0.1*y+0.1*u1+0.1*u2))*exp(n^(-1/2)*(y))
@@ -84,19 +87,337 @@ setting1.B2 = function(n){
   }
   y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
   mean(y)
-  
+
   propensity = response.prob(y, u1, u2)
   # propensity[propensity > 1] = 0.95
   r = rbinom(n, size = 1, prob = propensity)
   mean(r)
-  
+
   mean(y[r == 1]); mean(y[r == 0]);
-  
+
   dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
   return(dat)
 }
 
 setting2.A1 = function(n, response.rate){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 2)
+
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2)  1/(1+exp(-0.1+0.5*y-0.5*u1-0.1*u2))
+
+  eta = m(z1, z2, u1, u2)
+  y = rbinom(n, size = 1, prob = exp(eta)/(1+exp(eta)))
+  mean(y)
+
+  r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
+  mean(r)
+
+  mean(y[r == 1]); mean(y[r == 0]);
+
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting2.B1 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 2)
+
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2){
+    propensity = 1/(1+exp(0.05+0.5*y-0.5*u1-0.1*u2))*exp(n^(-1/2)*y)
+    # propensity[propensity > 1] = 0.95
+    return(propensity)
+  }
+  eta = m(z1, z2, u1, u2)
+  y = rbinom(n, size = 1, prob = exp(eta)/(1+exp(eta)))
+  mean(y)
+
+  propensity = response.prob(y, u1, u2)
+  # propensity[propensity > 1] = 0.95
+  r = rbinom(n, size = 1, prob = propensity)
+  mean(r)
+
+  mean(y[r == 1]); mean(y[r == 0]);
+
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting2.A2 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 2)
+
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2)  1/(1+exp(-0.8+0.5*y-0.5*u1-0.1*u2))
+
+  eta = m(z1, z2, u1, u2)
+  y = rbinom(n, size = 1, prob = exp(eta)/(1+exp(eta)))
+  mean(y)
+
+  r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
+  mean(r)
+
+  mean(y[r == 1]); mean(y[r == 0]);
+
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+setting2.B2 = function(n, response.rate){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 2)
+
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2){
+    propensity = 1/(1+exp(-0.2-0.5*y-0.5*u1-0.1*u2))*exp(n^(-1/2)*(y))
+    # propensity[propensity > 1] = 0.95
+    return(propensity)
+  }
+
+  eta = m(z1, z2, u1, u2)
+  y = rbinom(n, size = 1, prob = exp(eta)/(1+exp(eta)))
+  mean(y)
+
+  propensity = response.prob(y, u1, u2)
+  # propensity[propensity > 1] = 0.95
+  r = rbinom(n, size = 1, prob = propensity)
+  mean(r)
+
+  mean(y[r == 1]); mean(y[r == 0]);
+
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting3.A1 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 2)
+
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+
+  m = function(z1, z2, u1, u2) 1+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2)  1/(1+exp(-0.2+0.1*y+0.1*u1+0.1*u2))
+
+  y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
+  mean(y)
+
+  r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
+  mean(r)
+
+  mean(y[r == 1]); mean(y[r == 0]);
+
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting3.B1 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 2)
+
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+
+  m = function(z1, z2, u1, u2) 1+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2){
+    propensity = 1/(1+exp(-0.15+0.1*y+0.1*u1+0.1*u2))*exp(n^(-1/2)*y)
+    # propensity[propensity > 1] = 0.95
+    return(propensity)
+  }
+  y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
+  mean(y)
+
+  propensity = response.prob(y, u1, u2)
+  # propensity[propensity > 1] = 0.95
+  r = rbinom(n, size = 1, prob = propensity)
+  mean(r)
+
+  mean(y[r == 1]); mean(y[r == 0]);
+
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting3.A2 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 2)
+
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+
+  m = function(z1, z2, u1, u2) 1+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2)  1/(1+exp(-1.1+0.1*y+0.1*u1+0.1*u2))
+
+  y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
+  mean(y)
+
+  r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
+  mean(r)
+
+  mean(y[r == 1]); mean(y[r == 0]);
+
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting3.B2 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 2)
+
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+
+  m = function(z1, z2, u1, u2) 1+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2){
+    propensity = 1/(1+exp(-0.9+0.1*y+0.1*u1+0.1*u2))*exp(n^(-1/2)*y)
+    # propensity[propensity > 1] = 0.95
+    return(propensity)
+  }
+  y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
+  mean(y)
+
+  propensity = response.prob(y, u1, u2)
+  # propensity[propensity > 1] = 0.95
+  r = rbinom(n, size = 1, prob = propensity)
+  mean(r)
+
+  mean(y[r == 1]); mean(y[r == 0]);
+
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting5.A1 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 2)
+
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+  
+  m = function(z1, z2, u1, u2) 1+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2)  1/(1+exp(-0.2+0.1*y+0.1*u1+0.1*u2))
+
+  y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
+  mean(y)
+
+  r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
+  mean(r)
+  
+  v1 = rnorm(n, 2+r, sd = 0.5)
+  v2 = rnorm(n, 1-r, sd = 0.5)
+  v3 = rnorm(n, 2, sd = 0.5)
+  v4 = rnorm(n, 1, sd = 0.5)
+
+  mean(y[r == 1]); mean(y[r == 0]);
+
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, v1 = v1, v2 = v2, v3 = v3, v4 = v4, y = y, r = r)
+  return(dat)
+}
+
+setting5.B1 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 2)
+
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+
+  m = function(z1, z2, u1, u2) 1+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2){
+    propensity = 1/(1+exp(-0.15+0.1*y+0.1*u1+0.1*u2))*exp(n^(-1/2)*y)
+    # propensity[propensity > 1] = 0.95
+    return(propensity)
+  }
+  y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
+  mean(y)
+
+  propensity = response.prob(y, u1, u2)
+  # propensity[propensity > 1] = 0.95
+  r = rbinom(n, size = 1, prob = propensity)
+  mean(r)
+  
+  v1 = rnorm(n, 2+r, sd = 0.5)
+  v2 = rnorm(n, 1-r, sd = 0.5)
+  v3 = rnorm(n, 2, sd = 0.5)
+  v4 = rnorm(n, 1, sd = 0.5)
+
+  mean(y[r == 1]); mean(y[r == 0]);
+
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, v1 = v1, v2 = v2, v3 = v3, v4 = v4, y = y, r = r)
+  return(dat)
+}
+
+setting5.A2 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 2)
+
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+
+  m = function(z1, z2, u1, u2) 1+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2)  1/(1+exp(-1.1+0.1*y+0.1*u1+0.1*u2))
+
+  y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
+  mean(y)
+
+  r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
+  mean(r)
+  
+  v1 = rnorm(n, 2+r, sd = 0.5)
+  v2 = rnorm(n, 1-r, sd = 0.5)
+  v3 = rnorm(n, 2, sd = 0.5)
+  v4 = rnorm(n, 1, sd = 0.5)
+
+  mean(y[r == 1]); mean(y[r == 0]);
+
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, v1 = v1, v2 = v2, v3 = v3, v4 = v4, y = y, r = r)
+  return(dat)
+}
+
+setting5.B2 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 2)
+
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+
+  m = function(z1, z2, u1, u2) 1+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2){
+    propensity = 1/(1+exp(-0.9+0.1*y+0.1*u1+0.1*u2))*exp(n^(-1/2)*y)
+    # propensity[propensity > 1] = 0.95
+    return(propensity)
+  }
+  y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
+  mean(y)
+
+  propensity = response.prob(y, u1, u2)
+  # propensity[propensity > 1] = 0.95
+  r = rbinom(n, size = 1, prob = propensity)
+  mean(r)
+  
+  v1 = rnorm(n, 2+r, sd = 0.5)
+  v2 = rnorm(n, 1-r, sd = 0.5)
+  v3 = rnorm(n, 2, sd = 0.5)
+  v4 = rnorm(n, 1, sd = 0.5)
+  
+  mean(y[r == 1]); mean(y[r == 0]);
+
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, v1 = v1, v2 = v2, v3 = v3, v4 = v4, y = y, r = r)
+  return(dat)
+}
+
+setting6.A1 = function(n, response.rate){
   z1 = rbinom(n, size = 1, prob = 0.3)
   z2 = rnorm(n, mean = 0, sd = 2)
   
@@ -113,13 +434,18 @@ setting2.A1 = function(n, response.rate){
   r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
   mean(r)
   
+  v1 = rnorm(n, 2+r, sd = 0.5)
+  v2 = rnorm(n, 1-r, sd = 0.5)
+  v3 = rnorm(n, 2, sd = 0.5)
+  v4 = rnorm(n, 1, sd = 0.5)
+  
   mean(y[r == 1]); mean(y[r == 0]);
   
-  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, v1 = v1, v2 = v2, y = y, r = r)
   return(dat)
 }
 
-setting2.B1 = function(n){
+setting6.B1 = function(n){
   z1 = rbinom(n, size = 1, prob = 0.3)
   z2 = rnorm(n, mean = 0, sd = 2)
   
@@ -141,13 +467,18 @@ setting2.B1 = function(n){
   r = rbinom(n, size = 1, prob = propensity)
   mean(r)
   
+  v1 = rnorm(n, 2+r, sd = 0.5)
+  v2 = rnorm(n, 1-r, sd = 0.5)
+  v3 = rnorm(n, 2, sd = 0.5)
+  v4 = rnorm(n, 1, sd = 0.5)
+  
   mean(y[r == 1]); mean(y[r == 0]);
   
-  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, v1 = v1, v2 = v2, y = y, r = r)
   return(dat)
 }
 
-setting2.A2 = function(n){
+setting6.A2 = function(n){
   z1 = rbinom(n, size = 1, prob = 0.3)
   z2 = rnorm(n, mean = 0, sd = 2)
   
@@ -164,12 +495,18 @@ setting2.A2 = function(n){
   r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
   mean(r)
   
+  v1 = rnorm(n, 2+r, sd = 0.5)
+  v2 = rnorm(n, 1-r, sd = 0.5)
+  v3 = rnorm(n, 2, sd = 0.5)
+  v4 = rnorm(n, 1, sd = 0.5)
+  
   mean(y[r == 1]); mean(y[r == 0]);
   
-  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, v1 = v1, v2 = v2, y = y, r = r)
   return(dat)
 }
-setting2.B2 = function(n, response.rate){
+
+setting6.B2 = function(n, response.rate){
   z1 = rbinom(n, size = 1, prob = 0.3)
   z2 = rnorm(n, mean = 0, sd = 2)
   
@@ -192,21 +529,26 @@ setting2.B2 = function(n, response.rate){
   r = rbinom(n, size = 1, prob = propensity)
   mean(r)
   
+  v1 = rnorm(n, 2+r, sd = 0.5)
+  v2 = rnorm(n, 1-r, sd = 0.5)
+  v3 = rnorm(n, 2, sd = 0.5)
+  v4 = rnorm(n, 1, sd = 0.5)
+  
   mean(y[r == 1]); mean(y[r == 0]);
   
-  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, v1 = v1, v2 = v2, y = y, r = r)
   return(dat)
 }
 
-setting3.A1 = function(n){
+setting7.A1 = function(n){
   z1 = rbinom(n, size = 1, prob = 0.3)
-  z2 = rnorm(n, mean = 0, sd = 2)
+  z2 = rnorm(n, mean = 0, sd = 1)
   
   u1 = rbinom(n, size = 1, prob = 0.7)
-  u2 = rnorm(n, mean = 0, sd = 2)
+  u2 = rnorm(n, mean = 0, sd = 3)
   
-  m = function(z1, z2, u1, u2) 1+0.5*z1+0.5*z2+0.5*u1+0.5*u2
-  response.prob = function(y, u1, u2)  1/(1+exp(-0.2+0.1*y+0.1*u1+0.1*u2))
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2) 1/(1+exp(0.2+0.1*y-0.5*u1-0.5*u2))
   
   y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
   mean(y)
@@ -220,17 +562,18 @@ setting3.A1 = function(n){
   return(dat)
 }
 
-setting3.B1 = function(n){
+setting7.B1 = function(n){
   z1 = rbinom(n, size = 1, prob = 0.3)
-  z2 = rnorm(n, mean = 0, sd = 2)
+  z2 = rnorm(n, mean = 0, sd = 1)
   
   u1 = rbinom(n, size = 1, prob = 0.7)
-  u2 = rnorm(n, mean = 0, sd = 2)
+  u2 = rnorm(n, mean = 0, sd = 3)
   
-  m = function(z1, z2, u1, u2) 1+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+
   response.prob = function(y, u1, u2){
-    propensity = 1/(1+exp(-0.15+0.1*y+0.1*u1+0.1*u2))*exp(n^(-1/2)*y)
-    # propensity[propensity > 1] = 0.95
+    propensity = 1/(1+exp(0.2+0.1*y-0.5*u1-0.5*u2))*exp(n^(-1/2)*(-y+u1-u2))
+    propensity[propensity > 1] = 0.95
     return(propensity)
   }
   y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
@@ -247,15 +590,15 @@ setting3.B1 = function(n){
   return(dat)
 }
 
-setting3.A2 = function(n){
+setting7.A2 = function(n){
   z1 = rbinom(n, size = 1, prob = 0.3)
-  z2 = rnorm(n, mean = 0, sd = 2)
+  z2 = rnorm(n, mean = 0, sd = 1)
   
   u1 = rbinom(n, size = 1, prob = 0.7)
-  u2 = rnorm(n, mean = 0, sd = 2)
+  u2 = rnorm(n, mean = 0, sd = 3)
   
-  m = function(z1, z2, u1, u2) 1+0.5*z1+0.5*z2+0.5*u1+0.5*u2
-  response.prob = function(y, u1, u2)  1/(1+exp(-1.1+0.1*y+0.1*u1+0.1*u2))
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2)  1/(1+exp(-1+0.1*y-0.5*u1-0.5*u2))
   
   y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
   mean(y)
@@ -269,20 +612,325 @@ setting3.A2 = function(n){
   return(dat)
 }
 
-setting3.B2 = function(n){
+setting7.B2 = function(n){
   z1 = rbinom(n, size = 1, prob = 0.3)
-  z2 = rnorm(n, mean = 0, sd = 2)
+  z2 = rnorm(n, mean = 0, sd = 1)
+  
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 3)
+  
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2){
+    propensity = 1/(1+exp(-1+0.1*y-0.5*u1-0.5*u2))*exp(n^(-1/2)*(-y+u1-u2))
+    propensity[propensity > 1] = 0.95
+    return(propensity)
+  }
+  y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
+  mean(y)
+  
+  propensity = response.prob(y, u1, u2)
+  # propensity[propensity > 1] = 0.95
+  r = rbinom(n, size = 1, prob = propensity)
+  mean(r)
+  
+  mean(y[r == 1]); mean(y[r == 0]);
+  
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting8.A1 = function(n, response.rate){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 1)
+  
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 3)
+  
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2)  1/(1+exp(-0.04+0.2*y-0.2*u1-0.2*u2))
+  
+  eta = m(z1, z2, u1, u2)
+  y = rbinom(n, size = 1, prob = exp(eta)/(1+exp(eta)))
+  mean(y)
+  
+  r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
+  mean(r)
+  
+  mean(y[r == 1]); mean(y[r == 0]);
+  
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting8.B1 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 1)
+  
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 3)
+  
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2){
+    propensity = 1/(1+exp(-0.04+0.2*y-0.2*u1-0.2*u2))*exp(n^(-1/2)*(-y+u1-u2))
+    propensity[propensity > 1] = 0.95
+    return(propensity)
+  }
+  eta = m(z1, z2, u1, u2)
+  y = rbinom(n, size = 1, prob = exp(eta)/(1+exp(eta)))
+  mean(y)
+  
+  propensity = response.prob(y, u1, u2)
+  # propensity[propensity > 1] = 0.95
+  r = rbinom(n, size = 1, prob = propensity)
+  mean(r)
+  
+  mean(y[r == 1]); mean(y[r == 0]);
+  
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting8.A2 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 1)
+  
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 3)
+  
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2)  1/(1+exp(-0.9+0.2*y-0.2*u1-0.2*u2))
+  
+  eta = m(z1, z2, u1, u2)
+  y = rbinom(n, size = 1, prob = exp(eta)/(1+exp(eta)))
+  mean(y)
+  
+  r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
+  mean(r)
+  
+  mean(y[r == 1]); mean(y[r == 0]);
+  
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting8.B2 = function(n, response.rate){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 1)
+  
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 3)
+  
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2){
+    propensity = 1/(1+exp(-0.9+0.2*y-0.2*u1-0.2*u2))*exp(n^(-1/2)*(-y+u1-u2))
+    propensity[propensity > 1] = 0.95
+    return(propensity)
+  }
+  
+  eta = m(z1, z2, u1, u2)
+  y = rbinom(n, size = 1, prob = exp(eta)/(1+exp(eta)))
+  mean(y)
+  
+  propensity = response.prob(y, u1, u2)
+  # propensity[propensity > 1] = 0.95
+  r = rbinom(n, size = 1, prob = propensity)
+  mean(r)
+  
+  mean(y[r == 1]); mean(y[r == 0]);
+  
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting9.A1 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 1)
   
   u1 = rbinom(n, size = 1, prob = 0.7)
   u2 = rnorm(n, mean = 0, sd = 2)
   
-  m = function(z1, z2, u1, u2) 1+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2) 1/(1+exp(0.6+0.2*y-u1-0.5*u2))
+  
+  y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
+  mean(y)
+  
+  r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
+  mean(r)
+  
+  mean(y[r == 1]); mean(y[r == 0]);
+  
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting9.B1 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 1)
+  
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+  
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  
   response.prob = function(y, u1, u2){
-    propensity = 1/(1+exp(-0.9+0.1*y+0.1*u1+0.1*u2))*exp(n^(-1/2)*y)
-    # propensity[propensity > 1] = 0.95
+    propensity = 1/(1+exp(0.6+0.2*y-u1-0.5*u2))*exp(n^(-1/2)*(-y+u1-u2))
+    propensity[propensity > 1] = 0.95
     return(propensity)
   }
   y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
+  mean(y)
+  
+  propensity = response.prob(y, u1, u2)
+  # propensity[propensity > 1] = 0.95
+  r = rbinom(n, size = 1, prob = propensity)
+  mean(r)
+  
+  mean(y[r == 1]); mean(y[r == 0]);
+  
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting9.A2 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 1)
+  
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+  
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2)  1/(1+exp(-0.5+0.2*y-u1-0.5*u2))
+  
+  y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
+  mean(y)
+  
+  r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
+  mean(r)
+  
+  mean(y[r == 1]); mean(y[r == 0]);
+  
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting9.B2 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 1)
+  
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+  
+  m = function(z1, z2, u1, u2) 0.2+0.5*z1+0.5*z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2){
+    propensity = 1/(1+exp(-0.5+0.2*y-u1-0.5*u2))*exp(n^(-1/2)*(-y+u1-u2))
+    propensity[propensity > 1] = 0.95
+    return(propensity)
+  }
+  y = rnorm(n, mean = m(z1, z2, u1, u2), sd = 1)
+  mean(y)
+  
+  propensity = response.prob(y, u1, u2)
+  # propensity[propensity > 1] = 0.95
+  r = rbinom(n, size = 1, prob = propensity)
+  mean(r)
+  
+  mean(y[r == 1]); mean(y[r == 0]);
+  
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting10.A1 = function(n, response.rate){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 1)
+  
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+  
+  m = function(z1, z2, u1, u2) 0.2+z1+z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2)  1/(1+exp(0.4+0.4*y-u1-0.5*u2))
+  
+  eta = m(z1, z2, u1, u2)
+  y = rbinom(n, size = 1, prob = exp(eta)/(1+exp(eta)))
+  mean(y)
+  
+  r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
+  mean(r)
+  
+  mean(y[r == 1]); mean(y[r == 0]);
+  
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting10.B1 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 1)
+  
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+  
+  m = function(z1, z2, u1, u2) 0.2+z1+z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2){
+    propensity =  1/(1+exp(0.4+0.4*y-u1-0.5*u2))*exp(n^(-1/2)*(-y+u1-u2))
+    propensity[propensity > 1] = 0.95
+    return(propensity)
+  }
+  eta = m(z1, z2, u1, u2)
+  y = rbinom(n, size = 1, prob = exp(eta)/(1+exp(eta)))
+  mean(y)
+  
+  propensity = response.prob(y, u1, u2)
+  # propensity[propensity > 1] = 0.95
+  r = rbinom(n, size = 1, prob = propensity)
+  mean(r)
+  
+  mean(y[r == 1]); mean(y[r == 0]);
+  
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting10.A2 = function(n){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 1)
+  
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+  
+  m = function(z1, z2, u1, u2) 0.2+z1+z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2)  1/(1+exp(-0.6+0.4*y-u1-0.5*u2))
+  
+  eta = m(z1, z2, u1, u2)
+  y = rbinom(n, size = 1, prob = exp(eta)/(1+exp(eta)))
+  mean(y)
+  
+  r = rbinom(n, size = 1, prob = response.prob(y, u1, u2))
+  mean(r)
+  
+  mean(y[r == 1]); mean(y[r == 0]);
+  
+  dat = data.frame(z1 = z1, z2 = z2, u1 = u1, u2 = u2, y = y, r = r)
+  return(dat)
+}
+
+setting10.B2 = function(n, response.rate){
+  z1 = rbinom(n, size = 1, prob = 0.3)
+  z2 = rnorm(n, mean = 0, sd = 1)
+  
+  u1 = rbinom(n, size = 1, prob = 0.7)
+  u2 = rnorm(n, mean = 0, sd = 2)
+  
+  m = function(z1, z2, u1, u2) 0.2+z1+z2+0.5*u1+0.5*u2
+  response.prob = function(y, u1, u2){
+    propensity = 1/(1+exp(-0.6+0.4*y-u1-0.5*u2))*exp(n^(-1/2)*(-y+u1-u2))
+    propensity[propensity > 1] = 0.95
+    return(propensity)
+  }
+  
+  eta = m(z1, z2, u1, u2)
+  y = rbinom(n, size = 1, prob = exp(eta)/(1+exp(eta)))
   mean(y)
   
   propensity = response.prob(y, u1, u2)

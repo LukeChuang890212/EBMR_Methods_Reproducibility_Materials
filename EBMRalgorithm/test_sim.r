@@ -45,8 +45,8 @@ alpha.true = c(-0.2, 0.1, 0.1, 0.1)
 true.pi.model = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, 1000), y, u1, u2)%*%alpha.true))
 true.pi = true.pi.model(y, u1, u2, r, 1000, alpha.true)
 
-source("E:\\Other computers\\我的電腦\\MNAR-Simulation\\MNAR_2023\\ChuangChao2023_SM.r")
-source("E:\\Other computers\\我的電腦\\MNAR-Simulation\\MNAR_2023\\Wang2014_12.r")
+source("G:\\Other computers\\我的電腦\\MNAR-Simulation\\MNAR_2023\\ChuangChao2023_SM.r")
+source("G:\\Other computers\\我的電腦\\MNAR-Simulation\\MNAR_2023\\Wang2014_12.r")
 n = sum(r)
 N = 1000
 h.list = list(function(u1, u2, z1, z2) list(cbind(as.factor(u1), as.factor(z1)), cbind(u2, z2)),

@@ -528,9 +528,17 @@ all_results
 ```
 
 ```{r, fig.width=10, fig.height=20}
-rm.extreme_se = function(v){
-  v = v[v < quantile(v, 0.98)]
-  return(v)
+rm.extreme = function(v){
+  # v = v[v < quantile(v, 0.98)]
+  # return(v)
+  iqr <- IQR(v)
+
+  # Identify the values outside the lower and upper bounds
+  lower_bound <- quantile(v, 0.25) - 3 * iqr
+  upper_bound <- quantile(v, 0.75) + 3 * iqr
+
+  # Exclude the extreme values
+  return(v[v >= lower_bound & v <= upper_bound])
 }
 make_w_labels <- function(num_str) {
   nums <- as.integer(strsplit(num_str, "")[[1]])

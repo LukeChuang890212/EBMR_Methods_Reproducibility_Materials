@@ -25,7 +25,7 @@ simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, r
   sim_result = foreach(i= 1:replicate_num, .combine = 'cbind', .options.snow = opts, .packages = parallel_packages) %dopar% {
     tryCatch({
       dat = all_data[((i-1)*n+1):(i*n), ]
-
+      
       # ebmr = EBMRAlgorithm$new(y_names = "y",
       #                          ps_specifications = ps_specifications,
       #                          data = dat)
@@ -35,8 +35,10 @@ simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, r
       W = function(g.matrix){
         return(solve(t(g.matrix)%*%g.matrix/n))
       }
-
+      
       ebmr = EBMRAlgorithm$new("y", ps_specifications, dat, W)
+      # result = ebmr$EBMR_IPW(h_x_names = c("u1", "u2", "z1", "z2", "v3", "v4"),
+      #                        true_ps =  ps_model.true(dat$y, dat$u1, dat$u2, dat$r, alpha.true))
       result = ebmr$EBMR_IPW(h_x_names = c("u1", "u2"),
                              true_ps =  ps_model.true(dat$y, dat$u1, dat$u2, dat$r, alpha.true))
       estimates = unlist(result[1:4])
@@ -81,8 +83,13 @@ simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, r
     # }
     saveRDS(sim_result, save_file)
   }
-
+  
+  print(ncol(sim_result)); cat("\n");
   cat("\n", "Before removing the outliers", "\n")
+  print(rbind(apply(sim_result, 1, mean, na.rm = TRUE), apply(sim_result, 1, sd, na.rm = TRUE))); cat("\n");
+  cat("\n", "After removing the outliers", "\n")
+  sim_result = sim_result[, !is.na(sim_result[3, ])]
+  sim_result = sim_result[, which.not.extreme(sim_result[3, ])]
   print(rbind(apply(sim_result, 1, mean, na.rm = TRUE), apply(sim_result, 1, sd, na.rm = TRUE))); cat("\n");
   # cat("After removing the outliers", "\n")
   # print(rbind(apply(sim_result, 1, function(v) if(!all(is.na(v))) mean(rm.extreme(na.omit(v))) else NA),
@@ -99,7 +106,7 @@ simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, r
     cp[i] = mean(na.omit(apply(ci, 1, function(v) ifelse(v[1] < mu.true & v[2] > mu.true, 1, 0))))
   }
   names(cp) = c("ipw_cp", "ipw.true_cp")
-  print(cp)
+  print(cp); cat("\n");
 
   gc()
 }
@@ -116,7 +123,7 @@ simulate_all_model_combinations_and_sample_sizes = function(
                                                    replicate_num,
                                                    version){
   all_data = readRDS(all_data_file)
-  all_data$r[is.na(all_data$r)] = 1
+  # all_data$r[is.na(all_data$r)] = 1
   # plot.misspecification(dat, alpha.true, miss.ps_model.true, propensity.list,
   #                       N = 10^4,
   #                       save_file = paste0(c("ChuangResults_SM_Graphs/ChuangChao2023_",save_root, "_", n.vector[1], "_", version, ".png"), collapse = ""))
@@ -180,16 +187,37 @@ simulate_all_settings_with_all_missing_rates = function(settings,
 #   return(which(v < lower | v > upper))
 # }
 
-which.not.extreme = function(v){
-  z.score = scale(v)
-  extreme_num = sum(abs(z.score) > 3)
-  # print(paste(extreme_num, length(v)))
-  if(extreme_num == 0){
+which.not.extreme = function(v, log.tran = F){
+  # Calculate quantiles
+  Q1 = quantile(v, 0.25)
+  Q3 = quantile(v, 0.75)
+  IQR_value = Q3 - Q1
+  
+  # Determine bounds
+  lower_bound = Q1 - 6 * IQR_value
+  upper_bound = Q3 + 6 * IQR_value
+  
+  is.extreme = v > upper_bound | v < lower_bound
+  
+  print(sum(is.extreme))
+  if(sum(is.extreme) == 0){
     return(1:length(v))
   }else{
-    return((1:length(v))[-order(abs(z.score), decreasing = TRUE)[1:min(10, extreme_num)]])
+    return((1:length(v))[!is.extreme])
   }
 }
+
+# which.not.extreme = function(v, log.tran = F){
+#   z.score = scale(v)
+#   is.extreme = abs(z.score) > 3.5
+#   
+#   print(sum(is.extreme))
+#   if(sum(is.extreme) == 0){
+#     return(1:length(v))
+#   }else{
+#     return((1:length(v))[!is.extreme])
+#   }
+# }
 
 summarize_results = function(sim_result, pe_index, ese_index, mu.true, is.original){
   # process_sim_replicates = switch(is.original,
@@ -198,6 +226,7 @@ summarize_results = function(sim_result, pe_index, ese_index, mu.true, is.origin
 
   if(!is.original){
     # print(ncol(sim_result)-length(which.not.extreme(sim_result[ese_index,])))
+    sim_result = sim_result[, !is.na(sim_result[ese_index,])]
     sim_result = sim_result[, which.not.extreme(sim_result[ese_index,])]
   }
   # pe = rep(NA, length(pe_index))
@@ -278,7 +307,12 @@ summarize_all_settings_with_all_missing_rates = function(settings,
   for(j in 1:length(settings)){
     setting = settings[j]
     results_with_all_missing_rates = matrix(NA, 8*length(n.vector), 5*length(missing_rates))
-    mu.true = mean(readRDS(all_data_file.list[[setting]][[1]][[1]])$y)
+    # mu.true = mean(readRDS(all_data_file.list[[setting]][[1]][[1]])$y)
+    mu.true = switch(setting,
+                     "setting7" = 0.7,
+                     "setting8" = 0.617,
+                     "setting9" = 0.7,
+                     "setting10" = 0.645)
     for(i in 1:length(missing_rates)){
       missing_rate = missing_rates[i]
       results_with_all_missing_rates[, ((i-1)*5+1):((i-1)*5+5)] = summarize_all_model_combinations_and_sample_sizes(
@@ -305,7 +339,7 @@ summarize_all_settings_with_all_missing_rates = function(settings,
     print(kable(results_with_all_missing_rates, format = "latex", align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
                 caption = paste0(
                   "Comparison between different estimators under the Scenario ", scenario,
-                  " of Setting ", substr(setting, 8, 8),
+                  " of Setting ", substr(setting, 8, 9),
                   " with $\\mu_0$ approximately ", round(mu.true, 3), ". ",
                   "The $\\bm{\\alpha}_0$ in $\\pi(\\bm{U}, Y; \\bm{\\alpha}_0)$ that leads to $50\\%$ of missingness in $Y$ is $(",
                   paste(alpha_true.list[[setting]][[1]][[1]], collapse = ", "), ")^{\\top}$ and that leads to $30\\%$ of missingness is $(",
