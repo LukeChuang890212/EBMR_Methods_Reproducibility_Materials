@@ -40,7 +40,7 @@
 #'
 #' @references Wang, Shao, & Kim (2014). "An instrumental variable approach for identification and estimation with nonignorable nonresponse."
 
-WangShaoKim2014 = function(formula, h_x_names, inv_link, wt = NULL, se.fit = T, init = NULL) {
+WangShaoKim2014 = function(formula, h_x_names, inv_link, init = NULL, se.fit = T, wt = NULL) {
   # Basic setup
   result = private$parse_formula(formula)
   r = as.matrix(self$data[result$r_names])
@@ -198,7 +198,7 @@ ensemble = function(ps.matrix, h_x_names, init = NULL, se.fit = T, wt = NULL) {
 #' print(ipw_estimates)
 #' }
 
-EBMR_IPW = function(h_x_names, se.fit = TRUE, true_ps = NULL, wt = NULL) {
+EBMR_IPW = function(h_x_names, nu_init = rep(1/J, J), se.fit = TRUE, true_ps = NULL, wt = NULL) {
   # Basic setup
   r = as.matrix(private$r)
   y = as.matrix(private$y)
@@ -220,7 +220,7 @@ EBMR_IPW = function(h_x_names, se.fit = TRUE, true_ps = NULL, wt = NULL) {
   #-----------------------------------------------------------------------------#
   # Ensemble step
   #-----------------------------------------------------------------------------#
-  ensemble_fit = private$ensemble(ps.matrix, h_x_names, init = rep(1/J, J), se.fit)
+  ensemble_fit = private$ensemble(ps.matrix, h_x_names, nu_init, se.fit)
   nu.hat = ensemble_fit$coefficients
   w.hat = nu.hat^2/sum(nu.hat^2)
   ensemble_ps = ps.matrix%*%w.hat
@@ -355,7 +355,7 @@ EBMR_IPW = function(h_x_names, se.fit = TRUE, true_ps = NULL, wt = NULL) {
 #' print(ipw_sensitivity)
 #' }
 
-EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_tilt, exp_tilt_x_names, h_x_names, se.fit = FALSE){
+EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_tilt, exp_tilt_x_names, h_x_names, nu_init = rep(1/J, J), se.fit = FALSE){
   # Basic setup
   r = as.matrix(private$r)
   y = as.matrix(private$y)
@@ -371,7 +371,7 @@ EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_t
   #-----------------------------------------------------------------------------#
   # Ensemble step
   #-----------------------------------------------------------------------------#
-  ensemble_fit = private$ensemble(ps.matrix, h_x_names, init = rep(1/J, J), se.fit)
+  ensemble_fit = private$ensemble(ps.matrix, h_x_names, nu_init, se.fit)
   nu.hat = ensemble_fit$coefficients
   w.hat = nu.hat^2/sum(nu.hat^2)
   ensemble_ps = ps.matrix%*%w.hat

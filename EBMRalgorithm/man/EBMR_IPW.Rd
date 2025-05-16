@@ -4,7 +4,13 @@
 \alias{EBMR_IPW}
 \title{Compute the proposed Inverse Probability Weighting (IPW) Estimator}
 \usage{
-EBMR_IPW(h_x_names, se.fit = TRUE, true_ps = NULL, wt = NULL)
+EBMR_IPW(
+  h_x_names,
+  nu_init = rep(1/J, J),
+  se.fit = TRUE,
+  true_ps = NULL,
+  wt = NULL
+)
 }
 \arguments{
 \item{h_x_names}{A character vector of variable names to be balanced.}

@@ -10,6 +10,7 @@ EBMR_IPW_with_locally_misspecified_model(
   exp_tilt,
   exp_tilt_x_names,
   h_x_names,
+  nu_init = rep(1/J, J),
   se.fit = FALSE
 )
 }

@@ -8,18 +8,18 @@ WangShaoKim2014(
   formula,
   h_x_names,
   inv_link,
-  wt = NULL,
+  init = NULL,
   se.fit = T,
-  init = NULL
+  wt = NULL
 )
 
 WangShaoKim2014(
   formula,
   h_x_names,
   inv_link,
-  wt = NULL,
+  init = NULL,
   se.fit = T,
-  init = NULL
+  wt = NULL
 )
 }
 \arguments{

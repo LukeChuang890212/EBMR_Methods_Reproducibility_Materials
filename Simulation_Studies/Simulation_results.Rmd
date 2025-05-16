@@ -77,7 +77,7 @@ summary_tbls = summarize_all_settings_with_all_missing_rates(
   n.vector = n.vector,
   misspecified_model_all_data_file.list,
   misspecified_model_alpha.true.list,
-  version = "test6",
+  version = "test7",
   is.original = F
 )
 summary_tbls[[1]]

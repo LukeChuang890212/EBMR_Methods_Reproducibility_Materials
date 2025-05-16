@@ -94,6 +94,22 @@ correct_model_all_data_file.list = list(
     miss30 =list(
       paste0(data_root, "setting10.A2_n1000_replicate1000.RDS")
     )
+  ),
+  setting11 = list(
+    miss50 =list(
+      paste0(data_root, "setting11.A1_n1000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting11.A2_n1000_replicate1000.RDS")
+    )
+  ),
+  setting12 = list(
+    miss50 =list(
+      paste0(data_root, "setting12.A1_n1000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting12.A2_n1000_replicate1000.RDS")
+    )
   )
 )
 
@@ -197,6 +213,26 @@ misspecified_model_all_data_file.list = list(
       paste0(data_root, "setting10.B2_n1000_replicate1000.RDS"),
       paste0(data_root, "Setting10.B2_n300_replicate1000.RDS")
     )
+  ),
+  setting11 = list(
+    miss50 =list(
+      paste0(data_root, "setting11.B1_n1000_replicate1000.RDS"),
+      paste0(data_root, "setting11.B1_n300_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting11.B2_n1000_replicate1000.RDS"),
+      paste0(data_root, "setting11.B2_n300_replicate1000.RDS")
+    )
+  ),
+  setting12 = list(
+    miss50 =list(
+      paste0(data_root, "setting12.B1_n1000_replicate1000.RDS"),
+      paste0(data_root, "setting12.B1_n300_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting12.B2_n1000_replicate1000.RDS"),
+      paste0(data_root, "Setting12.B2_n300_replicate1000.RDS")
+    )
   )
 )
 
@@ -272,6 +308,22 @@ correct_model_alpha.true.list = list(
     ),
     miss30 =list(
       setting10_2 = c(-0.6, 0.4, -1, -0.5)
+    )
+  ),
+  setting11 = list(
+    miss50 =list(
+      setting9_1 = c(1.3, 0.2, -2, -0.5)
+    ),
+    miss30 =list(
+      setting9_2 = c(0.2, 0.2, -2, -0.5)
+    )
+  ),
+  setting12 = list(
+    miss50 =list(
+      setting10_1 = c(1.1, 0.4, -2, -0.5)
+    ),
+    miss30 =list(
+      setting10_2 = c(0.05, 0.4, -2, -0.5)
     )
   )
 )
@@ -365,6 +417,26 @@ misspecified_model_alpha.true.list = list(
     miss30 =list(
       setting8_2_mild_1000 = c(-0.6, 0.4, -1, -0.5),
       setting8_2_mild_300 = c(-0.6, 0.4, -1, -0.5)
+    )
+  ),
+  setting11 = list(
+    miss50 =list(
+      setting11_1_mild_1000 =  c(1.3, 0.2, -2, -0.5),
+      setting11_1_mild_300 =  c(1.3, 0.2, -2, -0.5)
+    ),
+    miss30 =list(
+      setting11_2_mild_1000 = c(0.2, 0.2, -2, -0.5),
+      setting11_2_mild_300 = c(0.2, 0.2, -2, -0.5)
+    )
+  ),
+  setting12 = list(
+    miss50 =list(
+      setting12_1_mild_1000 = c(1.1, 0.4, -2, -0.5),
+      setting12_1_mild_300 = c(1.1, 0.4, -2, -0.5)
+    ),
+    miss30 =list(
+      setting12_2_mild_1000 = c(0.05, 0.4, -2, -0.5),
+      setting12_2_mild_300 = c(0.05, 0.4, -2, -0.5)
     )
   )
 )

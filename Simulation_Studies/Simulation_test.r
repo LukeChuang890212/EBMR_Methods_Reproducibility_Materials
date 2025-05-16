@@ -194,8 +194,8 @@ which.not.extreme = function(v, log.tran = F){
   IQR_value = Q3 - Q1
   
   # Determine bounds
-  lower_bound = Q1 - 6 * IQR_value
-  upper_bound = Q3 + 6 * IQR_value
+  lower_bound = Q1 - 8 * IQR_value
+  upper_bound = Q3 + 8 * IQR_value
   
   is.extreme = v > upper_bound | v < lower_bound
   
@@ -257,7 +257,7 @@ summarize_results = function(sim_result, pe_index, ese_index, mu.true, is.origin
   ese = round(mean(ese), 3)
   cp = round(cp, 3)
 
-  return(c(bias, esd, ese, mse, cp))
+  return(c(bias, esd, ese, cp))
 }
 
 summarize_all_model_combinations_and_sample_sizes = function(setting,
@@ -270,7 +270,7 @@ summarize_all_model_combinations_and_sample_sizes = function(setting,
                                                              version,
                                                              is.original){
 
-  result = matrix(NA, 8*length(n.vector),  5)
+  result = matrix(NA, 8*length(n.vector),  4)
   j = 1
   for(n in n.vector){
     for(model_num in 1:J){
@@ -306,16 +306,16 @@ summarize_all_settings_with_all_missing_rates = function(settings,
   summary_tbls = list()
   for(j in 1:length(settings)){
     setting = settings[j]
-    results_with_all_missing_rates = matrix(NA, 8*length(n.vector), 5*length(missing_rates))
+    results_with_all_missing_rates = matrix(NA, 8*length(n.vector), 4*length(missing_rates))
     # mu.true = mean(readRDS(all_data_file.list[[setting]][[1]][[1]])$y)
     mu.true = switch(setting,
                      "setting7" = 0.7,
                      "setting8" = 0.617,
                      "setting9" = 0.7,
-                     "setting10" = 0.645)
+                     "setting10" = 0.646)
     for(i in 1:length(missing_rates)){
       missing_rate = missing_rates[i]
-      results_with_all_missing_rates[, ((i-1)*5+1):((i-1)*5+5)] = summarize_all_model_combinations_and_sample_sizes(
+      results_with_all_missing_rates[, ((i-1)*4+1):((i-1)*4+4)] = summarize_all_model_combinations_and_sample_sizes(
         setting = setting,
         scenario = scenario,
         J = J,
@@ -327,14 +327,20 @@ summarize_all_settings_with_all_missing_rates = function(settings,
         version = version
       )
     }
-    estimator_names= rep(c("$\\tilde{\\mu}$",
-                           "$\\hat{\\mu}_{100}$", "$\\hat{\\mu}_{010}$", "$\\hat{\\mu}_{001}$",
-                           "$\\hat{\\mu}_{110}$", "$\\hat{\\mu}_{101}$", "$\\hat{\\mu}_{011}$",
-                           "$\\hat{\\mu}_{111}$"), length(n.vector))
+    estimator_names = switch(substr(scenario, 1, 1),
+      "1" = rep(c("$\\hat{\\mu}_{\\text{IPW}}$",
+                  "$\\hat{\\mu}_{100}$", "$\\hat{\\mu}_{010}$", "$\\hat{\\mu}_{001}$",
+                  "$\\hat{\\mu}_{110}$", "$\\hat{\\mu}_{101}$", "$\\hat{\\mu}_{011}$",
+                  "$\\hat{\\mu}_{111}$"), length(n.vector)),
+      "2" = rep(c("$\\tilde{\\mu}_{\\text{IPW}}$",
+                  "$\\tilde{\\mu}_{100}$", "$\\tilde{\\mu}_{010}$", "$\\tilde{\\mu}_{001}$",
+                  "$\\tilde{\\mu}_{110}$", "$\\tilde{\\mu}_{101}$", "$\\tilde{\\mu}_{011}$",
+                  "$\\tilde{\\mu}_{111}$"), length(n.vector))
+    )
 
     results_with_all_missing_rates = cbind(estimator_names, as.data.frame(results_with_all_missing_rates)) %>%
       as.data.frame
-    colnames(results_with_all_missing_rates) = c("", rep(c("Bias", "ESD", "ESE", "MSE", "CP"), length(missing_rates)))
+    colnames(results_with_all_missing_rates) = c("", rep(c("Bias", "ESD", "ESE", "CP"), length(missing_rates)))
 
     print(kable(results_with_all_missing_rates, format = "latex", align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
                 caption = paste0(
@@ -346,7 +352,7 @@ summarize_all_settings_with_all_missing_rates = function(settings,
                   paste(alpha_true.list[[setting]][[2]][[1]], collapse = ", "), ")^{\\top}$."
                 )) %>%
             kable_styling(full_width = FALSE, latex_options = c("hold_position", "scale_down")) %>%
-            add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5)))
+            add_header_above(c("", "$50\\%$ missing" = 4, "$30\\%$ missing" = 4)))
 
     # summary_tbls[[j]] = kable(results_with_all_missing_rates, format = "latex", align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
     #                           caption = paste0(

@@ -7,7 +7,7 @@ source("Simulation_test.r")
 library(dplyr)
 
 # settings = c("setting1", "setting2", "setting3")
-settings = c("setting9", "setting10")
+settings = c("setting11", "setting12")
 missing_rates = c("miss50", "miss30")
 replicate_num = 1000
 
@@ -56,6 +56,7 @@ full_ps_specifications = list(
   inv_link = function(eta) 1/(1+exp(eta))
 )
 
+##  Scenario 1-2 ----
 simulate_all_settings_with_all_missing_rates(settings = settings,
                                              missing_rates = missing_rates,
                                              scenario = "1-2",
@@ -79,6 +80,7 @@ full_ps_specifications = list(
   inv_link = function(eta) 1/(1+exp(eta))
 )
 
+##  Scenario 1-3 ----
 simulate_all_settings_with_all_missing_rates(settings = settings,
                                              missing_rates = missing_rates,
                                              scenario = "1-3",
@@ -95,7 +97,7 @@ full_ps_specifications = list(
     r ~ o(y)
   ),
   h_x_names.list = list(
-    c("u1", "u2", "z1"),
+    c("u1", "u2", "z1", "z2"),
     c("u1", "z1", "z2"),
     c("z1", "z2")
   ),
@@ -150,7 +152,7 @@ full_ps_specifications = list(
   inv_link = function(eta) 1/(1+exp(eta))
 )
 
-##  Scenario 2-2 ----
+##  Scenario 2-3 ----
 simulate_all_settings_with_all_missing_rates(settings = settings,
                                              missing_rates = missing_rates,
                                              scenario = "2-3",
