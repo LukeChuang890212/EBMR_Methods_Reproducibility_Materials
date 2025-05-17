@@ -151,17 +151,6 @@ bootstrap = function(full_ps_specifications, W, data, B, init.list){
                                    nu_init = c(1, rep(0, model_num - 1)),
                                    true_ps =  NULL)
       
-            # ps_fit.list = list()
-            # J = length(ps_specifications$formula.list)
-            # for(j in 1:J){
-            #   formula = ps_specifications$formula.list[[j]]
-            #   h_x_names = ps_specifications$h_x_names.list[[j]]
-            #   inv_link = ps_specifications$inv_link
-            #   ps_fit.list[[j]] = WangShaoKim2014(formula, h_x_names, inv_link, W = W, data = sub_boot_dat)
-            # }
-            # 
-            # # if(model_num == 3) print(ps_fit.list[[2]]$coefficients)
-            # result = EBMR_IPW(h_x_names = c("father", "parent_report"), W = W, data = sub_boot_dat, se.fit = TRUE)
             
             p.hat[l] = result$mu_ipw
             p_cc[l] = mean(sub_boot_dat$teacher_report[sub_boot_dat$r == 1])
