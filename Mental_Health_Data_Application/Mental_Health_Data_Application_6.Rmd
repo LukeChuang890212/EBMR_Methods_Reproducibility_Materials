@@ -579,7 +579,8 @@ for(k in 1:7){
   nu.hat1 = nu.hat[1:(length(nu.hat)/2)]
   nu.hat2 = nu.hat[(length(nu.hat)/2+1):length(nu.hat)]
   qqnorm(rm.extreme(boot_result[theta.hat, !is.na(boot_result[theta.hat,])]), main = expression(hat(theta)))
-  boot_effect_se[k] = sd(rm.extreme(boot_result[theta.hat, !is.na(boot_result[theta.hat,])]))
+  # boot_effect_se[k] = sd(rm.extreme(boot_result[theta.hat, !is.na(boot_result[theta.hat,])]))
+  boot_effect_se[k] = sd(boot_result[theta.hat, ], na.rm = T)
   qqnorm(rm.extreme(boot_result[se_theta.hat, !is.na(boot_result[se_theta.hat,])]), main = expression(widehat("SE")(hat(theta))))
   if(length(w.hat) == 2){
     plot.new()
@@ -766,7 +767,8 @@ kable(full_results, align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
 
 ```{r}
 possibly_true_ps.vector = c(1, 1)
-exp_tilt_x_names = NULL
+# exp_tilt_x_names = c("father", "parent_report")
+exp_tilt_x_names = c("father", "parent_report")
 xi.vector.list = list(
   xi.vector0 = seq(0, nrow(dat[dat$health == 0, ])^(-1/2), length.out = 30),
   xi.vector1 = seq(0, nrow(dat[dat$health == 1, ])^(-1/2), length.out = 30)
@@ -788,7 +790,8 @@ for(k in 1:2){
     ebmr = EBMRAlgorithm$new("teacher_report", ps_specifications, subdat, W)
     result = ebmr$EBMR_IPW(h_x_names = c("father", "parent_report"))
     
-    exp_tilt = function(y, x) exp(xi*as.matrix(cbind(y))%*%rep(1, ncol(cbind(y))))
+    # exp_tilt = function(y, x) exp(xi*as.matrix(cbind(y))%*%rep(1, ncol(cbind(y))))
+    exp_tilt = function(y, x) exp(xi*as.matrix(cbind(y, x))%*%c(-1, 1, -1))
     sa_result = ebmr$EBMR_IPW_with_locally_misspecified_model(
       ps.matrix = result$ps.matrix,
       perturb_ps = possibly_true_ps.vector[k],
@@ -838,7 +841,45 @@ points(1:30, all_results[, 1], pch = 16)
 abline(h = 1, lwd = 2)
 ```
 
+# Analysis under MAR
 
+```{r}
+# Define the statistic function for bootstrap
+theta_hat_fn <- function(data, indices) {
+  boot_dat <- data[indices, ]
+  
+  fit0 = glm(1-r~father, data = boot_dat, family = binomial(), subset = health == 0)
+  fit1 = glm(1-r~father, data = boot_dat, family = binomial(), subset = health == 1)
+  
+  ps0 = 1 - fitted(fit0)
+  ps1 = 1 - fitted(fit1)
+  
+  p0_hat = mean(boot_dat$r[boot_dat$health == 0]/ps0*boot_dat$y[boot_dat$health == 0])
+  p1_hat = mean(boot_dat$r[boot_dat$health == 1]/ps1*boot_dat$y[boot_dat$health == 1])
+  theta.hat = effect.f(p0_hat, p1_hat)
+  
+  return(theta.hat)
+}
+
+theta.hat = theta_hat_fn(dat, 1:nrow(dat))
+```
+
+```{r}
+library(boot)
+
+# Run bootstrap
+set.seed(123)
+boot_res <- boot(dat, theta_hat_fn, R = 1000)
+
+# Results
+theta.hat <- boot_res$t0
+se.theta <- sd(boot_res$t)
+ci <- c(theta.hat - qnorm(0.975)*se.theta, theta.hat + qnorm(0.975)*se.theta)
+
+theta.hat
+se.theta
+ci 
+```
 
 
 
