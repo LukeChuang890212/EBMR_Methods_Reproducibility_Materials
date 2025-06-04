@@ -56,7 +56,7 @@ library(numDeriv)
 
 # source("./R/WangShaoKim2014.r")
 source("./R/GMM_functions.r")
-source("./R/test_Methods.r")
+source("./R/Methods.r")
 source("./R/Preprocessor.r")
 source("./R/Fool_proofing.r")
 
@@ -78,6 +78,7 @@ EBMRAlgorithm <- R6Class("EBMRAlgorithm",
                        private$n = nrow(self$data)
                        private$J = length(ps_specifications$formula.list)
                        private$W = W
+                       private$wt = wt
 
                        for(j in 1:private$J){
                          formula = ps_specifications$formula.list[[j]]

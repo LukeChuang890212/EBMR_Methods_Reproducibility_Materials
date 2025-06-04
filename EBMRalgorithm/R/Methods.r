@@ -76,12 +76,15 @@ WangShaoKim2014 = function(formula, h_x_names, inv_link, init = NULL, se.fit = T
     inv_link(cbind(rep(1, n), y, x)%*%alpha)
   }
 
-  Phi_alpha = function(param){
+  wt <- if (is.null(wt)) 1 else wt
+
+  # single, elegant definition of phi_alpha
+  Phi_alpha <- function(param) {
     rw = r/model(x, y, param)
     g.matrix = as.vector(rw-1)*h_x
-    return(g.matrix)
+    return(wt*g.matrix)
   }
-  if(!is.null(wt)) Phi_alpha = function(param) wt*Phi_alpha(param)
+  # if(!is.null(wt)) Phi_alpha = function(param) wt*Phi_alpha(param)
   gmm_fit = private$gmm(Phi_alpha, private$W, n, h_dim, alpha_dim, init, se.fit)
 
   results = list(coefficients = gmm_fit$estimates,
@@ -152,12 +155,14 @@ ensemble = function(ps.matrix, h_x_names, init = NULL, se.fit = T, wt = NULL) {
   h_x = cbind(d, h_x2)
   h_dim = ncol(h_x)
 
+  wt <- if (is.null(wt)) 1 else wt
+
   Phi_nu = function(param){
     rw = r/(ps.matrix%*%param)
     g.matrix = as.vector(rw-1)*h_x
-    return(g.matrix)
+    return(wt*g.matrix)
   }
-  if(!is.null(wt)) Phi_nu = function(param) wt*Phi_nu(param)
+  # if(!is.null(wt)) Phi_nu = function(param) wt*Phi_nu(param)
   gmm_fit = private$gmm(Phi_nu, private$W, n, h_dim, J, init, se.fit)
 
   results = list(coefficients = gmm_fit$estimates,

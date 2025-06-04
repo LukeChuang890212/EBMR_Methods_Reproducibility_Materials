@@ -39,13 +39,13 @@ library(dplyr)
 library(knitr)
 library(kableExtra)
 
-source("Simulation_test.r")
+source("Simulation.r")
 source("Basic_setup.r")
 ```
 
 ```{r}
 # settings = c("setting1", "setting2", "setting3")
-settings = c("setting9", "setting10")
+settings = c("setting11", "setting12")
 missing_rates = c("miss50", "miss30")
 J = 3
 n.vector = c(300, 1000)

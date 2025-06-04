@@ -3,7 +3,8 @@
 #------------------------------------------------------------------------------#
 # data_root = "E:/Other computers/我的電腦/MNAR-Simulation/MNAR_2023/ChuangData_SM/"
 # data_root = "/Users/luke/Library/CloudStorage/GoogleDrive-mingjuresearch@gmail.com/其他電腦/我的電腦/MNAR-Simulation/MNAR_2023/ChuangData_SM/"
-data_root = "G:/Other computers/我的電腦/MNAR-Simulation/MNAR_2023/ChuangData_SM/"
+# data_root = "G:/Other computers/我的電腦/MNAR-Simulation/MNAR_2023/ChuangData_SM/"
+data_root = "Simulation_Data/"
 
 replicate_num = 1000
 ps_model.true = function(y, u1, u2, r, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))

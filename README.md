@@ -53,17 +53,27 @@ cd EBMR_Methods_Reproducibility_Materials
 
 ## Usage
 
-Run the main analysis script:
+Install the package using devtools:
 ```sh
-Rscript scripts/main_analysis.R
+devtools::install_github("LukeChuang890212/EBMR_Methods_Reproducibility_Materials/EBMRalgorithm")
 ```
 
-For simulations:
+To run the simulation studies:
 ```sh
-Rscript scripts/simulation_study.R
+Rscript Simulation_Studies/simulation_main.R
+```
+The simulation results will be saved in the Simulation_results/ directory.
+
+To generate the tables reported in the main paper, run:
+```sh
+Rscript Simulation_Studies/simulation_results.rmd
 ```
 
-Generated results will be saved in the `results/` directory.
+To reproduce the analysis on the mental health dataset:
+```sh
+Rscript Mental_Health_Data_Application/Mental_Health_Data_Application.Rmd
+```
+This script generates the tables included in the main paper. Bootstrap samples will be saved in the MHD_results/ directory.
 
 ## Reproducibility
 
@@ -78,13 +88,13 @@ install.packages("renv")
 renv::init()
 ```
 
-## Contributing
+<!-- ## Contributing
 
 If you'd like to contribute, please fork the repository and submit a pull request.
 
 ## License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the MIT License. See the `LICENSE` file for details. -->
 
 ## Contact
 
