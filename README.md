@@ -53,7 +53,7 @@ cd EBMR_Methods_Reproducibility_Materials
 
 ## Usage
 
-Install the package using devtools:
+To install the package, use `devtools`:
 ```sh
 devtools::install_github("LukeChuang890212/EBMR_Methods_Reproducibility_Materials/EBMRalgorithm")
 ```
