@@ -146,6 +146,8 @@ ensemble = function(ps.matrix, h_x_names, init = NULL, se.fit = T, wt = NULL) {
   if(ncol(h_x1) > 0){
     for(j in 1:ncol(h_x1)) h_x1[, j] = as.factor(h_x1[, j])
     d = model.matrix(lm(rep(1, n)~., data =  h_x1))
+  }else{
+    d = as.matrix(rep(1, n))
   }
 
   if(ncol(h_x2) == 0){
