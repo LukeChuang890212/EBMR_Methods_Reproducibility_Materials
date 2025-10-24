@@ -60,6 +60,8 @@ WangShaoKim2014 = function(formula, h_x_names, inv_link, init = NULL, se.fit = T
   if(ncol(h_x1) > 0){
     for(j in 1:ncol(h_x1)) h_x1[, j] = as.factor(h_x1[, j])
     d = model.matrix(lm(rep(1, n)~., data = h_x1))
+  }else{
+    d = as.matrix(rep(1, n))
   }
 
   if(ncol(h_x2) == 0){
