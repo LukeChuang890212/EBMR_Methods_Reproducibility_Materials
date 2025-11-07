@@ -1,21 +1,25 @@
-# devtools::install_github("LukeChuang890212/EBMR_Methods_Reproducibility_Materials/EBMRalgorithm")
+# devtools::install_github(
+#   "LukeChuang890212/EBMR_Methods_Reproducibility_Materials",
+#   subdir = "EBMRalgorithm"
+# )
 setwd("C:/Users/stat-pc/Desktop/NTHU_Research/EBMR_Methods_Reproducibility_Materials/Simulation_Studies")
 source("Basic_setup.r")
 # source("test_methods.r")
+source("Data_Generation.r")
 source("Simulation.r")
-
-library(dplyr)
 
 #------------------------------------------------------------------------------#
 #  Generate data ----
 #------------------------------------------------------------------------------#
 set.seed(1234)
+n = 2000
+replicate_num = 1000
 
 cores = detectCores()
 cl <- makeCluster(cores-2)
 registerDoParallel(cl)
 
-pb = txtProgressBar(max = n.sim, style = 3)
+pb = txtProgressBar(max = replicate_num, style = 3)
 progress <- function(n) setTxtProgressBar(pb, n)
 opts = list(progress = progress)
 parallel_packages = c()
@@ -28,23 +32,29 @@ setting.list = list(
   setting12.A1 = setting12.A1,
   setting12.A2 = setting12.A2,
   setting12.B1 = setting12.B1,
-  setting12.B2 = setting12.B2
+  setting12.B2 = setting12.B2,
+  # Cho_RM1 = Cho_RM1,
+  Cho_RM2.A1 = Cho_RM2.A1,
+  Cho_RM2.A2 = Cho_RM2.A2,
+  Cho_RM3.A1 = Cho_RM3.A1,
+  Cho_RM3.A2 = Cho_RM3.A2
+  # Cho_RM4 = Cho_RM4
 )
 
-for(j in 1:length(setting.list)){
+# for(j in 1:length(setting.list)){
+for(j in 9:10){
   print(names(setting.list)[j])
   start = Sys.time()
   setting = setting.list[[j]]
-  dat <- foreach(i=1:n.sim,.combine = 'rbind', .options.snow = opts, .packages = parallel_packages)%dopar%{
-    setting(n = 1000)
+  dat <- foreach(i=1:1000,.combine = 'rbind', .options.snow = opts, .packages = parallel_packages)%dopar%{
+    setting(n = n)
   }
   close(pb)
 
   print(Sys.time()-start)
 
-  saveRDS(dat, paste0("Simulation_Data/", names(setting.list)[j], "_n1000_replicate1000.RDS"))
+  saveRDS(dat, paste0("Simulation_Data/", names(setting.list)[j], "_n", n, "_replicate", replicate_num, ".RDS"))
 }
-
 
 setting.list = list(
   setting11.B1 = setting11.B1,
@@ -74,8 +84,9 @@ for(j in 1:length(setting.list)){
 #------------------------------------------------------------------------------#
 
 # settings = c("setting1", "setting2", "setting3")
-settings = c("setting11", "setting12")
-missing_rates = c("miss50", "miss30")
+# settings = c("setting11", "setting12")
+settings = c("Cho_RM2", "Cho_RM3")
+missing_rates = c("miss30")
 replicate_num = 1000
 
 W = function(g.matrix){
@@ -407,7 +418,7 @@ simulate_all_settings_with_all_missing_rates(settings = c("setting5", "setting6"
                                              version = "test5")
 
 #------------------------------------------------------------------------------#
-# Run the simulations for Scenario 9, 10 ----
+# Run the simulations for Scenario 11, 12 ----
 #------------------------------------------------------------------------------#
 full_ps_specifications = list(
   formula.list = list(
@@ -437,6 +448,82 @@ simulate_all_settings_with_all_missing_rates(settings = c("setting5", "setting6"
 simulate_all_settings_with_all_missing_rates(settings = c("setting5", "setting6"),
                                              missing_rates = missing_rates,
                                              scenario = 12,
+                                             full_ps_specifications,
+                                             n.vector.list$misspecified_model,
+                                             misspecified_model_all_data_file.list,
+                                             misspecified_model_alpha.true.list,
+                                             version = "test5")
+
+#------------------------------------------------------------------------------#
+# Run the simulations for Scenario 13, 14 ----
+#------------------------------------------------------------------------------#
+full_ps_specifications = list(
+  formula.list = list(
+    r ~ o(y) + u1 + u2,
+    r ~ o(y) + u1 + u2,
+    r ~ o(y) + u1 + u2
+  ),
+  h_x_names.list = list(
+    c("u1", "u2", "z1", "z2"),
+    c("u1", "u2", "v3"),
+    c("u1", "u2", "v4")
+  ),
+  inv_link = function(eta) 1/(1+exp(eta))
+)
+
+
+##  Scenario 11 ----
+simulate_all_settings_with_all_missing_rates(settings = c("setting5", "setting6"),
+                                             missing_rates = missing_rates,
+                                             scenario = 11,
+                                             full_ps_specifications,
+                                             n.vector.list$correct_model,
+                                             correct_model_all_data_file.list,
+                                             correct_model_alpha.true.list,
+                                             version = "test5")
+
+##  Scenario 12 ----
+simulate_all_settings_with_all_missing_rates(settings = c("setting5", "setting6"),
+                                             missing_rates = missing_rates,
+                                             scenario = 12,
+                                             full_ps_specifications,
+                                             n.vector.list$misspecified_model,
+                                             misspecified_model_all_data_file.list,
+                                             misspecified_model_alpha.true.list,
+                                             version = "test5")
+
+#------------------------------------------------------------------------------#
+# Run the simulations for Scenario in Cho 2025 ----
+#------------------------------------------------------------------------------#
+full_ps_specifications = list(
+  formula.list = list(
+    r ~ x1 + x2,
+    r ~ o(y) + x1, 
+    r ~ o(y) + x2
+  ),
+  h_x_names.list = list(
+    c("x1", "x2", "x3"),
+    c("x1", "x2", "x3"),
+    c("x1", "x2", "x3")
+  ),
+  inv_link = function(eta) exp(eta)/(1+exp(eta))
+)
+
+
+##  Scenario cho1 ----
+simulate_all_settings_with_all_missing_rates(settings = c("Cho_RM2"),
+                                             missing_rates = missing_rates,
+                                             scenario = "cho1",
+                                             full_ps_specifications,
+                                             n.vector.list$correct_model,
+                                             correct_model_all_data_file.list,
+                                             correct_model_alpha.true.list,
+                                             version = "test5")
+
+##  Scenario cho2 ----
+simulate_all_settings_with_all_missing_rates(settings = c("Cho_RM2", "Cho_RM3"),
+                                             missing_rates = missing_rates,
+                                             scenario = "cho2",
                                              full_ps_specifications,
                                              n.vector.list$misspecified_model,
                                              misspecified_model_all_data_file.list,

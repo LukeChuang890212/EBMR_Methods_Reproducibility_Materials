@@ -39,8 +39,12 @@ simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, r
       ebmr = EBMRAlgorithm$new("y", ps_specifications, dat, W)
       # result = ebmr$EBMR_IPW(h_x_names = c("u1", "u2", "z1", "z2", "v3", "v4"),
       #                        true_ps =  ps_model.true(dat$y, dat$u1, dat$u2, dat$r, alpha.true))
-      result = ebmr$EBMR_IPW(h_x_names = c("u1", "u2", "z1", "z2"),
-                             true_ps =  ps_model.true(dat$y, dat$u1, dat$u2, dat$r, alpha.true))
+      # result = ebmr$EBMR_IPW(h_x_names = c("u1", "u2", "z1", "z2"),
+      #                        true_ps =  ps_model.true(dat$y, dat$u1, dat$u2, dat$r, alpha.true))
+      # result = ebmr$EBMR_IPW(h_x_names = ps_specifications$h_x_names.list[[1]],
+      #                        true_ps =  ps_model.true(dat, alpha.true))
+      result = ebmr$EBMR_IPW(h_x_names = c("x1", "x2", "x3"),
+                             true_ps =  ps_model.true(dat, alpha.true))
       estimates = unlist(result[1:4])
 
       # ps_fit.list = list()
@@ -130,10 +134,11 @@ simulate_all_model_combinations_and_sample_sizes = function(
 
   J = length(full_ps_specifications$formula.list)
   for(n in n.vector){
-    for(model_num in 1){
+    for(model_num in 2:3){
+    # for(model_num in 2:J){
       model_combinations = combn(J, model_num)
       # for(i in 1:ncol(model_combinations)){
-      for(i in 4:5){
+      for(i in 1){
         model_set = model_combinations[, i]
         save_file = paste0(c("Simulation_Results/EBMR_IPW_", setting, "-", missing_rate, "-scenario", scenario, "_", model_set, "_n", n, "_replicate", replicate_num, "_", version, ".RDS"), collapse = "")
         print(paste("model set:", paste0(model_set, collapse = ""), "/", "file:", save_file))

@@ -1,17 +1,25 @@
 #------------------------------------------------------------------------------#
 # Basic Setup ----
 #------------------------------------------------------------------------------#
+library(dplyr)
+library(doParallel)
+library(parallel)
+
 # data_root = "E:/Other computers/我的電腦/MNAR-Simulation/MNAR_2023/ChuangData_SM/"
 # data_root = "/Users/luke/Library/CloudStorage/GoogleDrive-mingjuresearch@gmail.com/其他電腦/我的電腦/MNAR-Simulation/MNAR_2023/ChuangData_SM/"
 # data_root = "G:/Other computers/我的電腦/MNAR-Simulation/MNAR_2023/ChuangData_SM/"
 data_root = "Simulation_Data/"
 
 replicate_num = 1000
-ps_model.true = function(y, u1, u2, r, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))
+# ps_model.true = function(dat, alpha.true) 1/(1+exp(cbind(rep(1, nrow(dat)), dat$y, dat$u1, dat$u2)%*%alpha.true))
+ps_model.true = function(dat, alpha.true){
+  eta = cbind(rep(1, nrow(dat)), dat$x1, dat$y)%*%alpha.true
+  exp(eta)/(1+exp(eta))
+}
 # miss.ps_model.true = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*y)
 
 n.vector.list = list(
-  correct_model = list(c(1000, 300)),
+  correct_model = list(c(4000, 300)),
   misspecified_model = list(c(1000), c(300))
 )
 
@@ -110,6 +118,27 @@ correct_model_all_data_file.list = list(
     ),
     miss30 =list(
       paste0(data_root, "setting12.A2_n1000_replicate1000.RDS")
+    )
+  ),
+  Cho_RM2 = list(
+    miss50 =list(
+      paste0(data_root, "Cho_RM2.A1_n2000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Cho_RM2.A2_n2000_replicate1000.RDS")
+    )
+  ),
+  Cho_RM3 = list(
+    miss50 =list(
+      paste0(data_root, "Cho_RM3.A1_n2000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Cho_RM3.A2_n2000_replicate1000.RDS")
+    )
+  ),
+  Cho_RM4 = list(
+    miss30 =list(
+      paste0(data_root, "Cho_RM4_n2000_replicate1000.RDS")
     )
   )
 )
@@ -325,6 +354,23 @@ correct_model_alpha.true.list = list(
     ),
     miss30 =list(
       setting10_2 = c(0.05, 0.4, -2, -0.5)
+    )
+  ),
+  Cho_RM2 = list(
+    miss50 =list(
+      c(-0.98, 0.5, 0.25)
+    ),
+    miss30 =list(
+      c(-0.114, 0.5, 0.25)
+      # c(-0.25, 0.25, 0.25, 0.25)
+    )
+  ),
+  Cho_RM3 = list(
+    miss50 =list(
+      c(0.02, 0.5, - 0.25)
+    ),
+    miss30 =list(
+      c(0.865, 0.5, - 0.25)
     )
   )
 )
