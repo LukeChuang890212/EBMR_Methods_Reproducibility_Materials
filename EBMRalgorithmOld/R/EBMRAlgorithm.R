@@ -1,6 +1,6 @@
 #' EBMRAlgorithm Class
 #'
-#' The `EBMRAlgorithm` class provides an implementation for estimating
+#' The `EBMRAlgorithmOld` class provides an implementation for estimating
 #' the coefficients in a propensity score model and related functionalities
 #' based on the ensemble method for inverse probability weighting (IPW).
 #' This class allows users to perform propensity score fitting and estimation
@@ -9,7 +9,7 @@
 #' @import R6
 #'
 #' @section Public Methods:
-#' The following methods are available in the EBMRAlgorithm class:
+#' The following methods are available in the EBMRAlgorithmOld class:
 #'
 #' \code{initialize(y_names, ps_specifications, data)}:
 #' Initializes the class and estimates the propensity scores based on the provided formulas,
@@ -40,13 +40,13 @@
 #'   inv_link = inv_link_function
 #' )
 #'
-#' # Initialize the EBMRAlgorithm class
-#' ebmr = EBMRAlgorithm$new(y_names = "outcome", ps_specifications = ps_specifications, data = dataset)
+#' # Initialize the EBMRAlgorithmOld class
+#' ebmr = EBMRAlgorithmOld$new(y_names = "outcome", ps_specifications = ps_specifications, data = dataset)
 #' }
 #'
 #' @export
 #'
-#' @name EBMRAlgorithm
+#' @name EBMRAlgorithmOld
 
 library(R6)
 library(stringr)
@@ -61,7 +61,7 @@ source("./R/Methods.r")
 source("./R/Preprocessor.r")
 source("./R/Fool_proofing.r")
 
-EBMRAlgorithm <- R6Class("EBMRAlgorithm",
+EBMRAlgorithmOld <- R6Class("EBMRAlgorithmOld",
                    public = list(
                      # Public fields (variables)
                      data = NULL,

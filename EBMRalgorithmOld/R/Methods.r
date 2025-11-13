@@ -205,11 +205,11 @@ ensemble = function(ps.matrix, h_x_names, init = NULL, se.fit = T, wt = NULL) {
 
   wt <- if (is.null(wt)) 1 else wt
 
-  h_x_tilde = matrix(NA, h_dim, J)
-  for(j in 1:h_dim){
-    h_x_tilde[j, ] = apply(as.vector(r*h_x[, j])/ps.matrix, 2, mean)
-  }
-  mu.vector = apply(as.vector(r*as.matrix(private$y))/ps.matrix, 2,  mean)
+  # h_x_tilde = matrix(NA, h_dim, J)
+  # for(j in 1:h_dim){
+  #   h_x_tilde[j, ] = apply(as.vector(r*h_x[, j])/ps.matrix, 2, mean)
+  # }
+  # mu.vector = apply(as.vector(r*as.matrix(private$y))/ps.matrix, 2,  mean)
 
   Phi_nu = function(param){
     # rw = r/(ps.matrix%*%param)
@@ -219,14 +219,11 @@ ensemble = function(ps.matrix, h_x_names, init = NULL, se.fit = T, wt = NULL) {
     #                  h_x[, 2:h_dim]-t(matrix(h_x_tilde%*%param, h_dim-1, n)),
     #                  rw*as.matrix(private$y)-sum(param*mu.vector)
     #                  )
-    g.matrix = cbind((rw-1)*h_x,
-                     rw*as.matrix(private$y)-sum(param*mu.vector)
-
-    )
+    g.matrix = cbind((rw-1)*h_x)
     return(wt*g.matrix)
   }
   # if(!is.null(wt)) Phi_nu = function(param) wt*Phi_nu(param)
-  gmm_fit = private$gmm(Phi_nu, private$W, n, h_dim + 1, J, init, se.fit)
+  gmm_fit = private$gmm(Phi_nu, private$W, n, h_dim, J, init, se.fit)
 
   results = list(coefficients = gmm_fit$estimates,
                  h_x = h_x,
@@ -342,15 +339,15 @@ EBMR_IPW = function(h_x_names, nu_init = rep(1/J, J), se.fit = TRUE, true_ps = N
     # K_3 = K_3-W_nu%*%t(f_n)%*%(t(t(dot_pi)*rep(nu.hat, alpha_dim))*as.vector(h_nu%*%W_nu%*%eta_s*(-r*((ps.matrix%*%nu.hat)^(-2)))))/n
     # K_3 = t(Gamma_nu)%*%K_3
 
-    Phi_nu.alpha = ((t(cbind(h_nu, y)*as.vector(-r*((ps.matrix%*%nu.hat)^(-2))))%*%t(t(dot_pi)*rep(nu.hat, alpha_dim)))/n)
+    Phi_nu.alpha = ((t(cbind(h_nu)*as.vector(-r*((ps.matrix%*%nu.hat)^(-2))))%*%t(t(dot_pi)*rep(nu.hat, alpha_dim)))/n)
     # for(j in 1:ncol(h_nu)){
     #   M = -as.vector(r*h_nu[, j])/(ps.matrix^2)
     #   Phi_nu.alpha[j, ] = (Phi_nu.alpha[j, ]
     #                                   -apply(t(M[, rep(1:ncol(M), times = alpha_dim)]*dot_pi)*rep(nu.hat, alpha_dim), 1, mean))
     # }
-    M = -as.vector(r*y)/(ps.matrix^2)
-    Phi_nu.alpha[nrow(Phi_nu.alpha), ] = (Phi_nu.alpha[nrow(Phi_nu.alpha), ]
-                                          -apply(t(M[, rep(1:ncol(M), times = alpha_dim)]*dot_pi)*rep(nu.hat, alpha_dim), 1, mean))
+    # M = -as.vector(r*y)/(ps.matrix^2)
+    # Phi_nu.alpha[nrow(Phi_nu.alpha), ] = (Phi_nu.alpha[nrow(Phi_nu.alpha), ]
+    #                                       -apply(t(M[, rep(1:ncol(M), times = alpha_dim)]*dot_pi)*rep(nu.hat, alpha_dim), 1, mean))
     dot_nu = -solve(t(Gamma_nu)%*%W_nu%*%Gamma_nu)%*%t(Gamma_nu)%*%W_nu%*%Phi_nu.alpha
     #--------------------------------------------------------------------------#
 
@@ -504,10 +501,10 @@ EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_t
     # K_3 = t(Gamma_nu)%*%K_3
 
     # Phi_nu.alpha = ((t(h_nu*as.vector(-r*((ps.matrix%*%nu.hat)^(-2))))%*%t(t(dot_pi)*rep(nu.hat, alpha_dim)))/n)
-    Phi_nu.alpha = ((t(cbind(h_nu, y)*as.vector(-r*((ps.matrix%*%nu.hat)^(-2))))%*%t(t(dot_pi)*rep(nu.hat, alpha_dim)))/n)
-    M = -as.vector(r*y)/ps.matrix^2
-    Phi_nu.alpha[nrow(Phi_nu.alpha), ] = (Phi_nu.alpha[nrow(Phi_nu.alpha), ]
-                                          -apply(t(M[, rep(1:ncol(M), times = alpha_dim)]*dot_pi)*rep(nu.hat, alpha_dim), 1, mean))
+    Phi_nu.alpha = ((t(cbind(h_nu)*as.vector(-r*((ps.matrix%*%nu.hat)^(-2))))%*%t(t(dot_pi)*rep(nu.hat, alpha_dim)))/n)
+    # M = -as.vector(r*y)/ps.matrix^2
+    # Phi_nu.alpha[nrow(Phi_nu.alpha), ] = (Phi_nu.alpha[nrow(Phi_nu.alpha), ]
+    #                                       -apply(t(M[, rep(1:ncol(M), times = alpha_dim)]*dot_pi)*rep(nu.hat, alpha_dim), 1, mean))
     dot_nu = -solve(t(Gamma_nu)%*%W_nu%*%Gamma_nu)%*%t(Gamma_nu)%*%W_nu%*%Phi_nu.alpha
     #--------------------------------------------------------------------------#
 

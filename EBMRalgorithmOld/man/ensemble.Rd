@@ -4,7 +4,7 @@
 \alias{ensemble}
 \title{Estimate the Coefficients for the Propensity Score Model}
 \usage{
-ensemble(mu.vector, ps.matrix, h_x_names, init = NULL, se.fit = T, wt = NULL)
+ensemble(ps.matrix, h_x_names, init = NULL, se.fit = T, wt = NULL)
 }
 \arguments{
 \item{ps.matrix}{A matrix of propensity scores for each observation and model.}
