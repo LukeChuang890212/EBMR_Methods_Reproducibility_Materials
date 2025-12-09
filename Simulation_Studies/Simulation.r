@@ -5,6 +5,7 @@
 simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, replicate_num, save_file = NULL){
   # source("Data_Generation.r", local = TRUE)
   library(EBMRalgorithm)
+  library(EBMRalgorithmOld)
   library(parallel)
   library(foreach)
   library(doSNOW)
@@ -18,13 +19,14 @@ simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, r
   pb = txtProgressBar(max = replicate_num, style = 3)
   progress <- function(n) setTxtProgressBar(pb, n)
   opts = list(progress = progress)
-  parallel_packages = c("EBMRalgorithm", "stringr", "Matrix", "numDeriv")
+  parallel_packages = c("EBMRalgorithm", "EBMRalgorithmOld", "stringr", "Matrix", "numDeriv")
 
   start = Sys.time()
   # sim_result = foreach(i= 1:replicate_num, .combine = 'cbind', .options.snow = opts, .packages = parallel_packages, .export = c("WangShaoKim2014", "EBMR_IPW", "estimate_nu", "ensemble", "parse_formula", "separate_variable_types")) %dopar% {
-  sim_result = foreach(i= 1:replicate_num, .combine = 'cbind', .options.snow = opts, .packages = parallel_packages) %dopar% {
+  sim_result = foreach(i= 1:replicate_num, .combine = 'cbind', .options.snow = opts, .packages = parallel_packages, .export = "Cho2025") %dopar% {
     tryCatch({
       dat = all_data[((i-1)*n+1):(i*n), ]
+      # dat = Cho_RM2.A1(300)
 
       # ebmr = EBMRAlgorithm$new(y_names = "y",
       #                          ps_specifications = ps_specifications,
@@ -32,20 +34,37 @@ simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, r
       # result = ebmr$EBMR_IPW(h_x_names = c("u1", "u2"),
       #                        true_ps = ps_model.true(dat$y, dat$u1, dat$u2, dat$r, alpha.true))
 
+      # W = function(g.matrix){
+      #   return(solve(t(g.matrix)%*%g.matrix/n))
+      # }
+      
       W = function(g.matrix){
-        return(solve(t(g.matrix)%*%g.matrix/n))
+        return(diag(ncol(g.matrix)))
       }
+
+      ebmr_old = EBMRAlgorithmOld$new("y", ps_specifications, dat, W)
+      result_old = ebmr_old$EBMR_IPW(h_x_names = ps_specifications$h_x_names.list[[1]],
+                             true_ps =  ps_model.true(dat, alpha.true))
+      estimates_old = unlist(result_old[1:4])
 
       ebmr = EBMRAlgorithm$new("y", ps_specifications, dat, W)
       # result = ebmr$EBMR_IPW(h_x_names = c("u1", "u2", "z1", "z2", "v3", "v4"),
       #                        true_ps =  ps_model.true(dat$y, dat$u1, dat$u2, dat$r, alpha.true))
-      # result = ebmr$EBMR_IPW(h_x_names = c("u1", "u2", "z1", "z2"),
-      #                        true_ps =  ps_model.true(dat$y, dat$u1, dat$u2, dat$r, alpha.true))
+      # result = ebmr$EBMR_IPW(h_x_names = c("u1", "u2"),
+      #                        true_ps =  ps_model.true(dat, alpha.true))
       # result = ebmr$EBMR_IPW(h_x_names = ps_specifications$h_x_names.list[[1]],
       #                        true_ps =  ps_model.true(dat, alpha.true))
-      result = ebmr$EBMR_IPW(h_x_names = c("x1", "x2", "x3"),
+      result = ebmr$EBMR_IPW(h_x_names = ps_specifications$h_x_names.list[[1]],
                              true_ps =  ps_model.true(dat, alpha.true))
       estimates = unlist(result[1:4])
+
+      # ChoKimQiu2025
+      Cho2025_est = Cho2025(dat,
+                            or_x_names = ps_specifications$h_x_names.list[[1]],
+                            s = sqrt(1/3),
+                            ebmr$ps_fit.list,
+                            Aux_names = ps_specifications$h_x_names.list[[1]],
+                            inv_link = ps_specifications$inv_link)
 
       # ps_fit.list = list()
       # J = length(ps_specifications$formula.list)
@@ -72,8 +91,20 @@ simulate = function(all_data, ps_model.true, alpha.true, ps_specifications, n, r
         alpha.hat = unlist(lapply(ebmr$ps_fit.list, function(ps_fit) ps_fit$coefficients)),
         se_alpha.hat = unlist(lapply(ebmr$ps_fit.list, function(ps_fit) ps_fit$se)),
         nu.hat = result$nu.hat,
-        w.hat = result$w.hat
+        w.hat = result$w.hat,
+        estimates_old,
+        alpha.hat_old = unlist(lapply(ebmr_old$ps_fit.list, function(ps_fit) ps_fit$coefficients)),
+        se_alpha.hat_old = unlist(lapply(ebmr_old$ps_fit.list, function(ps_fit) ps_fit$se)),
+        nu.hat_old = result_old$nu.hat,
+        w.hat_old = result_old$w.hat,
+        Cho2025_est
       )
+      # c(estimates_old,
+      #   alpha.hat_old = unlist(lapply(ebmr_old$ps_fit.list, function(ps_fit) ps_fit$coefficients)),
+      #   se_alpha.hat_old = unlist(lapply(ebmr_old$ps_fit.list, function(ps_fit) ps_fit$se)),
+      #   nu.hat_old = result_old$nu.hat,
+      #   w.hat_old = result_old$w.hat
+      # )
     }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})
   }
   close(pb)
@@ -123,7 +154,6 @@ simulate_all_model_combinations_and_sample_sizes = function(
                                                    n.vector,
                                                    all_data_file,
                                                    alpha.true,
-                                                   ps_model.true,
                                                    replicate_num,
                                                    version){
   all_data = readRDS(all_data_file)
@@ -134,11 +164,25 @@ simulate_all_model_combinations_and_sample_sizes = function(
 
   J = length(full_ps_specifications$formula.list)
   for(n in n.vector){
-    for(model_num in 2:3){
-    # for(model_num in 2:J){
+    ps_model.true = NULL
+    if(setting %in% c("Cho_RM2", "Cho_RM2p", "Cho_RM2q")){
+      ps_model.true = function(dat, alpha.true){
+        eta = cbind(rep(1, nrow(dat)), dat$x1, dat$y)%*%alpha.true
+        exp(eta)/(1+exp(eta))
+      }
+    }else if(setting %in% c("Cho_RM3", "Cho_RM3p", "Cho_RM3q")){
+      ps_model.true = function(dat, alpha.true){
+        eta = cbind(rep(1, nrow(dat)), dat$x2, dat$y)%*%alpha.true
+        exp(eta)/(1+exp(eta))
+      }
+    }else{
+        ps_model.true = function(dat, alpha.true) 1/(1+exp(cbind(rep(1, nrow(dat)), dat$y, dat$u1, dat$u2)%*%alpha.true))
+    }
+    for(model_num in 1:J){
+    # for(model_num in 2){
       model_combinations = combn(J, model_num)
-      # for(i in 1:ncol(model_combinations)){
-      for(i in 1){
+      for(i in 1:ncol(model_combinations)){
+      # for(i in 1){
         model_set = model_combinations[, i]
         save_file = paste0(c("Simulation_Results/EBMR_IPW_", setting, "-", missing_rate, "-scenario", scenario, "_", model_set, "_n", n, "_replicate", replicate_num, "_", version, ".RDS"), collapse = "")
         print(paste("model set:", paste0(model_set, collapse = ""), "/", "file:", save_file))
@@ -172,7 +216,6 @@ simulate_all_settings_with_all_missing_rates = function(settings,
           n.vector = n.vector.list[[i]],
           all_data_file = all_data_file.list[[setting]][[missing_rate]][[i]],
           alpha.true = alpha.true.list[[setting]][[missing_rate]][[i]],
-          ps_model.true = ps_model.true,
           replicate_num,
           version = version
         )
@@ -200,8 +243,8 @@ which.not.extreme = function(v, log.tran = F){
   IQR_value = Q3 - Q1
 
   # Determine bounds
-  lower_bound = Q1 - 8 * IQR_value
-  upper_bound = Q3 + 8 * IQR_value
+  lower_bound = Q1 - 40 * IQR_value
+  upper_bound = Q3 + 40 * IQR_value
 
   is.extreme = v > upper_bound | v < lower_bound
 
@@ -229,7 +272,7 @@ summarize_results = function(sim_result, pe_index, ese_index, mu.true, is.origin
   # process_sim_replicates = switch(is.original,
   #                                 `TRUE` = function(v) v,
   #                                 `FALSE` = rm.extreme)
-
+  print(ncol(sim_result))
   if(!is.original){
     # print(ncol(sim_result)-length(which.not.extreme(sim_result[ese_index,])))
     sim_result = sim_result[, !is.na(sim_result[ese_index,])]
@@ -263,7 +306,7 @@ summarize_results = function(sim_result, pe_index, ese_index, mu.true, is.origin
   ese = round(mean(ese), 3)
   cp = round(cp, 3)
 
-  return(c(bias, esd, ese, cp))
+  return(format(c(bias, esd, ese, cp), nsmall = 3))
 }
 
 summarize_all_model_combinations_and_sample_sizes = function(setting,
@@ -276,13 +319,14 @@ summarize_all_model_combinations_and_sample_sizes = function(setting,
                                                              version,
                                                              is.original){
 
-  result = matrix(NA, 8*length(n.vector),  4)
+  result = matrix(NA, 10*length(n.vector),  4)
   j = 1
   for(n in n.vector){
+    print(paste("n =", n))
     for(model_num in 1:J){
       model_combinations = combn(J, model_num)
       for(i in 1:ncol(model_combinations)){
-        # print(c(model_num, i))
+        print(c(model_num, i))
         model_set = model_combinations[, i]
         read_file = paste0(c("Simulation_Results/EBMR_IPW_", setting, "-", missing_rate, "-scenario", scenario, "_", model_set, "_n", n, "_replicate", replicate_num, "_", version, ".RDS"), collapse = "")
         sim_result = readRDS(read_file)
@@ -292,8 +336,17 @@ summarize_all_model_combinations_and_sample_sizes = function(setting,
           j = j + 1
         }
 
-        result[j, ] = summarize_results(sim_result, pe_index = 1, ese_index = 3, mu.true, is.original)
+        result[j, ] = summarize_results(sim_result, pe_index = (nrow(sim_result)-1)/2+1, ese_index = (nrow(sim_result)-1)/2+3, mu.true, is.original)
         j = j + 1
+
+        if(model_num == 3){
+          result[j, ] = summarize_results(sim_result, pe_index = 1, ese_index = 3, mu.true, is.original)
+          j = j + 1
+          sim_result = sim_result[, which.not.extreme(sim_result[nrow(sim_result),])]
+          result[j, ] = c(format(round(mean(sim_result[nrow(sim_result),])-mu.true, 3), nsmall = 3),
+                          format(round(sd(sim_result[nrow(sim_result),]), 3), nsmall = 3), "-", "-")
+          j = j + 1
+        }
       }
     }
   }
@@ -312,7 +365,8 @@ summarize_all_settings_with_all_missing_rates = function(settings,
   summary_tbls = list()
   for(j in 1:length(settings)){
     setting = settings[j]
-    results_with_all_missing_rates = matrix(NA, 8*length(n.vector), 4*length(missing_rates))
+    print(setting)
+    results_with_all_missing_rates = matrix(NA, 10*length(n.vector), 4*length(missing_rates))
     # mu.true = mean(readRDS(all_data_file.list[[setting]][[1]][[1]])$y)
     mu.true = switch(setting,
                      "setting7" = 0.7,
@@ -320,7 +374,13 @@ summarize_all_settings_with_all_missing_rates = function(settings,
                      "setting9" = 0.7,
                      "setting10" = 0.646,
                      "setting11" = 0.7,
-                     "setting12" = 0.646)
+                     "setting12" = 0.646,
+                     "Cho_RM2" = 2,
+                     "Cho_RM3" = 2,
+                     "Cho_RM2p" = 0.5,
+                     "Cho_RM3p" = 0.5,
+                     "Cho_RM2q" = 0.5,
+                     "Cho_RM3q" = 0.5)
     for(i in 1:length(missing_rates)){
       missing_rate = missing_rates[i]
       results_with_all_missing_rates[, ((i-1)*4+1):((i-1)*4+4)] = summarize_all_model_combinations_and_sample_sizes(
@@ -335,44 +395,47 @@ summarize_all_settings_with_all_missing_rates = function(settings,
         version = version
       )
     }
-    estimator_names = switch(substr(scenario, 1, 1),
-      "1" = rep(c("$\\hat{\\mu}_{\\text{IPW}}$",
-                  "$\\hat{\\mu}_{100}$", "$\\hat{\\mu}_{010}$", "$\\hat{\\mu}_{001}$",
-                  "$\\hat{\\mu}_{110}$", "$\\hat{\\mu}_{101}$", "$\\hat{\\mu}_{011}$",
-                  "$\\hat{\\mu}_{111}$"), length(n.vector)),
-      "2" = rep(c("$\\tilde{\\mu}_{\\text{IPW}}$",
-                  "$\\tilde{\\mu}_{100}$", "$\\tilde{\\mu}_{010}$", "$\\tilde{\\mu}_{001}$",
-                  "$\\tilde{\\mu}_{110}$", "$\\tilde{\\mu}_{101}$", "$\\tilde{\\mu}_{011}$",
-                  "$\\tilde{\\mu}_{111}$"), length(n.vector))
-    )
+
+    estimator_names = NULL
+    if(substr(scenario, 1, 1) == "1" || scenario %in% c("cho1")){
+      estimator_names = rep(c("$\\hat{\\mu}_{\\text{IPW}}$",
+                              "$\\hat{\\mu}_{100}$", "$\\hat{\\mu}_{010}$", "$\\hat{\\mu}_{001}$",
+                              "$\\hat{\\mu}_{110}$", "$\\hat{\\mu}_{101}$", "$\\hat{\\mu}_{011}$",
+                              "$\\hat{\\mu}_{111}$", "$\\tilde{\\mu}_{111}$","$\\hat{\\mu}_{\\text{MCEL}}$"), length(n.vector))
+    }else{
+      estimator_names = rep(c("$\\tilde{\\mu}_{\\text{IPW}}$",
+                              "$\\tilde{\\mu}_{100}$", "$\\tilde{\\mu}_{010}$", "$\\tilde{\\mu}_{001}$",
+                              "$\\tilde{\\mu}_{110}$", "$\\tilde{\\mu}_{101}$", "$\\tilde{\\mu}_{011}$",
+                              "$\\tilde{\\mu}_{111}$"), length(n.vector))
+    }
 
     results_with_all_missing_rates = cbind(estimator_names, as.data.frame(results_with_all_missing_rates)) %>%
       as.data.frame
     colnames(results_with_all_missing_rates) = c("", rep(c("Bias", "ESD", "ESE", "CP"), length(missing_rates)))
 
-    print(kable(results_with_all_missing_rates, format = "latex", align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
-                caption = paste0(
-                  "Comparison between different estimators under the Scenario ", scenario,
-                  " of Setting ", substr(setting, 8, 9),
-                  " with $\\mu_0$ approximately ", round(mu.true, 3), ". ",
-                  "The $\\bm{\\alpha}_0$ in $\\pi(\\bm{U}, Y; \\bm{\\alpha}_0)$ that leads to $50\\%$ of missingness in $Y$ is $(",
-                  paste(alpha_true.list[[setting]][[1]][[1]], collapse = ", "), ")^{\\top}$ and that leads to $30\\%$ of missingness is $(",
-                  paste(alpha_true.list[[setting]][[2]][[1]], collapse = ", "), ")^{\\top}$."
-                )) %>%
-            kable_styling(full_width = FALSE, latex_options = c("hold_position", "scale_down")) %>%
-            add_header_above(c("", "$50\\%$ missing" = 4, "$30\\%$ missing" = 4)))
+    # print(kable(results_with_all_missing_rates, format = "latex", align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
+    #             caption = paste0(
+    #               "Comparison between different estimators under the Scenario ", scenario,
+    #               " of Setting ", substr(setting, 8, 9),
+    #               " with $\\mu_0$ approximately ", round(mu.true, 3), ". ",
+    #               "The $\\bm{\\alpha}_0$ in $\\pi(\\bm{U}, Y; \\bm{\\alpha}_0)$ that leads to $50\\%$ of missingness in $Y$ is $(",
+    #               paste(alpha_true.list[[setting]][[1]][[1]], collapse = ", "), ")^{\\top}$ and that leads to $30\\%$ of missingness is $(",
+    #               paste(alpha_true.list[[setting]][[2]][[1]], collapse = ", "), ")^{\\top}$."
+    #             )) %>%
+    #         kable_styling(full_width = FALSE, latex_options = c("hold_position", "scale_down")) %>%
+    #         add_header_above(c("", "$50\\%$ missing" = 4, "$30\\%$ missing" = 4)))
 
-    # summary_tbls[[j]] = kable(results_with_all_missing_rates, format = "latex", align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
-    #                           caption = paste0(
-    #                             "Comparison between different estimators under the Scenario ", scenario,
-    #                             " of Setting ", substr(setting, 8, 8),
-    #                             " with $\\mu_0$ approximately ", round(mu.true, 3), ". ",
-    #                             "The $\\bm{\\alpha}_0$ in $\\pi(\\bm{U}, Y; \\bm{\\alpha}_0)$ that leads to $50\\%$ of missingness in $Y$ is $(",
-    #                             paste(alpha_true.list[[setting]][[1]][[1]], collapse = ", "), ")^{\\top}$ and that leads to $30\\%$ of missingness is $(",
-    #                             paste(alpha_true.list[[setting]][[2]][[1]], collapse = ", "), ")^{\\top}$."
-    #                           )) %>%
-    #   kable_styling(full_width = FALSE, latex_options = c("hold_position", "scale_down")) %>%
-    #   add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5))
+    summary_tbls[[j]] = kable(results_with_all_missing_rates, format = "latex", align = "c", booktabs = TRUE, escape = FALSE, linesep = "",
+                              caption = paste0(
+                                "Comparison between different estimators under the Scenario ", scenario,
+                                " of Setting ", substr(setting, 9, 9),
+                                " with $\\mu_0$ approximately ", round(mu.true, 3), ". ",
+                                "The $\\bm{\\alpha}_0$ in $\\pi(\\bm{U}, Y; \\bm{\\alpha}_0)$ that leads to $50\\%$ of missingness in $Y$ is $(",
+                                paste(alpha_true.list[[setting]][[1]][[1]], collapse = ", "), ")^{\\top}$ and that leads to $30\\%$ of missingness is $(",
+                                paste(alpha_true.list[[setting]][[2]][[1]], collapse = ", "), ")^{\\top}$."
+                              )) %>%
+      kable_styling(full_width = FALSE, latex_options = c("hold_position", "scale_down")) %>%
+      add_header_above(c("", "$50\\%$ missing" = 5, "$30\\%$ missing" = 5))
   }
   return(summary_tbls)
 }

@@ -33,10 +33,14 @@ gmm = function(g, W, n, esteq_dim, param_dim, init, se.fit = T){
   }
 
   obj = function(param){
-    g.matrix = g(param)
+    # g.matrix = g(param)
     G.hat = G(param)
     value = t(G.hat)%*%G.hat
     return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
+  }
+
+  obj_grad = function(param){
+    2*t(Gamma(param))%*%G(param)
   }
 
   if(is.null(init)) init = rep(0, param_dim)
@@ -51,10 +55,13 @@ gmm = function(g, W, n, esteq_dim, param_dim, init, se.fit = T){
     sol_path = cbind(sol_path, opt$par)
     g.matrix = g(sol_path[,t+1]); W.hat = W(g.matrix);
     obj = function(param){
-      g.matrix = g(param)
+      # g.matrix = g(param)
       G.hat = G(param)
       value = t(G.hat)%*%W.hat%*%G.hat
       return(ifelse(is.infinite(value) || is.na(value), 10^8, value))
+    }
+    obj_grad = function(param){
+      2*t(Gamma(param))%*%W.hat%*%G(param)
     }
     conv_err = max(abs(sol_path[,t+1]-sol_path[, t]))
     t = t + 1

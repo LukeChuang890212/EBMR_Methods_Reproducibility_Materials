@@ -1,8 +1,0 @@
-check_data	check_data
-EBMRAlgorithm	EBMRAlgorithm
-EBMR_IPW	EBMR_IPW
-EBMR_IPW_with_locally_misspecified_model	EBMR_IPW_with_locally_misspecified_model
-ensemble	ensemble
-parse_formula	parse_formula
-separate_variable_types	separate_variable_types
-WangShaoKim2014	WangShaoKim2014

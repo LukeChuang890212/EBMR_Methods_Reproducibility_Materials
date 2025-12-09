@@ -63,10 +63,10 @@ Cho2025 = function(dat, or_x_names, s, ps_fit.list, Aux_names, inv_link){
               return(ifelse(is.finite(value), value, 0))
             },-Inf,Inf)
           }else if(family == "binomial"){
-            res_int = sum(sapply(0:1, function(u){
+            res_int = list(value = sum(sapply(0:1, function(u){
               pivec <- inv_link(c(cbind(1, Xmat)%*%phihat[-2])+phihat[2]*u)
               return( mean((1-pivec)^H*pivec*exp(eta)^u/(1+exp(eta))))
-            }))
+            })))
           }
           pitil[, j] <- pismat[, j] - res_int$value - sum(1-(1-pismat[, j])^H)/n
         }
@@ -87,58 +87,58 @@ Cho2025 = function(dat, or_x_names, s, ps_fit.list, Aux_names, inv_link){
         }else{
           nuis_prev <- nuis_new
         }
-        if(count >= 100){
+        if(count >= 1000){
           is_conv <- F
           break
         }
       }
-      
-      for(j in which(is.mnar)){
-        # Impose MBC assumption
-        phihat = ps_fit.list[[j]]$coefficients
-        q <- length(phihat)
-        Xmat = as.matrix(dat[ps_fit.list[[j]]$model_x_names])
-        eta <- c(cbind(1, or_x)%*%nuis_prev)
-        est_adj = NULL
-        if(family == "gaussian"){
-          est_adj <- function(adj){
-            res_int <- integrate(function(uvec){
-              value = sapply(uvec,function(u){
-                sum(inv_link(adj+c(cbind(1, Xmat)%*%phihat[-2])+
-                               phihat[2]*( eta+s*u )))*
-                  dnorm(x=u,mean=0,sd=1)
-              })
-              return(ifelse(is.finite(value), value, 0))
-            },-Inf,Inf)
-            return(res_int$value-n1)
-          }
-        }else if(family == "binomial"){
-          est_adj <- function(adj){
-            res_int = sum(sapply(0:1, function(u){
-              sum(inv_link(c(cbind(1, Xmat)%*%phihat[-2])+phihat[2]*u)*
-                            exp(eta)^u/(1+exp(eta)))
-            }))
-            return(res_int$value-n1)
-          }
-        }
-        M <- 1
-        while(TRUE){
-          if( est_adj(M)*est_adj(-M)<0 ){
-            break
-          }else{
-            M <- M+1
-          }
-        }
-        res_adj <- uniroot(est_adj,interval=c(-M,M))
-        phihatadj <- phihat
-        phihatadj[1] <- phihatadj[1] + res_adj$root
-        pismat[, j] <- inv_link(cbind(1, ysvec, Xmat[deltavec == 1,])%*%phihatadj)
-      }
-      
-      Aux = as.matrix(dat[Aux_names])
-      Aux = t(t(Aux[deltavec == 1, ]) - apply(Aux, 2, mean))
-      res_el <- EstEL0(pismat, Aux, n-n1)
-      pvec <- res_el$pvec
+    
+      # for(j in which(is.mnar)){
+      #   # Impose MBC assumption
+      #   phihat = ps_fit.list[[j]]$coefficients
+      #   q <- length(phihat)
+      #   Xmat = as.matrix(dat[ps_fit.list[[j]]$model_x_names])
+      #   eta <- c(cbind(1, or_x)%*%nuis_prev)
+      #   est_adj = NULL
+      #   if(family == "gaussian"){
+      #     est_adj <- function(adj){
+      #       res_int <- integrate(function(uvec){
+      #         value = sapply(uvec,function(u){
+      #           sum(inv_link(adj+c(cbind(1, Xmat)%*%phihat[-2])+
+      #                          phihat[2]*( eta+s*u )))*
+      #             dnorm(x=u,mean=0,sd=1)
+      #         })
+      #         return(ifelse(is.finite(value), value, 0))
+      #       },-Inf,Inf)
+      #       return(res_int$value-n1)
+      #     }
+      #   }else if(family == "binomial"){
+      #     est_adj <- function(adj){
+      #       res_int = list(value = sum(sapply(0:1, function(u){
+      #         sum(inv_link(c(cbind(1, Xmat)%*%phihat[-2])+phihat[2]*u)*
+      #                       exp(eta)^u/(1+exp(eta)))
+      #       })))
+      #       return(res_int$value-n1)
+      #     }
+      #   }
+      #   M <- 1
+      #   while(TRUE){
+      #     if( est_adj(M)*est_adj(-M)<0 ){
+      #       break
+      #     }else{
+      #       M <- M+1
+      #     }
+      #   }
+      #   res_adj <- uniroot(est_adj,interval=c(-M,M))
+      #   phihatadj <- phihat
+      #   phihatadj[1] <- phihatadj[1] + res_adj$root
+      #   pismat[, j] <- inv_link(cbind(1, ysvec, Xmat[deltavec == 1,])%*%phihatadj)
+      # }
+      # 
+      # Aux = as.matrix(dat[Aux_names])
+      # Aux = t(t(Aux[deltavec == 1, ]) - apply(Aux, 2, mean))
+      # res_el <- EstEL0(pismat, Aux, n-n1)
+      # pvec <- res_el$pvec
     }else{
       Aux = as.matrix(dat[Aux_names])
       Aux = t(t(Aux[deltavec == 1, ]) - apply(Aux, 2, mean))

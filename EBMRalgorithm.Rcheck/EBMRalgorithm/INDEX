@@ -1,8 +1,0 @@
-EBMRAlgorithm           EBMRAlgorithm Class
-EBMR_IPW                Compute the proposed Inverse Probability
-                        Weighting (IPW) Estimator
-EBMR_IPW_with_locally_misspecified_model
-                        Compute the IPW Estimator with Locally
-                        Misspecified Model
-WangShaoKim2014         Wang, Shao, and Kim (2014) Method for
-                        Propensity Score Estimation

@@ -12,15 +12,11 @@ data_root = "Simulation_Data/"
 
 replicate_num = 1000
 # ps_model.true = function(dat, alpha.true) 1/(1+exp(cbind(rep(1, nrow(dat)), dat$y, dat$u1, dat$u2)%*%alpha.true))
-ps_model.true = function(dat, alpha.true){
-  eta = cbind(rep(1, nrow(dat)), dat$x1, dat$y)%*%alpha.true
-  exp(eta)/(1+exp(eta))
-}
 # miss.ps_model.true = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*y)
 
 n.vector.list = list(
-  correct_model = list(c(4000, 300)),
-  misspecified_model = list(c(1000), c(300))
+  correct_model = list(c(2000, 300)),
+  misspecified_model = list(c(2000), c(300))
 )
 
 correct_model_all_data_file.list = list(
@@ -106,34 +102,66 @@ correct_model_all_data_file.list = list(
   ),
   setting11 = list(
     miss50 =list(
-      paste0(data_root, "setting11.A1_n1000_replicate1000.RDS")
+      paste0(data_root, "setting11.A1_n2000_replicate1000.RDS")
     ),
     miss30 =list(
-      paste0(data_root, "setting11.A2_n1000_replicate1000.RDS")
+      paste0(data_root, "setting11.A2_n2000_replicate1000.RDS")
     )
   ),
   setting12 = list(
     miss50 =list(
-      paste0(data_root, "setting12.A1_n1000_replicate1000.RDS")
+      paste0(data_root, "setting12.A1_n2000_replicate1000.RDS")
     ),
     miss30 =list(
-      paste0(data_root, "setting12.A2_n1000_replicate1000.RDS")
+      paste0(data_root, "setting12.A2_n2000_replicate1000.RDS")
     )
   ),
   Cho_RM2 = list(
     miss50 =list(
-      paste0(data_root, "Cho_RM2.A1_n2000_replicate1000.RDS")
+      paste0(data_root, "Cho_RM2.A1_n4000_replicate1000.RDS")
     ),
     miss30 =list(
-      paste0(data_root, "Cho_RM2.A2_n2000_replicate1000.RDS")
+      paste0(data_root, "Cho_RM2.A2_n4000_replicate1000.RDS")
     )
   ),
   Cho_RM3 = list(
     miss50 =list(
-      paste0(data_root, "Cho_RM3.A1_n2000_replicate1000.RDS")
+      paste0(data_root, "Cho_RM3.A1_n4000_replicate1000.RDS")
     ),
     miss30 =list(
-      paste0(data_root, "Cho_RM3.A2_n2000_replicate1000.RDS")
+      paste0(data_root, "Cho_RM3.A2_n4000_replicate1000.RDS")
+    )
+  ),
+  Cho_RM2p = list(
+    miss50 =list(
+      paste0(data_root, "Cho_RM2p.A1_n4000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Cho_RM2p.A2_n4000_replicate1000.RDS")
+    )
+  ),
+  Cho_RM3p = list(
+    miss50 =list(
+      paste0(data_root, "Cho_RM3p.A1_n4000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Cho_RM3p.A2_n4000_replicate1000.RDS")
+    )
+  ),
+  Cho_RM2q = list(
+    miss50 =list(
+      paste0(data_root, "Cho_RM2q.A1_n4000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Cho_RM2q.A2_n4000_replicate1000.RDS")
+    )
+  ),
+  Cho_RM3q = list(
+    miss50 =list(
+      paste0(data_root, "Cho_RM3q.A1_n4000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Cho_RM3q.A2_n4000_replicate1000.RDS")
     )
   ),
   Cho_RM4 = list(
@@ -246,21 +274,21 @@ misspecified_model_all_data_file.list = list(
   ),
   setting11 = list(
     miss50 =list(
-      paste0(data_root, "setting11.B1_n1000_replicate1000.RDS"),
+      paste0(data_root, "setting11.B1_n2000_replicate1000.RDS"),
       paste0(data_root, "setting11.B1_n300_replicate1000.RDS")
     ),
     miss30 =list(
-      paste0(data_root, "setting11.B2_n1000_replicate1000.RDS"),
+      paste0(data_root, "setting11.B2_n2000_replicate1000.RDS"),
       paste0(data_root, "setting11.B2_n300_replicate1000.RDS")
     )
   ),
   setting12 = list(
     miss50 =list(
-      paste0(data_root, "setting12.B1_n1000_replicate1000.RDS"),
+      paste0(data_root, "setting12.B1_n2000_replicate1000.RDS"),
       paste0(data_root, "setting12.B1_n300_replicate1000.RDS")
     ),
     miss30 =list(
-      paste0(data_root, "setting12.B2_n1000_replicate1000.RDS"),
+      paste0(data_root, "setting12.B2_n2000_replicate1000.RDS"),
       paste0(data_root, "Setting12.B2_n300_replicate1000.RDS")
     )
   )
@@ -372,6 +400,40 @@ correct_model_alpha.true.list = list(
     miss30 =list(
       c(0.865, 0.5, - 0.25)
     )
+  ),
+  Cho_RM2p = list(
+    miss50 =list(
+      c(0.1, -0.5, -0.25)
+    ),
+    miss30 =list(
+      c(1.004, -0.5, -0.25)
+      # c(-0.25, 0.25, 0.25, 0.25)
+    )
+  ),
+  Cho_RM3p = list(
+    miss50 =list(
+      c(-0.05, 0.5, 0.25)
+    ),
+    miss30 =list(
+      c(0.761, 0.5, 0.25)
+    )
+  ),
+  Cho_RM2q = list(
+    miss50 =list(
+      c(0.1, -0.5, -0.25)
+    ),
+    miss30 =list(
+      c(1.004, -0.5, -0.25)
+      # c(-0.25, 0.25, 0.25, 0.25)
+    )
+  ),
+  Cho_RM3q = list(
+    miss50 =list(
+      c(-0.05, 0.5, 0.25)
+    ),
+    miss30 =list(
+      c(0.761, 0.5, 0.25)
+    )
   )
 )
 
@@ -478,8 +540,8 @@ misspecified_model_alpha.true.list = list(
   ),
   setting12 = list(
     miss50 =list(
-      setting12_1_mild_1000 = c(1.1, 0.4, -2, -0.5),
-      setting12_1_mild_300 = c(1.1, 0.4, -2, -0.5)
+      setting12_1_mild_1000 = c(1.2, 0.4, -2, -0.5),
+      setting12_1_mild_300 = c(1.2, 0.4, -2, -0.5)
     ),
     miss30 =list(
       setting12_2_mild_1000 = c(0.05, 0.4, -2, -0.5),
