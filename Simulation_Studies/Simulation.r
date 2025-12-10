@@ -100,6 +100,89 @@ get_mu_true <- function(setting, n_large = 10^6) {
   return(mu_true)
 }
 
+#' Generate simulation data for a setting
+#'
+#' @param setting_name Name of the data generation function (e.g., "setting11.A1")
+#' @param n Sample size per replicate
+#' @param replicate_num Number of replicates to generate
+#' @param seed Random seed for reproducibility (default: 2345)
+#' @param cores Number of cores to use (default: all available minus 2)
+#' @return Invisibly returns the generated data; also saves to Simulation_Data/
+generate_data <- function(setting_name, n = 2000, replicate_num = 1000,
+                          seed = 2345, cores = NULL) {
+  # Check if function exists
+  if (!exists(setting_name, mode = "function")) {
+    stop(paste("Data generation function not found:", setting_name))
+  }
+
+  setting_func <- get(setting_name)
+
+  # Create output directory if needed
+  if (!dir.exists("Simulation_Data")) {
+    dir.create("Simulation_Data")
+  }
+
+  # Output file path
+  output_file <- paste0("Simulation_Data/", setting_name, "_n", n,
+                        "_replicate", replicate_num, ".RDS")
+
+  # Check if file already exists
+  if (file.exists(output_file)) {
+    cat("File already exists:", output_file, "\n")
+    cat("Loading existing data...\n")
+    return(invisible(readRDS(output_file)))
+  }
+
+  cat("Generating data for:", setting_name, "\n")
+  cat("  Sample size (n):", n, "\n")
+  cat("  Replicates:", replicate_num, "\n")
+
+  # Set seed for reproducibility
+  set.seed(seed)
+
+  # Setup parallel cluster
+  library(parallel)
+  library(foreach)
+  library(doSNOW)
+
+  if (is.null(cores)) {
+    cores <- detectCores() - 2
+  }
+  cores <- max(1, cores)  # Ensure at least 1 core
+
+  cl <- makeCluster(cores)
+  registerDoSNOW(cl)
+
+  # Progress bar
+  pb <- txtProgressBar(max = replicate_num, style = 3)
+  progress <- function(i) setTxtProgressBar(pb, i)
+  opts <- list(progress = progress)
+
+  cat("  Using", cores, "cores\n")
+  start <- Sys.time()
+
+  # Generate data in parallel
+  dat <- foreach(
+    i = 1:replicate_num,
+    .combine = 'rbind',
+    .options.snow = opts
+  ) %dopar% {
+    setting_func(n = n)
+  }
+
+  close(pb)
+  stopCluster(cl)
+
+  elapsed <- Sys.time() - start
+  cat("  Completed in", format(elapsed), "\n")
+
+  # Save to file
+  saveRDS(dat, output_file)
+  cat("  Saved to:", output_file, "\n")
+
+  return(invisible(dat))
+}
+
 #------------------------------------------------------------------------------#
 # Core Simulation Function
 #------------------------------------------------------------------------------#

@@ -506,3 +506,25 @@ set_scenario_enabled <- function(scenario_id, enabled = TRUE) {
   SCENARIOS[[scenario_id]]$enabled <<- enabled
   invisible(enabled)
 }
+
+#' Get model parameters based on model type
+#'
+#' @param model_type Either "correct" or "misspecified"
+#' @return List with n_vector, data_files, and alpha_true
+get_model_params <- function(model_type) {
+  if (model_type == "correct") {
+    list(
+      n_vector = n.vector.list$correct_model,
+      data_files = correct_model_all_data_file.list,
+      alpha_true = correct_model_alpha.true.list
+    )
+  } else if (model_type == "misspecified") {
+    list(
+      n_vector = n.vector.list$misspecified_model,
+      data_files = misspecified_model_all_data_file.list,
+      alpha_true = misspecified_model_alpha.true.list
+    )
+  } else {
+    stop(paste("Unknown model type:", model_type))
+  }
+}

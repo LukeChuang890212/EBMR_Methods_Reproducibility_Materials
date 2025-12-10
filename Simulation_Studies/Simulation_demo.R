@@ -5,8 +5,35 @@
 # Modify the parameters below to customize your simulation run.
 #------------------------------------------------------------------------------#
 
-# Load the simulation framework
-source("Simulation_main.r")
+#------------------------------------------------------------------------------#
+# Install required packages if not already installed
+#------------------------------------------------------------------------------#
+
+# CRAN packages
+required_packages <- c("dplyr", "knitr", "kableExtra", "parallel", "foreach",
+                       "doSNOW", "doParallel", "stringr", "Matrix", "numDeriv",
+                       "devtools")
+for (pkg in required_packages) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+  }
+}
+
+# GitHub packages
+if (!requireNamespace("EBMRalgorithmOld", quietly = TRUE)) {
+  devtools::install_github(
+    "LukeChuang890212/EBMR_Methods_Reproducibility_Materials",
+    subdir = "EBMRalgorithmOld"
+  )
+}
+
+#------------------------------------------------------------------------------#
+# Load the simulation framework components
+#------------------------------------------------------------------------------#
+source("Basic_setup.r")
+source("Data_Generation.r")
+source("Simulation.r")
+source("config/scenarios.R")
 
 #------------------------------------------------------------------------------#
 # Configuration

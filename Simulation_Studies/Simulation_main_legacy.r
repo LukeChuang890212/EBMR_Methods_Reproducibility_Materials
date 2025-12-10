@@ -1,8 +1,16 @@
-devtools::install_github(
-  "LukeChuang890212/EBMR_Methods_Reproducibility_Materials",
-  subdir = "EBMRalgorithm"
-)
-setwd("C:/Users/stat-user/Desktop/EBMR_Methods_Reproducibility_Materials/Simulation_Studies")
+# Install EBMRalgorithm package only if not already installed
+if (!requireNamespace("EBMRalgorithm", quietly = TRUE)) {
+  devtools::install_github(
+    "LukeChuang890212/EBMR_Methods_Reproducibility_Materials",
+    subdir = "EBMRalgorithm"
+  )
+}
+
+# Set working directory to the directory containing this script
+# Works in RStudio; for Rscript, set working directory before running
+if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
+  setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+}
 source("Basic_setup.r")
 # source("test_methods.r")
 source("Data_Generation.r")
