@@ -136,31 +136,31 @@ PS_SPECS <- list(
   # Scenario 7: with z1 interactions
   `7` = create_ps_spec(
     formulas = list(FORMULAS$full, FORMULAS$u1_z1, FORMULAS$u2_z1),
-    h_x_names_list = rep(list(H_X_NAMES$full), 3)
+    h_x_names_list = list(H_X_NAMES$full, H_X_NAMES$u1_subset, H_X_NAMES$u2_subset)
   ),
 
   # Scenario 7-alt1: z1 interactions (like 7) with h_x u1u2_z1 for first model
   `7-alt1` = create_ps_spec(
     formulas = list(FORMULAS$full, FORMULAS$u1_z1, FORMULAS$u2_z1),
-    h_x_names_list = list(H_X_NAMES$u1u2_z1, H_X_NAMES$full, H_X_NAMES$full)
+    h_x_names_list = list(H_X_NAMES$u1u2_z1, H_X_NAMES$u1_subset, H_X_NAMES$u2_subset)
   ),
 
   # Scenario 7-alt2: z1 interactions (like 7) with h_x u1u2_z2 for first model
   `7-alt2` = create_ps_spec(
     formulas = list(FORMULAS$full, FORMULAS$u1_z1, FORMULAS$u2_z1),
-    h_x_names_list = list(H_X_NAMES$u1u2_z2, H_X_NAMES$full, H_X_NAMES$full)
+    h_x_names_list = list(H_X_NAMES$u1u2_z2, H_X_NAMES$u1_subset, H_X_NAMES$u2_subset)
   ),
 
   # Scenario 8: with z2 interactions
   `8` = create_ps_spec(
     formulas = list(FORMULAS$full, FORMULAS$u1_z2, FORMULAS$u2_z2),
-    h_x_names_list = rep(list(H_X_NAMES$full), 3)
+    h_x_names_list = list(H_X_NAMES$full, H_X_NAMES$u1_subset, H_X_NAMES$u2_subset)
   ),
 
   # Scenario 9: no-y models
   `9` = create_ps_spec(
-    formulas = list(FORMULAS$full, FORMULAS$no_y_u1, FORMULAS$no_y_u2),
-    h_x_names_list = rep(list(H_X_NAMES$full), 3)
+    formulas = list(FORMULAS$full, FORMULAS$u1_z1, FORMULAS$u2_z2),
+    h_x_names_list = list(H_X_NAMES$full, H_X_NAMES$u1_subset, H_X_NAMES$u2_subset)
   ),
 
   # Scenario 9-10 (setting5/6): with v1/v2
@@ -527,4 +527,208 @@ get_model_params <- function(model_type) {
   } else {
     stop(paste("Unknown model type:", model_type))
   }
+}
+
+#------------------------------------------------------------------------------#
+# Configuration Object
+#------------------------------------------------------------------------------#
+CONFIG <- list(
+  replicate_num = 1000,
+  n_default = 2000
+)
+
+#' Show available scenarios (pretty print)
+show_scenarios <- function() {
+  cat("\n")
+  cat(strrep("=", 70), "\n")
+  cat("Available Scenarios\n")
+  cat(strrep("=", 70), "\n\n")
+
+  df <- list_scenarios()
+  for (i in 1:nrow(df)) {
+    cat(sprintf("%-8s %s\n", df$id[i], df$description[i]))
+    cat(sprintf("         Settings: %s | Model: %s | Version: %s\n",
+                df$settings[i], df$model_type[i], df$version[i]))
+    cat("\n")
+  }
+}
+
+#' Show current configuration
+show_config <- function() {
+  cat("\n")
+  cat(strrep("=", 70), "\n")
+  cat("Current Configuration\n")
+  cat(strrep("=", 70), "\n\n")
+  cat("  Replicate number:", CONFIG$replicate_num, "\n")
+  cat("  Default sample size:", CONFIG$n_default, "\n")
+  cat("\n")
+}
+
+#' Run a scenario
+#'
+#' @param scenario_id The scenario ID to run (e.g., "7-1", "9-1")
+#' @param setting Which setting to run (e.g., "setting11", "setting12")
+#' @param n Sample size (optional - if NULL, runs all sizes from n.vector.list)
+#' @param replicate_num Number of replicates (default: from CONFIG or 1000)
+#' @param version Version string for output files
+#' @param missing_rates Which missing rates to run (default: from scenario)
+run_scenario <- function(scenario_id,
+                         setting = NULL,
+                         n = NULL,
+                         replicate_num = NULL,
+                         version = NULL,
+                         missing_rates = NULL) {
+
+  # Get scenario configuration
+  scenario <- get_scenario(scenario_id)
+  ps_spec <- get_ps_spec(scenario$ps_spec_id)
+
+  # Use defaults if not provided
+  if (is.null(setting)) setting <- scenario$settings[1]
+  if (is.null(replicate_num)) replicate_num <- if (!is.null(CONFIG$replicate_num)) CONFIG$replicate_num else 1000
+  if (is.null(version)) version <- scenario$version
+  if (is.null(missing_rates)) missing_rates <- scenario$missing_rates
+
+  # Get model parameters
+  params <- get_model_params(scenario$model_type)
+
+  # Get n.vector from params - this contains all sample sizes to run
+  n_vector_list <- params$n_vector
+
+  cat("\n")
+  cat(strrep("=", 70), "\n")
+  cat("Running Scenario:", scenario_id, "\n")
+  cat("Description:", scenario$description, "\n")
+  cat(strrep("=", 70), "\n")
+  cat("  Setting:", setting, "\n")
+  cat("  Replicates:", replicate_num, "\n")
+  cat("  Version:", version, "\n")
+  cat("  Missing rates:", paste(missing_rates, collapse = ", "), "\n")
+  cat("\n")
+
+  # Get data file config and alpha.true for this setting
+  data_file_config <- params$data_files[[setting]]
+  if (is.null(data_file_config)) {
+    stop(paste("No data file configuration for setting:", setting))
+  }
+  alpha.true_config <- params$alpha_true[[setting]]
+
+  # Run for each missing rate
+  for (miss_rate in missing_rates) {
+    cat("Processing:", miss_rate, "\n")
+
+    # Get data file path(s) - the config stores full paths in a list
+    data_files_for_rate <- data_file_config[[miss_rate]]
+    if (is.null(data_files_for_rate)) {
+      cat("  WARNING: No data file config for", miss_rate, "\n")
+      next
+    }
+
+    # Get alpha.true for this missing rate
+    alpha.true_for_rate <- alpha.true_config[[miss_rate]]
+
+    # Iterate over data files (each may correspond to different n values)
+    for (file_idx in seq_along(data_files_for_rate)) {
+      data_file <- data_files_for_rate[[file_idx]]
+      alpha.true <- alpha.true_for_rate[[file_idx]]
+
+      # Get n.vector for this file index
+      n_vector <- n_vector_list[[file_idx]]
+
+      # If user specified n, filter to just that n
+      if (!is.null(n)) {
+        if (n %in% n_vector) {
+          n_vector <- n
+        } else {
+          next  # Skip this file if it doesn't contain the requested n
+        }
+      }
+
+      if (!file.exists(data_file)) {
+        cat("  WARNING: Data file not found:", data_file, "\n")
+        cat("  Use generate_data() to create it first.\n")
+        next
+      }
+
+      # Load data
+      all_data <- readRDS(data_file)
+      cat("  Loaded data:", data_file, "\n")
+
+      # Run for each sample size in this n_vector
+      for (current_n in n_vector) {
+        cat("  Sample size n =", current_n, "\n")
+
+        # Run simulation for each model combination
+        J <- length(ps_spec$formula.list)
+        for (model_num in 1:J) {
+          model_combinations <- combn(J, model_num)
+          for (i in 1:ncol(model_combinations)) {
+            model_set <- model_combinations[, i]
+            model_str <- paste0(model_set, collapse = "")
+
+            cat("    Running models:", model_str, "\n")
+
+            # Create subset PS specification
+            subset_ps_spec <- list(
+              formula.list = ps_spec$formula.list[model_set],
+              h_x_names.list = ps_spec$h_x_names.list[model_set],
+              inv_link = ps_spec$inv_link
+            )
+
+            # Output file
+            save_file <- paste0(
+              "Simulation_Results/EBMR_IPW_", setting, "-", miss_rate,
+              "-scenario", scenario_id, "_", model_str,
+              "_n", current_n, "_replicate", replicate_num, "_", version, ".RDS"
+            )
+
+            # Check if already exists
+            if (file.exists(save_file)) {
+              cat("      Already exists, skipping\n")
+              next
+            }
+
+            # Define true PS model function based on setting
+            ps_model.true <- if (setting %in% c("Cho_RM2", "Cho_RM2p", "Cho_RM2q")) {
+              function(dat, alpha.true) {
+                eta <- cbind(rep(1, nrow(dat)), dat$x1, dat$y) %*% alpha.true
+                exp(eta) / (1 + exp(eta))
+              }
+            } else if (setting %in% c("Cho_RM3", "Cho_RM3p", "Cho_RM3q")) {
+              function(dat, alpha.true) {
+                eta <- cbind(rep(1, nrow(dat)), dat$x2, dat$y) %*% alpha.true
+                exp(eta) / (1 + exp(eta))
+              }
+            } else {
+              function(dat, alpha.true) {
+                1 / (1 + exp(cbind(rep(1, nrow(dat)), dat$y, dat$u1, dat$u2) %*% alpha.true))
+              }
+            }
+
+            # Run simulation
+            simulate(
+              all_data = all_data,
+              ps_model.true = ps_model.true,
+              alpha.true = alpha.true,
+              ps_specifications = subset_ps_spec,
+              n = current_n,
+              replicate_num = replicate_num,
+              save_file = save_file
+            )
+
+            # Print console summary after simulation completes
+            # Uses clean_sim_result() from Simulation.r for consistent logic
+            if (file.exists(save_file)) {
+              sim_result <- readRDS(save_file)
+              cleaned <- clean_sim_result(sim_result, multiplier = 30, verbose = FALSE)
+              cat("      Summary: Total=", cleaned$n_total, ", Successful=", cleaned$n_successful,
+                  ", NA=", cleaned$n_na, ", Outliers=", cleaned$n_outliers, "\n", sep = "")
+            }
+          }
+        }
+      }
+    }
+  }
+
+  cat("\nScenario", scenario_id, "completed!\n")
 }

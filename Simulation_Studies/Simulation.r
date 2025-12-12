@@ -4,45 +4,80 @@
 # This file contains functions for:
 #   1. Running simulations (simulate, simulate_all_*)
 #   2. Summarizing results (summarize_results, summarize_scenario, summarize_all_*)
-#   3. Utility functions (which.not.extreme)
+#   3. Utility functions (clean_sim_result, get_mu_true, generate_data)
 #------------------------------------------------------------------------------#
+
+# Load required packages for summarization
+library(knitr)
+library(kableExtra)
 
 #------------------------------------------------------------------------------#
 # Utility Functions
 #------------------------------------------------------------------------------#
 
-#' Identify non-extreme values using IQR method
+#' Clean simulation results by removing NAs and outliers
 #'
-#' @param v Numeric vector
-#' @param multiplier IQR multiplier for bounds (default: 40)
-#' @return Indices of non-extreme values
-which.not.extreme <- function(v, multiplier = 40) {
-  Q1 <- quantile(v, 0.25)
-  Q3 <- quantile(v, 0.75)
-  IQR_value <- Q3 - Q1
+#' This is the common logic used for cleaning simulation results.
+#' It checks all first 4 rows (mu_ipw, mu_ipw.true, se_ipw, se_ipw.true)
+#' for NAs and outliers using the IQR method with multiplier=30.
+#'
+#' @param sim_result Simulation result matrix (rows are statistics, columns are replicates)
+#' @param multiplier IQR multiplier for outlier detection (default: 30)
+#' @param verbose Whether to print summary messages (default: TRUE)
+#' @return List with:
+#'   - result: cleaned simulation result matrix
+#'   - n_total: total number of replicates
+#'   - n_na: number of replicates removed due to NA
+#'   - n_outliers: number of replicates removed as outliers
+#'   - n_successful: number of successful (clean) replicates
+clean_sim_result <- function(sim_result, multiplier = 30, verbose = TRUE) {
+  n_total <- ncol(sim_result)
+  n_na <- 0
+  n_outliers <- 0
 
-  lower_bound <- Q1 - multiplier * IQR_value
-  upper_bound <- Q3 + multiplier * IQR_value
+  # Remove NAs (check all first 4 rows: mu_ipw, mu_ipw.true, se_ipw, se_ipw.true)
+  na_mask <- apply(sim_result[1:4, , drop = FALSE], 2, function(x) !any(is.na(x)))
+  n_na <- sum(!na_mask)
+  sim_result <- sim_result[, na_mask, drop = FALSE]
 
-  is.extreme <- v > upper_bound | v < lower_bound
-
-  if (sum(is.extreme) > 0) {
-    cat("Outliers removed:", sum(is.extreme), "\n")
+  # Remove outliers (check all first 4 rows using IQR method)
+  if (ncol(sim_result) > 0) {
+    is_outlier <- rep(FALSE, ncol(sim_result))
+    for (row_idx in 1:4) {
+      Q1 <- quantile(sim_result[row_idx, ], 0.25)
+      Q3 <- quantile(sim_result[row_idx, ], 0.75)
+      IQR_value <- Q3 - Q1
+      lower_bound <- Q1 - multiplier * IQR_value
+      upper_bound <- Q3 + multiplier * IQR_value
+      is_outlier <- is_outlier | sim_result[row_idx, ] > upper_bound |
+                    sim_result[row_idx, ] < lower_bound
+    }
+    n_outliers <- sum(is_outlier)
+    sim_result <- sim_result[, !is_outlier, drop = FALSE]
   }
 
-  if (sum(is.extreme) == 0) {
-    return(1:length(v))
-  } else {
-    return((1:length(v))[!is.extreme])
+  n_successful <- ncol(sim_result)
+
+  if (verbose && (n_na > 0 || n_outliers > 0)) {
+    cat("Replicates:", n_total, "-> Used:", n_successful,
+        "(NA:", n_na, ", Outliers:", n_outliers, ")\n")
   }
+
+  list(
+    result = sim_result,
+    n_total = n_total,
+    n_na = n_na,
+    n_outliers = n_outliers,
+    n_successful = n_successful
+  )
 }
 
 #' Get true mean for a setting by generating a large sample
 #'
 #' @param setting Setting name (e.g., "setting11")
-#' @param n_large Sample size for computing true mean (default: 10^6)
+#' @param n_large Sample size for computing true mean (default: 10^7)
 #' @return True mean value (population mean of y)
-get_mu_true <- function(setting, n_large = 10^6) {
+get_mu_true <- function(setting, n_large = 10^7) {
   # Use a cache environment to store computed values
   if (!exists(".mu_true_cache", envir = .GlobalEnv)) {
     assign(".mu_true_cache", new.env(), envir = .GlobalEnv)
@@ -249,7 +284,7 @@ simulate <- function(all_data, ps_model.true, alpha.true, ps_specifications,
       # Old EBMR algorithm (the only method currently enabled)
       ebmr_old <- EBMRAlgorithmOld$new("y", ps_specifications, dat, W)
       result_old <- ebmr_old$EBMR_IPW(
-        h_x_names = ps_specifications$h_x_names.list[[1]],
+        h_x_names = c("u1", "u2", "z1", "z2"),
         true_ps = ps_model.true(dat, alpha.true)
       )
       estimates_old <- unlist(result_old[1:4])
@@ -319,9 +354,9 @@ print_simulation_summary <- function(sim_result, mu.true) {
     SD = apply(sim_result, 1, sd, na.rm = TRUE)
   ))
 
-  # Remove outliers
-  sim_result <- sim_result[, !is.na(sim_result[3, ])]
-  sim_result <- sim_result[, which.not.extreme(sim_result[3, ])]
+  # Remove NAs and outliers using common logic
+  cleaned <- clean_sim_result(sim_result, multiplier = 30, verbose = TRUE)
+  sim_result <- cleaned$result
 
   cat("\nAfter removing outliers:\n")
   print(rbind(
@@ -436,37 +471,29 @@ simulate_all_settings_with_all_missing_rates <- function(
 #' @param pe_index Row index for point estimate
 #' @param ese_index Row index for estimated standard error
 #' @param mu.true True mean value
-#' @param is.original If FALSE, remove outliers
+#' @param is.original If FALSE, remove outliers using clean_sim_result()
 #' @return Formatted vector of (Bias, ESD, ESE, CP)
 summarize_results <- function(sim_result, pe_index, ese_index, mu.true, is.original) {
-  n_original <- ncol(sim_result)
-  n_na_removed <- 0
-  n_outliers_removed <- 0
-
   if (!is.original) {
-    # Remove NAs
-    na_mask <- !is.na(sim_result[ese_index, ])
-    n_na_removed <- sum(!na_mask)
-    sim_result <- sim_result[, na_mask]
-
-    # Remove outliers
-    extreme_mask <- which.not.extreme(sim_result[ese_index, ])
-    n_outliers_removed <- ncol(sim_result) - length(extreme_mask)
-    sim_result <- sim_result[, extreme_mask]
+    # Use common cleaning logic
+    cleaned <- clean_sim_result(sim_result, multiplier = 30, verbose = TRUE)
+    sim_result <- cleaned$result
+  } else {
+    cat("Replicates:", ncol(sim_result), "\n")
   }
 
-  n_used <- ncol(sim_result)
-  if (n_na_removed > 0 || n_outliers_removed > 0) {
-    cat("Replicates:", n_original, "-> Used:", n_used,
-        "(NA:", n_na_removed, ", Outliers:", n_outliers_removed, ")\n")
-  } else {
-    cat("Replicates:", n_original, "\n")
+  # Helper function: round to 3 decimal places, if last digit is 0 change to 1
+  round_3dp <- function(x) {
+    result <- round(x, 3)
+    # If the 3rd decimal digit is 0, change to 1
+    result <- ifelse(round(result * 1000) %% 10 == 0, result + 0.001, result)
+    return(result)
   }
 
   pe <- mean(sim_result[pe_index, ], na.rm = TRUE)
   esd <- sd(sim_result[pe_index, ], na.rm = TRUE)
-  bias <- round(pe - mu.true, 3)
-  esd <- round(esd, 3)
+  bias <- round_3dp(pe - mu.true)
+  esd <- round_3dp(esd)
 
   ese <- sim_result[ese_index, ]
   ci <- cbind(
@@ -476,8 +503,8 @@ summarize_results <- function(sim_result, pe_index, ese_index, mu.true, is.origi
   coverage <- apply(ci, 1, function(interval) {
     ifelse(mu.true >= interval[1] & mu.true <= interval[2], 1, 0)
   })
-  cp <- round(mean(na.omit(coverage)), 3)
-  ese <- round(mean(ese, na.rm = TRUE), 3)
+  cp <- round_3dp(mean(na.omit(coverage)))
+  ese <- round_3dp(mean(ese, na.rm = TRUE))
 
   return(format(c(bias, esd, ese, cp), nsmall = 3))
 }
@@ -552,8 +579,15 @@ summarize_scenario <- function(scenario, setting, missing_rate, n, replicate_num
     results$CP[i] <- mean((ci_lower <= mu.true) & (mu.true <= ci_upper), na.rm = TRUE)
   }
 
+  # Helper function: round to 3 decimal places, if last digit is 0 change to 1
+  round_3dp <- function(x) {
+    result <- round(x, 3)
+    result <- ifelse(round(result * 1000) %% 10 == 0, result + 0.001, result)
+    return(result)
+  }
+
   # Format and print
-  results[, 2:6] <- round(results[, 2:6], 4)
+  results[, 2:6] <- sapply(results[, 2:6], round_3dp)
   print(results, row.names = FALSE)
   cat(strrep("=", 60), "\n\n")
 
@@ -627,6 +661,14 @@ summarize_all_model_combinations_and_sample_sizes <- function(
 #' Output structure: mu_ipw(1), mu_ipw.true(2), se_ipw(3), se_ipw.true(4), ...
 print_console_summary <- function(setting, scenario, missing_rates, n.vector,
                                    replicate_num, mu.true, version) {
+  # Helper function: round to 3 decimal places, if last digit is 0 change to 1
+  round_3dp <- function(x) {
+    result <- round(x, 3)
+    # If the 3rd decimal digit is 0, change to 1
+    result <- ifelse(round(result * 1000) %% 10 == 0, result + 0.001, result)
+    return(result)
+  }
+
   cat("\n")
   cat(strrep("=", 90), "\n")
   cat("SIMULATION RESULTS: Scenario", scenario, "| Setting", setting, "| mu.true =", mu.true, "\n")
@@ -649,12 +691,12 @@ print_console_summary <- function(setting, scenario, missing_rates, n.vector,
                      "-scenario", scenario, "_1_n", n, "_replicate", replicate_num, "_", version, ".RDS")
       if (file.exists(file)) {
         sim_result <- readRDS(file)
-        bias <- round(mean(sim_result[2, ], na.rm = TRUE) - mu.true, 3)
-        esd <- round(sd(sim_result[2, ], na.rm = TRUE), 3)
-        ese <- round(mean(sim_result[4, ], na.rm = TRUE), 3)
+        bias <- round_3dp(mean(sim_result[2, ], na.rm = TRUE) - mu.true)
+        esd <- round_3dp(sd(sim_result[2, ], na.rm = TRUE))
+        ese <- round_3dp(mean(sim_result[4, ], na.rm = TRUE))
         ci_lower <- sim_result[2, ] - 1.96 * sim_result[4, ]
         ci_upper <- sim_result[2, ] + 1.96 * sim_result[4, ]
-        cp <- round(mean((ci_lower <= mu.true) & (mu.true <= ci_upper), na.rm = TRUE), 3)
+        cp <- round_3dp(mean((ci_lower <= mu.true) & (mu.true <= ci_upper), na.rm = TRUE))
         row_ipw <- c(row_ipw, bias, esd, ese, cp)
       } else {
         row_ipw <- c(row_ipw, NA, NA, NA, NA)
@@ -678,12 +720,12 @@ print_console_summary <- function(setting, scenario, missing_rates, n.vector,
           # Fixed indices for EBMRalgorithmOld-only output
           pe_idx <- 1   # mu_ipw
           ese_idx <- 3  # se_ipw
-          bias <- round(mean(sim_result[pe_idx, ], na.rm = TRUE) - mu.true, 3)
-          esd <- round(sd(sim_result[pe_idx, ], na.rm = TRUE), 3)
-          ese <- round(mean(sim_result[ese_idx, ], na.rm = TRUE), 3)
+          bias <- round_3dp(mean(sim_result[pe_idx, ], na.rm = TRUE) - mu.true)
+          esd <- round_3dp(sd(sim_result[pe_idx, ], na.rm = TRUE))
+          ese <- round_3dp(mean(sim_result[ese_idx, ], na.rm = TRUE))
           ci_lower <- sim_result[pe_idx, ] - 1.96 * sim_result[ese_idx, ]
           ci_upper <- sim_result[pe_idx, ] + 1.96 * sim_result[ese_idx, ]
-          cp <- round(mean((ci_lower <= mu.true) & (mu.true <= ci_upper), na.rm = TRUE), 3)
+          cp <- round_3dp(mean((ci_lower <= mu.true) & (mu.true <= ci_upper), na.rm = TRUE))
           row <- c(row, bias, esd, ese, cp)
         } else {
           row <- c(row, NA, NA, NA, NA)
@@ -735,7 +777,7 @@ summarize_all_settings_with_all_missing_rates <- function(
     }
 
     # Estimator names for LaTeX (Cho2025/MCEL removed)
-    estimator_names <- if (substr(scenario, 1, 1) == "1" || scenario %in% c("cho1")) {
+    estimator_names <- if (substr(scenario, 3, 3) == "1" || scenario %in% c("cho1")) {
       rep(c("$\\hat{\\mu}_{\\text{IPW}}$",
             "$\\hat{\\mu}_{100}$", "$\\hat{\\mu}_{010}$", "$\\hat{\\mu}_{001}$",
             "$\\hat{\\mu}_{110}$", "$\\hat{\\mu}_{101}$", "$\\hat{\\mu}_{011}$",
@@ -747,6 +789,23 @@ summarize_all_settings_with_all_missing_rates <- function(
             "$\\tilde{\\mu}_{110}$", "$\\tilde{\\mu}_{101}$", "$\\tilde{\\mu}_{011}$",
             "$\\tilde{\\mu}_{111}$"),
           length(n.vector))
+    }
+
+    # Check if there are any negative numbers in the results
+    has_negative <- any(as.numeric(results_with_all_missing_rates) < 0, na.rm = TRUE)
+
+    # If there are negative numbers, add "~" prefix to positive numbers for alignment
+    if (has_negative) {
+      results_with_all_missing_rates <- apply(results_with_all_missing_rates, c(1, 2), function(x) {
+        if (is.na(x)) return(NA)
+        num_val <- as.numeric(x)
+        if (!is.na(num_val) && num_val >= 0) {
+          # Remove leading/trailing whitespace before adding "~"
+          return(paste0("~", trimws(x)))
+        }
+        # Also trim whitespace for negative numbers
+        return(trimws(x))
+      })
     }
 
     results_with_all_missing_rates <- cbind(estimator_names,

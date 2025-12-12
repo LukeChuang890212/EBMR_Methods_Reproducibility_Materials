@@ -69,7 +69,7 @@ cat(strrep("=", 70), "\n")
 cat("Scenario 9-1: Correct Model (No-Y Models)\n")
 cat(strrep("=", 70), "\n")
 
-summary_tbls <- get_scenario_summary("9-1", version = "test5")
+summary_tbls <- get_scenario_summary("9-1", version = "test6")
 
 # Setting 11
 cat("\nSetting 11:\n")
@@ -107,7 +107,7 @@ cat(strrep("=", 70), "\n")
 cat("Scenario 7-1: Correct Model (Z1 Interactions)\n")
 cat(strrep("=", 70), "\n")
 
-summary_tbls <- get_scenario_summary("7-1", version = "test5")
+summary_tbls <- get_scenario_summary("7-1", version = "test6")
 
 # Setting 11
 cat("\nSetting 11:\n")
@@ -121,39 +121,77 @@ print(summary_tbls[[2]])
 # Scenario 7-2: Misspecified Model (Z1 Interactions)
 #------------------------------------------------------------------------------#
 
-# cat("\n")
-# cat(strrep("=", 70), "\n")
-# cat("Scenario 7-2: Misspecified Model (Z1 Interactions)\n")
-# cat(strrep("=", 70), "\n")
-#
-# summary_tbls <- get_scenario_summary("7-2")
-#
-# # Setting 11
-# cat("\nSetting 11:\n")
-# print(summary_tbls[[1]])
-#
-# # Setting 12
-# cat("\nSetting 12:\n")
-# print(summary_tbls[[2]])
+cat("\n")
+cat(strrep("=", 70), "\n")
+cat("Scenario 7-2: Misspecified Model (Z1 Interactions)\n")
+cat(strrep("=", 70), "\n")
+
+summary_tbls <- get_scenario_summary("7-2", version = "test6")
+
+# Setting 11
+cat("\nSetting 11:\n")
+print(summary_tbls[[1]])
+
+# Setting 12
+cat("\nSetting 12:\n")
+print(summary_tbls[[2]])
+
+#------------------------------------------------------------------------------#
+# Scenario 7-3: Misspecified Model (Z1 Interactions)
+#------------------------------------------------------------------------------#
+
+cat("\n")
+cat(strrep("=", 70), "\n")
+cat("Scenario 7-3: Misspecified Model (Z1 Interactions)\n")
+cat(strrep("=", 70), "\n")
+
+summary_tbls <- get_scenario_summary("7-3", version = "test6")
+
+# Setting 11
+cat("\nSetting 11:\n")
+print(summary_tbls[[1]])
+
+# Setting 12
+cat("\nSetting 12:\n")
+print(summary_tbls[[2]])
+
+#------------------------------------------------------------------------------#
+# Scenario 7-4: Misspecified Model (Z1 Interactions)
+#------------------------------------------------------------------------------#
+
+cat("\n")
+cat(strrep("=", 70), "\n")
+cat("Scenario 7-4: Misspecified Model (Z1 Interactions)\n")
+cat(strrep("=", 70), "\n")
+
+summary_tbls <- get_scenario_summary("7-4", version = "test6")
+
+# Setting 11
+cat("\nSetting 11:\n")
+print(summary_tbls[[1]])
+
+# Setting 12
+cat("\nSetting 12:\n")
+print(summary_tbls[[2]])
 
 #------------------------------------------------------------------------------#
 # Scenario 8-1: Correct Model (Z2 Interactions)
 #------------------------------------------------------------------------------#
 
-# cat("\n")
-# cat(strrep("=", 70), "\n")
-# cat("Scenario 8-1: Correct Model (Z2 Interactions)\n")
-# cat(strrep("=", 70), "\n")
-#
-# summary_tbls <- get_scenario_summary("8-1")
-#
-# # Setting 11
-# cat("\nSetting 11:\n")
-# print(summary_tbls[[1]])
-#
-# # Setting 12
-# cat("\nSetting 12:\n")
-# print(summary_tbls[[2]])
+cat("\n")
+cat(strrep("=", 70), "\n")
+cat("Scenario 8-1: Correct Model (Z2 Interactions)\n")
+cat(strrep("=", 70), "\n")
+
+summary_tbls <- get_scenario_summary("8-1", version = "test6")
+
+# Setting 11
+cat("\nSetting 11:\n")
+print(summary_tbls[[1]])
+
+# Setting 12
+cat("\nSetting 12:\n")
+print(summary_tbls[[2]])
 
 #------------------------------------------------------------------------------#
 # Scenario 8-2: Misspecified Model (Z2 Interactions)
@@ -212,23 +250,31 @@ print(summary_tbls[[2]])
 # Cho et al. Scenarios
 #------------------------------------------------------------------------------#
 
-# cat("\n")
-# cat(strrep("=", 70), "\n")
-# cat("Cho et al. Scenarios\n")
-# cat(strrep("=", 70), "\n")
-#
-# summary_tbls <- summarize_all_settings_with_all_missing_rates(
-#   settings = c("Cho_RM2q", "Cho_RM2p", "Cho_RM3q", "Cho_RM3p"),
-#   missing_rates = c("miss50", "miss30"),
-#   scenario = "cho1",
-#   J = 3,
-#   n.vector = c(1000, 4000),
-#   all_data_file.list = misspecified_model_all_data_file.list,
-#   alpha_true.list = misspecified_model_alpha.true.list,
-#   version = "test7",
-#   is.original = FALSE
-# )
-# print(summary_tbls[[1]])
-# print(summary_tbls[[2]])
-# print(summary_tbls[[3]])
-# print(summary_tbls[[4]])
+cat("\n")
+cat(strrep("=", 70), "\n")
+cat("Scenario cho1: Cho et al. Settings\n")
+cat(strrep("=", 70), "\n")
+
+cho_settings <- c("Cho_RM2p", "Cho_RM2q", "Cho_RM3p", "Cho_RM3q")
+
+for (setting in cho_settings) {
+  cat("\n")
+  cat(strrep("-", 70), "\n")
+  cat(setting, "\n")
+  cat(strrep("-", 70), "\n")
+
+  summary_tbls <- summarize_all_settings_with_all_missing_rates(
+    settings = setting,
+    missing_rates = c("miss50", "miss30"),
+    scenario = "cho1",
+    J = 3,
+    n.vector = c(300, 2000),
+    all_data_file.list = correct_model_all_data_file.list,
+    alpha_true.list = correct_model_alpha.true.list,
+    version = "test6",
+    is.original = FALSE
+  )
+
+  print(summary_tbls[[1]])
+}
+
