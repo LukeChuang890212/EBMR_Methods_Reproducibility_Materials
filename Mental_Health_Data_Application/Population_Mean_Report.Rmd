@@ -1,0 +1,451 @@
+---
+title: "Population Mean Estimation for Teacher-Reported Mental Health"
+subtitle: "Using Ensemble-Based Multiply Robust (EBMR) Estimator"
+author: "Mental Health Data Analysis"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    highlight: tango
+    latex_engine: xelatex
+header-includes:
+  - \usepackage{booktabs}
+  - \usepackage{longtable}
+  - \usepackage{array}
+  - \usepackage{multirow}
+  - \usepackage{float}
+  - \usepackage{colortbl}
+  - \usepackage{xcolor}
+  - \usepackage{pdflscape}
+  - \newcommand{\blandscape}{\begin{landscape}}
+  - \newcommand{\elandscape}{\end{landscape}}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
+                      fig.width = 6, fig.height = 4, fig.pos = "H")
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+```
+
+# Notation
+
+Throughout this report, we use the following notation for variables:
+
+| Symbol | Variable Name | Description |
+|:------:|:--------------|:------------|
+| $Y$ | teacher_report | Outcome variable: teacher-reported mental health score |
+| $X_1$ | health | Child's health status |
+| $X_2$ | father | Father presence indicator |
+| $X_3$ | parent_report | Parent-reported mental health score |
+| $R$ | response | Response indicator: $R=1$ if $Y$ is observed, $R=0$ if missing |
+| $X$ | $(X_1, X_2, X_3)$ | Vector of all covariates |
+
+# Executive Summary
+
+This report presents an analysis of population mean estimation for teacher-reported mental health outcomes using the Ensemble-Based Multiply Robust (EBMR) method. The analysis addresses the challenge of **missing not at random (MNAR)** data, where missingness may depend on the unobserved outcome itself.
+
+**Key Findings:**
+
+- **Sample size:** 2,486 observations with **42.7% missing** teacher reports
+- **Complete case mean:** 0.1832 (SE = 0.0103)
+- **EBMR-adjusted mean:** 0.2113 (SE = 0.0369)
+- **Adjustment difference:** +0.0282 (15.4% higher than complete case)
+- The EBMR method assigns **99.9% weight to Model 1**, indicating this model is relatively correctly specified for the missing data mechanism
+
+# Introduction
+
+## Background
+
+Teacher-reported mental health assessments are commonly used in educational and clinical settings. However, missing data is pervasive in such surveys, and the missingness mechanism may not be random. If teachers are more (or less) likely to report on students with certain mental health profiles, naive complete-case analysis will produce biased estimates.
+
+<!-- ## The MNAR Challenge -->
+
+<!-- Traditional methods assume data are **Missing at Random (MAR)**, meaning missingness depends only on observed variables. However, in mental health reporting: -->
+
+<!-- - Teachers may be less likely to complete reports for students with severe issues (too complex) -->
+<!-- - Teachers may be more likely to report on students with notable problems (more salient) -->
+<!-- - The missingness mechanism itself may depend on the unobserved mental health score -->
+
+<!-- This creates a **Missing Not at Random (MNAR)** scenario requiring specialized methods. -->
+
+<!-- ## EBMR Approach -->
+
+<!-- The Ensemble-Based Multiple Robustness (EBMR) method: -->
+
+<!-- 1. Specifies multiple propensity score models that include the outcome variable -->
+<!-- 2. Estimates each model using GMM (Generalized Method of Moments) -->
+<!-- 3. Combines models using data-adaptive weights -->
+<!-- 4. Provides consistent estimates if at least one model is correctly specified -->
+
+<!-- # Data Description -->
+
+```{r load-data}
+# Load the summary data
+popmean_summary <- readRDS("MHD_results/popmean_summary.RDS")
+```
+
+<!-- ## Sample Characteristics -->
+
+<!-- ```{r sample-desc} -->
+<!-- sample_info <- data.frame( -->
+<!--   Characteristic = c("Total Sample Size", "Complete Cases", "Missing Cases", "Missing Rate"), -->
+<!--   Value = c("2,486", "1,424", "1,062", "42.7%") -->
+<!-- ) -->
+
+<!-- kable(sample_info, col.names = c("Characteristic", "Value"), -->
+<!--       caption = "Sample Overview", booktabs = TRUE) %>% -->
+<!--   kable_styling(latex_options = c("striped", "hold_position")) -->
+<!-- ``` -->
+
+<!-- ## Evidence of Non-Random Missingness -->
+
+<!-- We examined whether auxiliary variables are associated with the response indicator $R$ (1 = observed, 0 = missing): -->
+
+<!-- ```{r missingness-evidence} -->
+<!-- missing_tests <- data.frame( -->
+<!--   Variable = c("Health Status", "Father Present", "Parent Report"), -->
+<!--   Coefficient = c(0.0447, -0.0421, 0.0102), -->
+<!--   SE = c(0.0202, 0.0164, 0.0158), -->
+<!--   `t-value` = c(2.21, -2.57, 0.64), -->
+<!--   `p-value` = c(0.027, 0.010, 0.520), -->
+<!--   Significance = c("*", "*", "") -->
+<!-- ) -->
+
+<!-- kable(missing_tests, col.names = c("Variable", "Coefficient", "SE", "t-value", "p-value", "Sig."), -->
+<!--       caption = "Association between Covariates and Missingness (R)", -->
+<!--       digits = 4, booktabs = TRUE) %>% -->
+<!--   kable_styling(latex_options = c("striped", "hold_position")) %>% -->
+<!--   footnote(general = "* p < 0.05, ** p < 0.01, *** p < 0.001") -->
+<!-- ``` -->
+
+<!-- **Interpretation:** -->
+
+<!-- - **Health status** is positively associated with response ($p = 0.027$): healthier individuals are more likely to have complete data -->
+<!-- - **Father presence** is negatively associated with response ($p = 0.010$): individuals with fathers present are less likely to have complete data -->
+<!-- - **Parent report** shows no significant association with missingness -->
+
+<!-- These associations suggest the data are not Missing Completely at Random (MCAR). -->
+
+# Candidate Propensity Score Models
+
+## Model Specifications
+
+We specified three MNAR propensity score models, each including the outcome variable $Y$ and different covariates:
+
+The three propensity score models are specified as follows:
+
+**Model 1 ($\pi_1$):** $R \sim Y + X_1 + X_2 + Y \times X_1 + Y \times X_2$
+
+- Includes health status ($X_1$) and father presence ($X_2$) with outcome interactions
+- Implicitly assume that $X_3$ (parent_report) is the IV.
+- $h_{\alpha_1}(X) = (1, X_1, X_2, X_3, X_2 X_3, X_1 X_2, X_1 X_3)^\top$
+
+**Model 2 ($\pi_2$):** $R \sim Y + X_1 + X_3 + Y \times X_1 + Y \times X_3$
+
+- Includes health status ($X_1$) and parent report ($X_3$) with outcome interactions
+- Implicitly assume that $X_2$ (father) is the IV.
+- $h_{\alpha_2}(X) = (1, X_1, X_2, X_3, X_2 X_3, X_1 X_2, X_1 X_3)^\top$
+
+**Model 3 ($\pi_3$):** $R \sim Y + X_3 + X_2 + Y \times X_3 + Y \times X_2$
+
+- Includes parent report ($X_3$) and father presence ($X_2$) with outcome interactions
+- Implicitly assume that $X_1$ (health) is the IV.
+- $h_{\alpha_3}(X) = (1, X_1, X_2, X_3, X_2 X_3, X_1 X_2, X_1 X_3)^\top$
+
+**Ensemble Step:** The ensemble weights $\nu$ are estimated using:
+$$h_\nu(X) = (X_1, X_2, X_3, X_2 X_3, X_1 X_2, X_1 X_3, X_1 X_2 X_3)^\top,$$
+which differs from $h_{\alpha_j}(X)$ by adding the three-order interaction $X_1X_2X_3$.
+
+## Model Estimation Results
+
+### Model 1: use $X_1$ (Health) and $X_2$ (Father)
+
+```{r model1-results}
+model1 <- data.frame(
+  Variable = c("(Intercept)", "Y", "Y:X1",
+               "Y:X2", "X1", "X2"),
+  Estimate = c(-0.6335, 1.4005, -2.4616, -0.9906, 0.2966, 0.4827),
+  SE = c(0.2477, 0.6011, 1.2180, 0.6336, 0.2528, 0.1637),
+  z = c(-2.558, 2.330, -2.021, -1.564, 1.173, 2.948),
+  p = c(0.0105, 0.0198, 0.0433, 0.1179, 0.2407, 0.0032)
+)
+model1$Sig <- ifelse(model1$p < 0.001, "***",
+                     ifelse(model1$p < 0.01, "**",
+                            ifelse(model1$p < 0.05, "*",
+                                   ifelse(model1$p < 0.1, ".", ""))))
+
+kable(model1, col.names = c("Variable", "Estimate", "SE", "z", "p-value", "Sig."),
+      caption = "Model 1 Parameter Estimates (Convergence: 0, Objective: 1.70e-04)",
+      digits = 4, booktabs = TRUE) %>%
+  kable_styling(latex_options = c("striped", "hold_position"))
+```
+
+### Model 2: use $X_1$ (Health) and $X_3$ (Parent Report)
+
+```{r model2-results}
+model2 <- data.frame(
+  Variable = c("(Intercept)", "Y", "Y:X1",
+               "Y:X3", "X1", "X3"),
+  Estimate = c(-6.9875, 8.8064, 0.2080, 4.1743, -0.3900, -5.3551),
+  SE = c(0.2748, 0.2993, 0.2571, 0.6682, 0.2276, 0.6884),
+  z = c(-25.432, 29.425, 0.809, 6.247, -1.714, -7.779),
+  p = c(0.0000, 0.0000, 0.4183, 0.0000, 0.0865, 0.0000)
+)
+model2$Sig <- ifelse(model2$p < 0.001, "***",
+                     ifelse(model2$p < 0.01, "**",
+                            ifelse(model2$p < 0.05, "*",
+                                   ifelse(model2$p < 0.1, ".", ""))))
+
+kable(model2, col.names = c("Variable", "Estimate", "SE", "z", "p-value", "Sig."),
+      caption = "Model 2 Parameter Estimates (Convergence: 0, Objective: 4.03e-03)",
+      digits = 4, booktabs = TRUE) %>%
+  kable_styling(latex_options = c("striped", "hold_position"))
+```
+
+### Model 3: use $X_3$ (Parent Report) and $X_2$ (Father)
+
+```{r model3-results}
+model3 <- data.frame(
+  Variable = c("(Intercept)", "Y", "Y:X3",
+               "Y:X2", "X3", "X2"),
+  Estimate = c(-0.9201, 1.9797, -14.7839, -0.1911, 0.9692, 0.2985),
+  SE = c(0.9016, 1.7691, 2.0452, 0.5269, 0.9106, 0.2405),
+  z = c(-1.021, 1.119, -7.229, -0.363, 1.064, 1.241),
+  p = c(0.3075, 0.2631, 0.0000, 0.7169, 0.2872, 0.2145)
+)
+model3$Sig <- ifelse(model3$p < 0.001, "***",
+                     ifelse(model3$p < 0.01, "**",
+                            ifelse(model3$p < 0.05, "*",
+                                   ifelse(model3$p < 0.1, ".", ""))))
+
+kable(model3, col.names = c("Variable", "Estimate", "SE", "z", "p-value", "Sig."),
+      caption = "Model 3 Parameter Estimates (Convergence: 0, Objective: 2.37e-03)",
+      digits = 4, booktabs = TRUE) %>%
+  kable_styling(latex_options = c("striped", "hold_position"))
+```
+
+## Model Weights
+
+The EBMR method assigns data-adaptive weights to each model:
+
+```{r model-weights}
+weights_df <- data.frame(
+  Model = c("Model 1", "Model 2", "Model 3"),
+  Weight = c(0.9988, 0.0000, 0.0012),
+  Percentage = c("99.88%", "0.00%", "0.12%")
+)
+
+kable(weights_df, col.names = c("Model", "Weight", "Percentage"),
+      caption = "EBMR Model Weights",
+      escape = FALSE, booktabs = TRUE) %>%
+  kable_styling(latex_options = c("striped", "hold_position"))
+```
+
+**Interpretation:** Model 1 receives nearly all the weight (99.88%), suggesting it best captures the missing data mechanism. This indicates that the combination of $X_1$ (health) and $X_2$ (father), along with their interactions with the outcome $Y$, provides the most informative model for the propensity scores.
+
+# Population Mean Estimates
+
+## Main Results
+
+```{r main-results}
+main_results <- data.frame(
+  Estimator = c("Complete Case", "EBMR (use 3 models)"),
+  Estimate = c(0.1832, 0.2113),
+  SE = c(0.0103, 0.0369),
+  CI_lower = c(0.1631, 0.1390),
+  CI_upper = c(0.2032, 0.2836)
+)
+
+kable(main_results, col.names = c("Estimator", "Estimate", "SE", "95% CI Lower", "95% CI Upper"),
+      caption = "Population Mean Estimates: Complete Case vs. EBMR",
+      digits = 4, booktabs = TRUE) %>%
+  kable_styling(latex_options = c("striped", "hold_position")) %>%
+  row_spec(2, bold = TRUE)
+```
+
+**Key Finding:** The EBMR estimate (0.2113) is **15.4% higher** than the complete case estimate (0.1832), with a difference of 0.0282. This suggests that the complete case analysis underestimates the population mean, possibly because individuals with $Y = 1$ are less likely to have complete data.
+
+## All Model Combinations
+
+```{r all-combinations}
+# Use the saved summary
+results_table <- popmean_summary
+rownames(results_table) = NULL
+
+kable(results_table,
+      col.names = c("Label", "Models", "Estimate", "Analytical SE", "Bootstrap SE", "Perturbation SE"),
+      caption = "Population Mean Estimates for All Model Combinations",
+      digits = 4, booktabs = TRUE) %>%
+  kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  row_spec(which(results_table$label == "111"), bold = TRUE)
+```
+
+**Observations:**
+
+1. **Model 1 alone** (label "100") gives estimate 0.2114, nearly identical to the full ensemble
+2. **Model 2 alone** (label "010") gives a much higher estimate (0.5299) with large bootstrap SE (0.1397), indicating instability
+3. **Model 3 alone** (label "001") gives estimate 0.2855 with the largest analytical SE (0.1530)
+4. **Combinations including Model 1** (110, 101, 111) all give similar estimates around 0.2113
+5. **Combinations without Model 1** (011) give much higher estimates similar to Model 2
+
+# Standard Error Comparison
+
+```{r se-comparison}
+se_comparison <- data.frame(
+  Method = c("Complete Case", "EBMR (111)"),
+  Analytical = c(0.0103, 0.0369),
+  Bootstrap = c(0.0099, 0.0435),
+  Perturbation = c(0.0112, 0.0431)
+)
+
+kable(se_comparison,
+      col.names = c("Method", "Analytical SE", "Bootstrap SE", "Perturbation SE"),
+      caption = "Standard Error Comparison",
+      digits = 4, booktabs = TRUE) %>%
+  kable_styling(latex_options = c("striped", "hold_position"))
+```
+
+```{r se-plot, fig.width=8, fig.height=5}
+se_long <- popmean_summary %>%
+  select(label, name, analytical_se, bootstrap_se, perturbation_se) %>%
+  pivot_longer(cols = c(analytical_se, bootstrap_se, perturbation_se),
+               names_to = "SE_Type", values_to = "SE") %>%
+  mutate(SE_Type = case_when(
+    SE_Type == "analytical_se" ~ "Analytical",
+    SE_Type == "bootstrap_se" ~ "Bootstrap",
+    SE_Type == "perturbation_se" ~ "Perturbation"
+  ))
+
+ggplot(se_long, aes(x = label, y = SE, fill = SE_Type)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
+  theme_minimal() +
+  labs(title = "Standard Error Comparison Across Methods",
+       x = "Model Combination",
+       y = "Standard Error",
+       fill = "SE Type") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_brewer(palette = "Set2")
+```
+
+**Observations:**
+
+- For the complete case and Model 1 combinations, all three SE methods give similar results
+- - For Model 2 (010) and combinations with Model 2 but without Model 1, bootstrap and perturbation SEs are much larger than analytical SEs, indicating potential model instability
+<!-- - The EBMR (111) has bootstrap/perturbation SEs slightly larger than analytical SE (0.043 vs 0.037) -->
+
+# Sensitivity Analysis
+
+## Methodology
+
+We conducted a sensitivity analysis by perturbing Model 1 using an exponential tilt function:
+
+$$\tilde{\pi}_1(X, Y) = \pi_1(X, Y)\exp\left(\xi \cdot (Y + X_1 + X_2 + X_3)\right)$$
+
+where $\xi$ ranges from 0 to $n^{-1/2} \approx 0.020$. The resulting estimator is denoted as $\hat{\mu}(\xi)$.
+
+This tests the robustness of our estimates to local misspecification of the propensity score model.
+
+## Results
+
+```{r sensitivity-plot, fig.width=8, fig.height=5}
+# Load sensitivity results
+sensitivity_data <- data.frame(
+  xi = seq(0, 0.020056, length.out = 30),
+  mu_ipw = c(0.2113, 0.2111, 0.2108, 0.2105, 0.2102, 0.2100,
+             0.2097, 0.2094, 0.2092, 0.2089, 0.2086, 0.2084,
+             0.2081, 0.2078, 0.2076, 0.2073, 0.2071, 0.2068,
+             0.2065, 0.2063, 0.2060, 0.2057, 0.2055, 0.2052,
+             0.2050, 0.2047, 0.2045, 0.2042, 0.2039, 0.2037)
+)
+
+ggplot(sensitivity_data, aes(x = xi, y = mu_ipw)) +
+  geom_line(color = "blue", linewidth = 1) +
+  geom_point(color = "blue", size = 2) +
+  geom_hline(yintercept = 0.1832, linetype = "dashed", color = "red", linewidth = 1) +
+  geom_hline(yintercept = 0.2113, linetype = "dotted", color = "darkgreen", linewidth = 1) +
+  annotate("text", x = 0.015, y = 0.185, label = "Complete Case", color = "red") +
+  annotate("text", x = 0.015, y = 0.215, label = "EBMR (xi=0)", color = "darkgreen") +
+  theme_minimal() +
+  labs(title = "Sensitivity Analysis: Effect of Model Perturbation",
+       subtitle = "Perturbing Model 1 with exponential tilt function",
+       x = expression(xi),
+       y = expression(hat(mu)(xi))) +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+The sensitivity analysis results are summarized below:
+
+| Metric | Value |
+|:-------|:------|
+| $\xi$ range | [0, 0.0201] |
+| $\hat{\mu}(\xi)$ range | [0.2037, 0.2113] |
+| $\hat{\mu}(\xi)$ at Baseline ($\xi=0$) | 0.2113 |
+| $\hat{\mu}(\xi)$ at max $\xi$ | 0.2037 |
+| Change from baseline | -0.0076 (-3.6%) |
+
+**Interpretation:**
+
+- As $\xi$ increases from 0 to 0.02, the estimated population mean decreases monotonically from 0.2113 to 0.2037
+- The total change is only **-0.0076 (3.6%)**, indicating the estimate is relatively robust to local misspecification
+- Even at maximum perturbation, the EBMR estimate (0.2037) remains substantially higher than the complete case estimate (0.1832)
+- This provides confidence that the adjustment for MNAR missingness is genuine and not an artifact of model specification
+
+# Conclusions
+
+## Key Findings
+
+1. **Evidence of MNAR:** The association between outcome and missingness, combined with the difference between complete case and EBMR estimates, suggests the data are MNAR.
+
+2. **Population Mean Adjustment:** The EBMR method estimates the population mean at **0.2113**, which is **15.4% higher** than the complete case estimate of 0.1832. This indicates that complete case analysis underestimates mental health concerns in this population.
+
+3. **Model Ensemble:** The EBMR assigns nearly all weight (99.9%) to Model 1, which includes $X_1$ (health) and $X_2$ (father) and implicitly assumes that $X_3$ (parent_report) is the valid IV.
+
+4. **Robustness:** Sensitivity analysis shows the estimate is robust to local model misspecification, with only a 3.6% change across the perturbation range.
+
+<!-- ## Recommendations -->
+
+<!-- 1. **Use EBMR-adjusted estimates** for policy and clinical decisions, as complete case analysis appears biased. -->
+
+<!-- 2. **Collect auxiliary variables** ($X_1$: health, $X_2$: father, $X_3$: parent report) that predict missingness to enable MNAR adjustment. -->
+
+<!-- 3. **Consider the uncertainty** reflected in the larger standard errors of the EBMR estimate (0.037) compared to complete case (0.010). -->
+
+<!-- ## Limitations -->
+
+<!-- - The EBMR method assumes at least one propensity score model is correctly specified -->
+<!-- - Sensitivity analysis only considers local perturbations; larger model misspecifications could have greater impact -->
+<!-- - The analysis relies on the parametric form of the propensity score models -->
+
+<!-- # Technical Appendix -->
+
+<!-- ## EBMR Algorithm -->
+
+<!-- The Ensemble-Based Multiple Robustness (EBMR) method proceeds as follows: -->
+
+<!-- 1. **Propensity Score Estimation:** For each model $j = 1, \ldots, J$, estimate parameters $\alpha_j$ using GMM with moment conditions: -->
+<!--    $$E\left[h_{\alpha_j}(X)\left(R - \pi_j(Y, X; \alpha_j)\right)\right] = 0$$ -->
+
+<!-- 2. **Ensemble Weights:** Compute data-adaptive weights $w_j = \nu_j^2 / \sum_k \nu_k^2$ where $\nu$ minimizes: -->
+<!--    $$E\left[h_\nu(X)\left(\frac{R}{\sum_j \nu_j^2 \pi_j} - 1\right)\right] = 0$$ -->
+
+<!-- 3. **IPW Estimation:** Estimate the population mean as: -->
+<!--    $$\hat{\mu}_{IPW} = \frac{1}{n}\sum_{i=1}^n \frac{R_i Y_i}{\sum_j w_j \hat{\pi}_j(Y_i, X_i)}$$ -->
+
+<!-- where $X = (X_1, X_2, X_3)$ denotes the vector of covariates. -->
+
+<!-- ## Software -->
+
+<!-- Analysis was conducted using: -->
+
+<!-- - R version 4.x -->
+<!-- - EBMRalgorithmFast2 package (custom implementation) -->
+<!-- - Bootstrap: 1,000 replicates -->
+<!-- - Perturbation bootstrap: 1,000 replicates with exponential weights -->
+
+---
+
+*Report generated on `r Sys.Date()`*

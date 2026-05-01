@@ -1,0 +1,4 @@
+line profiling: sample.interval=10000
+"lazyLoadDBfetch" "<Anonymous>" "lazyLoadDBfetch" "exists" "getInlineHandler" "tryInline" "cmpCall" "cmp" "genCode" "compile" "doTryCatch" "tryCatchOne" "tryCatchList" "tryCatch" "compiler:::tryCompile" 
+"exists" "getInlineHandler" "tryInline" "cmpCall" "cmp" "h" "tryInline" "cmpCall" "cmp" "cmpPrim2" "h" "tryInline" "cmpCall" "cmp" "genCode" "h" "tryInline" "cmpCall" "cmp" "genCode" "cb$putconst" "cmpCallArgs" "cmpCallExprFun" "cmpCall" "cmp" "h" "tryInline" "cmpCall" "cmp" "cmpForBody" "h" "tryInline" "cmpCall" "cmp" "genCode" "compile" "doTryCatch" "tryCatchOne" "tryCatchList" "tryCatch" "compiler:::tryCompile" 
+"$" "cmpCallExprFun" "cmpCall" "cmp" "h" "tryInline" "cmpCall" "cmp" "cmpForBody" "h" "tryInline" "cmpCall" "cmp" "genCode" "compile" "doTryCatch" "tryCatchOne" "tryCatchList" "tryCatch" "compiler:::tryCompile" 

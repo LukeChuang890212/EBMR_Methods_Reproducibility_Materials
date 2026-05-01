@@ -1,0 +1,23 @@
+# s11_A1_miss_rate = 1-mean(setting11.A1(10^7)$r)
+# s11_A2_miss_rate = 1-mean(setting11.A2(10^7)$r)
+# s12_A1_miss_rate = 1-mean(setting12.A1(10^7)$r)
+# s12_A2_miss_rate = 1-mean(setting12.A2(10^7)$r)
+miss_rate_A = matrix(NA, 10000, 4)
+miss_rate_B = matrix(NA, 10000, 8)
+for(i in 1:10000){
+  miss_rate_A[i, 1] = 1-mean(setting11.A1(10^3)$r)
+  miss_rate_A[i, 2] = 1-mean(setting11.A2(10^3)$r)
+  miss_rate_A[i, 3] = 1-mean(setting12.A1(10^3)$r)
+  miss_rate_A[i, 4] = 1-mean(setting12.A2(10^3)$r)
+  miss_rate_B[i, 1] = 1-mean(setting11.B1(10^3)$r)
+  miss_rate_B[i, 2] = 1-mean(setting11.B1(300)$r)
+  miss_rate_B[i, 3] = 1-mean(setting11.B2(10^3)$r)
+  miss_rate_B[i, 4] = 1-mean(setting11.B2(300)$r)
+  miss_rate_B[i, 5] = 1-mean(setting12.B1(10^3)$r)
+  miss_rate_B[i, 6] = 1-mean(setting12.B1(300)$r)
+  miss_rate_B[i, 7] = 1-mean(setting12.B2(10^3)$r)
+  miss_rate_B[i, 8] = 1-mean(setting12.B2(300)$r)
+}
+
+round(apply(miss_rate_A, 2, mean), 3)
+round(apply(miss_rate_B, 2, mean), 3)

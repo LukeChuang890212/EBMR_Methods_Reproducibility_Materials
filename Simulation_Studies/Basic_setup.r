@@ -1,0 +1,755 @@
+#------------------------------------------------------------------------------#
+# Basic Setup ----
+#------------------------------------------------------------------------------#
+library(dplyr)
+library(doParallel)
+library(parallel)
+
+# data_root = "E:/Other computers/我的電腦/MNAR-Simulation/MNAR_2023/ChuangData_SM/"
+# data_root = "/Users/luke/Library/CloudStorage/GoogleDrive-mingjuresearch@gmail.com/其他電腦/我的電腦/MNAR-Simulation/MNAR_2023/ChuangData_SM/"
+# data_root = "G:/Other computers/我的電腦/MNAR-Simulation/MNAR_2023/ChuangData_SM/"
+data_root = "Simulation_Data/"
+
+replicate_num = 1000
+# ps_model.true = function(dat, alpha.true) 1/(1+exp(cbind(rep(1, nrow(dat)), dat$y, dat$u1, dat$u2)%*%alpha.true))
+# miss.ps_model.true = function(y, u1, u2, r, n, alpha.true) 1/(1+exp(cbind(rep(1, n), y, u1, u2)%*%alpha.true))*exp(n^(-1/2)*y)
+
+n.vector.list = list(
+  correct_model = list(c(2000, 500)),
+  misspecified_model = list(c(2000), c(500))
+)
+
+correct_model_all_data_file.list = list(
+  setting1 = list(
+    miss50 =list(
+      paste0(data_root, "setting1.A1_n2000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting1.A2_n2000_replicate1000.RDS")
+    )
+  ),
+  setting2 = list(
+    miss50 =list(
+      paste0(data_root, "setting2.A1_n2000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting2.A2_n2000_replicate1000.RDS")
+    )
+  ),
+  setting3 = list(
+    miss50 =list(
+      paste0(data_root, "Setting3.A1_n2000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Setting3.A2_n2000_replicate1000.RDS")
+    )
+  ),
+  setting4 = list(
+    miss50 =list(
+      paste0(data_root, "Setting4.A1_n2000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Setting4.A2_n2000_replicate1000.RDS")
+    )
+  ),
+  setting5 = list(
+    miss50 =list(
+      paste0(data_root, "Setting5.A1_n1000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Setting5.A2_n1000_replicate1000.RDS")
+    )
+  ),
+  setting6 = list(
+    miss50 =list(
+      paste0(data_root, "Setting6.A1_n1000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Setting6.A2_n1000_replicate1000.RDS")
+    )
+  ),
+  setting7 = list(
+    miss50 =list(
+      paste0(data_root, "setting7.A1_n1000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting7.A2_n1000_replicate1000.RDS")
+    )
+  ),
+  setting8 = list(
+    miss50 =list(
+      paste0(data_root, "setting8.A1_n1000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting8.A2_n1000_replicate1000.RDS")
+    )
+  ),
+  setting9 = list(
+    miss50 =list(
+      paste0(data_root, "setting9.A1_n1000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting9.A2_n1000_replicate1000.RDS")
+    )
+  ),
+  setting10 = list(
+    miss50 =list(
+      paste0(data_root, "setting10.A1_n1000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting10.A2_n1000_replicate1000.RDS")
+    )
+  ),
+  setting11 = list(
+    miss50 =list(
+      paste0(data_root, "setting11.A1_n1000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting11.A2_n1000_replicate1000.RDS")
+    )
+  ),
+  setting12 = list(
+    miss50 =list(
+      paste0(data_root, "setting12.A1_n1000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting12.A2_n1000_replicate1000.RDS")
+    )
+  ),
+  setting13 = list(
+    miss50 =list(
+      paste0(data_root, "setting13.A1_n2000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting13.A2_n2000_replicate1000.RDS")
+    )
+  ),
+  setting14 = list(
+    miss50 =list(
+      paste0(data_root, "setting14.A1_n2000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting14.A2_n2000_replicate1000.RDS")
+    )
+  ),
+  setting15 = list(
+    miss50 =list(
+      paste0(data_root, "setting15.A1_n2000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting15.A2_n2000_replicate1000.RDS")
+    )
+  ),
+  Cho_RM2 = list(
+    miss50 =list(
+      paste0(data_root, "Cho_RM2.A1_n4000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Cho_RM2.A2_n4000_replicate1000.RDS")
+    )
+  ),
+  Cho_RM3 = list(
+    miss50 =list(
+      paste0(data_root, "Cho_RM3.A1_n4000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Cho_RM3.A2_n4000_replicate1000.RDS")
+    )
+  ),
+  Cho_RM2p = list(
+    miss50 =list(
+      paste0(data_root, "Cho_RM2p.A1_n2000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Cho_RM2p.A2_n2000_replicate1000.RDS")
+    )
+  ),
+  Cho_RM3p = list(
+    miss50 =list(
+      paste0(data_root, "Cho_RM3p.A1_n2000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Cho_RM3p.A2_n2000_replicate1000.RDS")
+    )
+  ),
+  Cho_RM2q = list(
+    miss50 =list(
+      paste0(data_root, "Cho_RM2q.A1_n2000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Cho_RM2q.A2_n2000_replicate1000.RDS")
+    )
+  ),
+  Cho_RM3q = list(
+    miss50 =list(
+      paste0(data_root, "Cho_RM3q.A1_n2000_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Cho_RM3q.A2_n2000_replicate1000.RDS")
+    )
+  ),
+  Cho_RM4 = list(
+    miss30 =list(
+      paste0(data_root, "Cho_RM4_n2000_replicate1000.RDS")
+    )
+  )
+)
+
+misspecified_model_all_data_file.list = list(
+  setting1 = list(
+    miss50 =list(
+      paste0(data_root, "setting1.B1_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting1.B1_n500_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting1.B2_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting1.B2_n500_replicate1000.RDS")
+    )
+  ),
+  setting2 = list(
+    miss50 =list(
+      paste0(data_root, "setting2.B1_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting2.B1_n500_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting2.B2_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting2.B2_n500_replicate1000.RDS")
+    )
+  ),
+  setting3 = list(
+    miss50 =list(
+      paste0(data_root, "Setting3.B1_n2000_replicate1000.RDS"),
+      paste0(data_root, "Setting3.B1_n500_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Setting3.B2_n2000_replicate1000.RDS"),
+      paste0(data_root, "Setting3.B2_n500_replicate1000.RDS")
+    )
+  ),
+  setting4 = list(
+    miss50 =list(
+      paste0(data_root, "Setting4.B1_n2000_replicate1000.RDS"),
+      paste0(data_root, "Setting4.B1_n500_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Setting4.B2_n2000_replicate1000.RDS"),
+      paste0(data_root, "Setting4.B2_n500_replicate1000.RDS")
+    )
+  ),
+  setting5 = list(
+    miss50 =list(
+      paste0(data_root, "Setting5.B1_n1000_replicate1000.RDS"),
+      paste0(data_root, "Setting5.B1_n300_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Setting5.B2_n1000_replicate1000.RDS"),
+      paste0(data_root, "Setting5.B2_n300_replicate1000.RDS")
+    )
+  ),
+  setting6 = list(
+    miss50 =list(
+      paste0(data_root, "Setting6.B1_n1000_replicate1000.RDS"),
+      paste0(data_root, "Setting6.B1_n300_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "Setting6.B2_n1000_replicate1000.RDS"),
+      paste0(data_root, "Setting6.B2_n300_replicate1000.RDS")
+    )
+  ),
+  setting7 = list(
+    miss50 =list(
+      paste0(data_root, "setting7.B1_n1000_replicate1000.RDS"),
+      paste0(data_root, "setting7.B1_n300_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting7.B2_n1000_replicate1000.RDS"),
+      paste0(data_root, "setting7.B2_n300_replicate1000.RDS")
+    )
+  ),
+  setting8 = list(
+    miss50 =list(
+      paste0(data_root, "setting8.B1_n1000_replicate1000.RDS"),
+      paste0(data_root, "setting8.B1_n300_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting8.B2_n1000_replicate1000.RDS"),
+      paste0(data_root, "Setting8.B2_n300_replicate1000.RDS")
+    )
+  ),
+  setting9 = list(
+    miss50 =list(
+      paste0(data_root, "setting9.B1_n1000_replicate1000.RDS"),
+      paste0(data_root, "setting9.B1_n300_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting9.B2_n1000_replicate1000.RDS"),
+      paste0(data_root, "setting9.B2_n300_replicate1000.RDS")
+    )
+  ),
+  setting10 = list(
+    miss50 =list(
+      paste0(data_root, "setting10.B1_n1000_replicate1000.RDS"),
+      paste0(data_root, "setting10.B1_n300_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting10.B2_n1000_replicate1000.RDS"),
+      paste0(data_root, "Setting10.B2_n300_replicate1000.RDS")
+    )
+  ),
+  setting11 = list(
+    miss50 =list(
+      paste0(data_root, "setting11.B1_n1000_replicate1000.RDS"),
+      paste0(data_root, "setting11.B1_n300_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting11.B2_n1000_replicate1000.RDS"),
+      paste0(data_root, "setting11.B2_n300_replicate1000.RDS")
+    )
+  ),
+  setting12 = list(
+    miss50 =list(
+      paste0(data_root, "setting12.B1_n1000_replicate1000.RDS"),
+      paste0(data_root, "setting12.B1_n300_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting12.B2_n1000_replicate1000.RDS"),
+      paste0(data_root, "Setting12.B2_n300_replicate1000.RDS")
+    )
+  ),
+  setting13 = list(
+    miss50 =list(
+      paste0(data_root, "setting13.B1_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting13.B1_n500_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting13.B2_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting13.B2_n500_replicate1000.RDS")
+    )
+  ),
+  setting14 = list(
+    miss50 =list(
+      paste0(data_root, "setting14.B1_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting14.B1_n500_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting14.B2_n2000_replicate1000.RDS"),
+      paste0(data_root, "Setting14.B2_n500_replicate1000.RDS")
+    )
+  ),
+  setting15 = list(
+    miss50 =list(
+      paste0(data_root, "setting15.B1_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting15.B1_n500_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting15.B2_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting15.B2_n500_replicate1000.RDS")
+    )
+  ),
+  setting16 = list(
+    miss50 =list(
+      paste0(data_root, "setting16.B1_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting16.B1_n500_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting16.B2_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting16.B2_n500_replicate1000.RDS")
+    )
+  ),
+  setting17 = list(
+    miss50 =list(
+      paste0(data_root, "setting17.B1_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting17.B1_n500_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting17.B2_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting17.B2_n500_replicate1000.RDS")
+    )
+  ),
+  setting18 = list(
+    miss50 =list(
+      paste0(data_root, "setting18.B1_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting18.B1_n500_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting18.B2_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting18.B2_n500_replicate1000.RDS")
+    )
+  ),
+  setting19 = list(
+    miss50 =list(
+      paste0(data_root, "setting19.B1_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting19.B1_n500_replicate1000.RDS")
+    ),
+    miss30 =list(
+      paste0(data_root, "setting19.B2_n2000_replicate1000.RDS"),
+      paste0(data_root, "setting19.B2_n500_replicate1000.RDS")
+    )
+  )
+)
+
+
+correct_model_alpha.true.list = list(
+  setting1 = list(
+    miss50 =list(
+      setting1_1 = c(0.0519, 0.2, -0.2, -0.2)  # cbind(1, y, u1, y*u1), no tilt, z2~N(0,4), u2~N(2,1)
+    ),
+    miss30 =list(
+      setting1_2 = c(-0.8105, 0.2, -0.2, -0.2)  # cbind(1, y, u1, y*u1), no tilt, z2~N(0,4), u2~N(2,1)
+    )
+  ),
+  setting2 = list(
+    miss50 =list(
+      setting2_1 = c(0.0407, 0.2, -0.2, -0.2)  # cbind(1, y, u1, y*u1), no tilt, z2~N(0,4), u2~N(2,1)
+    ),
+    miss30 =list(
+      setting2_2 = c(-0.8127, 0.2, -0.2, -0.2)  # cbind(1, y, u1, y*u1), no tilt, z2~N(0,4), u2~N(2,1)
+    )
+  ),
+  setting3 = list(
+    miss50 =list(
+      setting3_1 = c(-0.1581, 0.2, -0.4, 1.0)  # cbind(1, y, u1, u2), no tilt, z1~Bern(0.4), u1~Bern(0.6), u2~N(0,1), m(x) 1+u1+u2+z1+z2
+    ),
+    miss30 =list(
+      setting3_2 = c(-1.2697, 0.2, -0.4, 1.0)  # cbind(1, y, u1, u2), no tilt, z1~Bern(0.4), u1~Bern(0.6), u2~N(0,1), m(x) 1+u1+u2+z1+z2
+    )
+  ),
+  setting4 = list(
+    miss50 =list(
+      setting4_1 = c(0.0672, 0.15, -0.30, 0.80)  # cbind(1, y, u1, u2), no tilt, z1~Bern(0.4), u1~Bern(0.6), u2~N(0,1), m(x) 1+u1+u2+z1+z2, binary Y
+    ),
+    miss30 =list(
+      setting4_2 = c(-0.9027, 0.15, -0.30, 0.80)  # cbind(1, y, u1, u2), no tilt, z1~Bern(0.4), u1~Bern(0.6), u2~N(0,1), m(x) 1+u1+u2+z1+z2, binary Y
+    )
+  ),
+  setting5 = list(
+    miss50 =list(
+      setting3_1 = c(-0.2, 0.1, 0.1, 0.1)
+    ),
+    miss30 =list(
+      setting3_2 = c(-1.1, 0.1, 0.1, 0.1)
+    )
+  ),
+  setting6 = list(
+    miss50 =list(
+      setting2_1 = c(-0.1, 0.5, -0.5, -0.1)
+    ),
+    miss30 =list(
+      setting2_2 = c(-0.8, 0.5, -0.5, -0.1)
+    )
+  ),
+  setting7 = list(
+    miss50 =list(
+      setting7_1 = c(0.2, 0.1, -0.5, -0.5)
+    ),
+    miss30 =list(
+      setting7_2 = c(-1, 0.1, -0.5, -0.5)
+    )
+  ),
+  setting8 = list(
+    miss50 =list(
+      setting8_1 = c(-0.04, 0.2, -0.2, -0.2)
+    ),
+    miss30 =list(
+      setting8_2 = c(-0.9, 0.2, -0.2, -0.2)
+    )
+  ),
+  setting9 = list(
+    miss50 =list(
+      setting9_1 = c(0.6, 0.2, -1, -0.5)
+    ),
+    miss30 =list(
+      setting9_2 = c(-0.5, 0.2, -1, -0.5)
+    )
+  ),
+  setting10 = list(
+    miss50 =list(
+      setting10_1 = c(0.4, 0.4, -1, -0.5)
+    ),
+    miss30 =list(
+      setting10_2 = c(-0.6, 0.4, -1, -0.5)
+    )
+  ),
+  setting11 = list(
+    miss50 =list(
+      setting9_1 = c(1.3, 0.2, -2, -0.5)
+    ),
+    miss30 =list(
+      setting9_2 = c(0.2, 0.2, -2, -0.5)
+    )
+  ),
+  setting12 = list(
+    miss50 =list(
+      setting10_1 = c(1.2, 0.4, -2, -0.5)
+    ),
+    miss30 =list(
+      setting10_2 = c(0.05, 0.4, -2, -0.5)
+    )
+  ),
+  setting13 = list(
+    miss50 =list(
+      setting13_1 = c(0.1161, 0.2, -0.4, -0.4)
+    ),
+    miss30 =list(
+      setting13_2 = c(-0.7780, 0.2, -0.4, -0.4)
+    )
+  ),
+  setting14 = list(
+    miss50 =list(
+      setting14_1 = c(0.1154, 0.2, -0.4, -0.4)
+    ),
+    miss30 =list(
+      setting14_2 = c(-0.7696, 0.2, -0.4, -0.4)
+    )
+  ),
+  setting15 = list(
+    miss50 =list(
+      setting15_1 = c(0.0917, 0.2, -0.4, -0.4)
+    ),
+    miss30 =list(
+      setting15_2 = c(-0.7946, 0.2, -0.4, -0.4)
+    )
+  ),
+  Cho_RM2 = list(
+    miss50 =list(
+      c(-0.98, 0.5, 0.25)
+    ),
+    miss30 =list(
+      c(-0.114, 0.5, 0.25)
+      # c(-0.25, 0.25, 0.25, 0.25)
+    )
+  ),
+  Cho_RM3 = list(
+    miss50 =list(
+      c(0.02, 0.5, - 0.25)
+    ),
+    miss30 =list(
+      c(0.865, 0.5, - 0.25)
+    )
+  ),
+  Cho_RM2p = list(
+    miss50 =list(
+      c(0.1244, -0.5, -0.25)
+    ),
+    miss30 =list(
+      c(1.0098, -0.5, -0.25)
+    )
+  ),
+  Cho_RM3p = list(
+    miss50 =list(
+      c(-0.125, 0.5, 0.25)
+    ),
+    miss30 =list(
+      c(0.7679, 0.5, 0.25)
+    )
+  ),
+  Cho_RM2q = list(
+    miss50 =list(
+      c(0.1246, -0.5, -0.25)
+    ),
+    miss30 =list(
+      c(1.0099, -0.5, -0.25)
+    )
+  ),
+  Cho_RM3q = list(
+    miss50 =list(
+      c(-0.125, 0.5, 0.25)
+    ),
+    miss30 =list(
+      c(0.7679, 0.5, 0.25)
+    )
+  )
+)
+
+misspecified_model_alpha.true.list = list(
+  setting1 = list(
+    miss50 =list(
+      setting1_1_mild_1000 = c(0.1891, 0.2, -0.2, -0.2),  # n>=1000, cbind(1, y, u1, y*u1), z2~N(0,4), u2~N(2,1)
+      setting1_1_mild_300 = c(0.3216, 0.2, -0.2, -0.2)    # n<1000, cbind(1, y, u1, y*u1), z2~N(0,4), u2~N(2,1)
+    ),
+    miss30 =list(
+      setting1_2_mild_1000 = c(-0.5896, 0.2, -0.2, -0.2),  # n>=1000, cbind(1, y, u1, y*u1), z2~N(0,4), u2~N(2,1)
+      setting1_2_mild_300 = c(-0.3915, 0.2, -0.2, -0.2)    # n<1000, cbind(1, y, u1, y*u1), z2~N(0,4), u2~N(2,1)
+    )
+  ),
+  setting2 = list(
+    miss50 =list(
+      setting2_1_mild_1000 = c(0.1789, 0.2, -0.2, -0.2),  # n>=1000, cbind(1, y, u1, y*u1), z2~N(0,4), u2~N(2,1)
+      setting2_1_mild_300 = c(0.3103, 0.2, -0.2, -0.2)    # n<1000, cbind(1, y, u1, y*u1), z2~N(0,4), u2~N(2,1)
+    ),
+    miss30 =list(
+      setting2_2_mild_1000 = c(-0.5928, 0.2, -0.2, -0.2),  # n>=1000, cbind(1, y, u1, y*u1), z2~N(0,4), u2~N(2,1)
+      setting2_2_mild_300 = c(-0.3981, 0.2, -0.2, -0.2)    # n<1000, cbind(1, y, u1, y*u1), z2~N(0,4), u2~N(2,1)
+    )
+  ),
+  setting3 = list(
+    miss50 =list(
+      setting3_1_mild_1000 = c(-0.0774, 0.2, -0.4, 1.0),  # n>=1000, cbind(1, y, u1, u2), linear tilt, m(x) 1+u1+u2+z1+z2
+      setting3_1_mild_500 = c(0.0070, 0.2, -0.4, 1.0)     # n<1000, cbind(1, y, u1, u2), linear tilt, m(x) 1+u1+u2+z1+z2
+    ),
+    miss30 =list(
+      setting3_2_mild_1000 = c(-1.0998, 0.2, -0.4, 1.0),  # n>=1000, cbind(1, y, u1, u2), linear tilt, m(x) 1+u1+u2+z1+z2
+      setting3_2_mild_500 = c(-0.9435, 0.2, -0.4, 1.0)    # n<1000, cbind(1, y, u1, u2), linear tilt, m(x) 1+u1+u2+z1+z2
+    )
+  ),
+  setting4 = list(
+    miss50 =list(
+      setting4_1_mild_1000 = c(0.5660, 0.15, -0.30, 0.80),  # n>=1000, cbind(1, y, u1, u2), 10x tilt, m(x) 1+u1+u2+z1+z2, binary Y
+      setting4_1_mild_500 = c(1.0545, 0.15, -0.30, 0.80)    # n<1000, cbind(1, y, u1, u2), 10x tilt, m(x) 1+u1+u2+z1+z2, binary Y
+    ),
+    miss30 =list(
+      setting4_2_mild_1000 = c(-0.1039, 0.15, -0.30, 0.80),  # n>=1000, cbind(1, y, u1, u2), 10x tilt, m(x) 1+u1+u2+z1+z2, binary Y
+      setting4_2_mild_500 = c(0.5310, 0.15, -0.30, 0.80)    # n<1000, cbind(1, y, u1, u2), 10x tilt, m(x) 1+u1+u2+z1+z2, binary Y
+    )
+  ),
+  setting5 = list(
+    miss50 =list(
+      setting5_1_mild_1000 = c(-0.15, 0.1, 0.1, 0.1),
+      setting5_1_mild_300 = c(-0.15, 0.1, 0.1, 0.1)
+    ),
+    miss30 =list(
+      setting5_2_mild_1000 = c(-0.9, 0.1, 0.1, 0.1),
+      setting5_2_mild_300 = c(-0.9, 0.1, 0.1, 0.1)
+    )
+  ),
+  setting6 = list(
+    miss50 =list(
+      setting6_1_mild_1000 = c(0.05, 0.5, -0.5, -0.1),
+      setting6_1_mild_300 = c(0.05, 0.5, -0.5, -0.1)
+    ),
+    miss30 =list(
+      setting6_2_mild_1000 = c(-0.2, -0.5, -0.5, -0.1),
+      setting6_2_mild_300 = c(-0.2, -0.5, -0.5, -0.1)
+    )
+  ),
+  setting7 = list(
+    miss50 =list(
+      setting7_1_mild_1000 = c(0.2, 0.1, -0.5, -0.5),
+      setting7_1_mild_300 = c(0.2, 0.1, -0.5, -0.5)
+    ),
+    miss30 =list(
+      setting7_2_mild_1000 = c(-1, 0.1, -0.5, -0.5),
+      setting7_2_mild_300 = c(-1, 0.1, -0.5, -0.5)
+    )
+  ),
+  setting8 = list(
+    miss50 =list(
+      setting8_1_mild_1000 = c(-0.04, 0.2, -0.2, -0.2),
+      setting8_1_mild_300 = c(-0.04, 0.2, -0.2, -0.2)
+    ),
+    miss30 =list(
+      setting8_2_mild_1000 = c(-0.9, 0.2, -0.2, -0.2),
+      setting8_2_mild_300 = c(-0.9, 0.2, -0.2, -0.2)
+    )
+  ),
+  setting9 = list(
+    miss50 =list(
+      setting7_1_mild_1000 =  c(0.6, 0.2, -1, -0.5),
+      setting7_1_mild_300 =  c(0.6, 0.2, -1, -0.5)
+    ),
+    miss30 =list(
+      setting7_2_mild_1000 = c(-0.5, 0.2, -1, -0.5),
+      setting7_2_mild_300 = c(-0.5, 0.2, -1, -0.5)
+    )
+  ),
+  setting10 = list(
+    miss50 =list(
+      setting8_1_mild_1000 = c(0.4, 0.4, -1, -0.5),
+      setting8_1_mild_300 = c(0.4, 0.4, -1, -0.5)
+    ),
+    miss30 =list(
+      setting8_2_mild_1000 = c(-0.6, 0.4, -1, -0.5),
+      setting8_2_mild_300 = c(-0.6, 0.4, -1, -0.5)
+    )
+  ),
+  setting11 = list(
+    miss50 =list(
+      setting11_1_mild_1000 =  c(1.3, 0.2, -2, -0.5),
+      setting11_1_mild_300 =  c(1.3, 0.2, -2, -0.5)
+    ),
+    miss30 =list(
+      setting11_2_mild_1000 = c(0.2, 0.2, -2, -0.5),
+      setting11_2_mild_300 = c(0.2, 0.2, -2, -0.5)
+    )
+  ),
+  setting12 = list(
+    miss50 =list(
+      setting12_1_mild_1000 = c(1.2, 0.4, -2, -0.5),
+      setting12_1_mild_300 = c(1.2, 0.4, -2, -0.5)
+    ),
+    miss30 =list(
+      setting12_2_mild_1000 = c(0.05, 0.4, -2, -0.5),
+      setting12_2_mild_300 = c(0.05, 0.4, -2, -0.5)
+    )
+  ),
+  setting13 = list(
+    miss50 =list(
+      setting13_1_mild_1000 = c(0.1764, 0.2, -0.4, -0.4),  # n>=1000, tilt exp(n^{-1/2}*(y+u1+u2))
+      setting13_1_mild_300 = c(0.2396, 0.2, -0.4, -0.4)    # n<1000, tilt exp(n^{-1/2}*(y+u1+u2))
+    ),
+    miss30 =list(
+      setting13_2_mild_1000 = c(-0.6807, 0.2, -0.4, -0.4),  # n>=1000, tilt exp(n^{-1/2}*(y+u1+u2))
+      setting13_2_mild_300 = c(-0.5863, 0.2, -0.4, -0.4)    # n<1000, tilt exp(n^{-1/2}*(y+u1+u2))
+    )
+  ),
+  setting14 = list(
+    miss50 =list(
+      setting14_1_mild_1000 = c(0.1844, 0.2, -0.4, -0.4),  # n>=1000, tilt exp(n^{-1/2}*(y+u1+u2))
+      setting14_1_mild_300 = c(0.2517, 0.2, -0.4, -0.4)    # n<1000, tilt exp(n^{-1/2}*(y+u1+u2))
+    ),
+    miss30 =list(
+      setting14_2_mild_1000 = c(-0.6653, 0.2, -0.4, -0.4),  # n>=1000, tilt exp(n^{-1/2}*(y+u1+u2))
+      setting14_2_mild_300 = c(-0.5688, 0.2, -0.4, -0.4)    # n<1000, tilt exp(n^{-1/2}*(y+u1+u2))
+    )
+  ),
+  setting15 = list(
+    miss50 =list(
+      setting15_1_mild_1000 = c(-0.3480, 0.6, 0.6, 0.6),  # n>=1000, tilt exp(10*n^{-1/2}*(y+u1+u2))
+      setting15_1_mild_300 = c(0.0973, 0.6, 0.6, 0.6)    # n<1000, tilt exp(10*n^{-1/2}*(y+u1+u2))
+    ),
+    miss30 =list(
+      setting15_2_mild_1000 = c(-1.0052, 0.6, 0.6, 0.6),  # n>=1000, tilt exp(10*n^{-1/2}*(y+u1+u2))
+      setting15_2_mild_300 = c(-0.4191, 0.6, 0.6, 0.6)    # n<1000, tilt exp(10*n^{-1/2}*(y+u1+u2))
+    )
+  ),
+  setting16 = list(
+    miss50 =list(
+      setting16_1_mild_1000 = c(0.7340, 0.2, -0.4, -0.4),
+      setting16_1_mild_300 = c(1.2000, 0.2, -0.4, -0.4)
+    ),
+    miss30 =list(
+      setting16_2_mild_1000 = c(-0.1460, 0.2, -0.4, -0.4),
+      setting16_2_mild_300 = c(0.0560, 0.2, -0.4, -0.4)
+    )
+  ),
+  setting17 = list(
+    miss50 =list(
+      setting17_1_mild_1000 = c(0.7370, 0.2, -0.4, -0.4),
+      setting17_1_mild_300 = c(1.1980, 0.2, -0.4, -0.4)
+    ),
+    miss30 =list(
+      setting17_2_mild_1000 = c(-0.0730, 0.2, -0.4, -0.4),
+      setting17_2_mild_300 = c(0.2730, 0.2, -0.4, -0.4)
+    )
+  ),
+  setting18 = list(
+    miss50 =list(
+      setting18_1_mild_1000 = c(0.1900, 0.2, -0.4, -0.4),
+      setting18_1_mild_300 = c(0.1900, 0.2, -0.4, -0.4)
+    ),
+    miss30 =list(
+      setting18_2_mild_1000 = c(-0.6600, 0.2, -0.4, -0.4),
+      setting18_2_mild_300 = c(-0.6600, 0.2, -0.4, -0.4)
+    )
+  ),
+  setting19 = list(
+    miss50 =list(
+      setting19_1_mild_1000 = c(0.2100, 0.2, -0.4, -0.4),
+      setting19_1_mild_300 = c(0.2100, 0.2, -0.4, -0.4)
+    ),
+    miss30 =list(
+      setting19_2_mild_1000 = c(-0.6400, 0.2, -0.4, -0.4),
+      setting19_2_mild_300 = c(-0.6400, 0.2, -0.4, -0.4)
+    )
+  )
+)

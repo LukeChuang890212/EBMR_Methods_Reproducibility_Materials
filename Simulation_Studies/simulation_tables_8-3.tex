@@ -1,0 +1,77 @@
+
+\begin{table}[ht]
+\centering
+\caption{Estimation of $\mu_0 = 0.62$ is conducted under continuous outcome $Y$, where the set of candidate models includes a locally misspecified model. The parameter vectors $\bm{\alpha}_0 = (0.21, 0.20, -0.40, -0.40)^{\top}$ and $(-0.63, 0.20, -0.40, -0.40)^{\top}$ correspond to missingness rates of 50\% and 30\%, respectively.}
+\begin{threeparttable}
+\begin{tabularx}{\textwidth}{l *{8}{>{\centering\arraybackslash}X}}
+\toprule
+\multicolumn{1}{c}{} & \multicolumn{4}{c}{$50\%$ missing} & \multicolumn{4}{c}{$30\%$ missing} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9}
+ & Bias & ESD & ESE & CP & Bias & ESD & ESE & CP \\
+\midrule
+\multicolumn{9}{c}{$n = 500$} \\
+\midrule
+$\tilde{\mu}_{\text{IPW}}$ & ~0.174 & ~0.129 & ~0.125 & ~0.725 & ~0.181 & ~0.098 & ~0.100 & ~0.562\\
+$\tilde{\mu}_{100}$ & ~0.012 & ~0.159 & ~0.151 & ~0.939 & ~0.009 & ~0.108 & ~0.111 & ~0.963\\
+$\tilde{\mu}_{010}$ & -0.094 & ~0.095 & ~0.093 & ~0.819 & -0.076 & ~0.078 & ~0.079 & ~0.843\\
+$\tilde{\mu}_{001}$ & -0.167 & ~0.246 & ~0.212 & ~0.846 & -0.128 & ~0.181 & ~0.148 & ~0.852\\
+$\tilde{\mu}_{110}$ & ~0.005 & ~0.148 & ~0.144 & ~0.934 & ~0.006 & ~0.105 & ~0.108 & ~0.959\\
+$\tilde{\mu}_{101}$ & -0.038 & ~0.173 & ~0.173 & ~0.932 & -0.022 & ~0.124 & ~0.121 & ~0.957\\
+$\tilde{\mu}_{011}$ & -0.166 & ~0.221 & ~0.203 & ~0.855 & -0.127 & ~0.164 & ~0.141 & ~0.859\\
+$\tilde{\mu}_{111}$ & -0.041 & ~0.169 & ~0.173 & ~0.935 & -0.021 & ~0.121 & ~0.120 & ~0.956\\
+\midrule
+\multicolumn{9}{c}{$n = 2000$} \\
+\midrule
+$\tilde{\mu}_{\text{IPW}}$ & ~0.086 & ~0.060 & ~0.061 & ~0.727 & ~0.093 & ~0.049 & ~0.049 & ~0.532\\
+$\tilde{\mu}_{100}$ & ~0.006 & ~0.077 & ~0.076 & ~0.942 & ~0.006 & ~0.057 & ~0.056 & ~0.946\\
+$\tilde{\mu}_{010}$ & -0.080 & ~0.046 & ~0.047 & ~0.603 & -0.064 & ~0.041 & ~0.040 & ~0.642\\
+$\tilde{\mu}_{001}$ & -0.159 & ~0.101 & ~0.101 & ~0.630 & -0.104 & ~0.067 & ~0.069 & ~0.691\\
+$\tilde{\mu}_{110}$ & ~0.006 & ~0.076 & ~0.075 & ~0.940 & ~0.005 & ~0.057 & ~0.055 & ~0.946\\
+$\tilde{\mu}_{101}$ & -0.004 & ~0.079 & ~0.078 & ~0.949 & -0.001 & ~0.058 & ~0.057 & ~0.950\\
+$\tilde{\mu}_{011}$ & -0.157 & ~0.095 & ~0.097 & ~0.622 & -0.102 & ~0.065 & ~0.067 & ~0.677\\
+$\tilde{\mu}_{111}$ & -0.004 & ~0.079 & ~0.078 & ~0.950 & -0.001 & ~0.058 & ~0.057 & ~0.947\\
+\bottomrule
+\end{tabularx}
+\end{threeparttable}
+\label{tab:setting13_8-3}
+\end{table}
+
+
+\begin{table}[ht]
+\centering
+\caption{Estimation of $\mu_0 = 0.616$ is conducted under binary outcome $Y$ with reduced $m(\bm{x})$ coefficients, where the set of candidate models includes a locally misspecified model. The parameter vectors $\bm{\alpha}_0 = (0.22, 0.20, -0.40, -0.40)^{\top}$ and $(-0.62, 0.20, -0.40, -0.40)^{\top}$ correspond to missingness rates of 50\% and 30\%, respectively.}
+\begin{threeparttable}
+\begin{tabularx}{\textwidth}{l *{8}{>{\centering\arraybackslash}X}}
+\toprule
+\multicolumn{1}{c}{} & \multicolumn{4}{c}{$50\%$ missing} & \multicolumn{4}{c}{$30\%$ missing} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9}
+ & Bias & ESD & ESE & CP & Bias & ESD & ESE & CP \\
+\midrule
+\multicolumn{9}{c}{$n = 500$} \\
+\midrule
+$\tilde{\mu}_{\text{IPW}}$ & ~0.053 & ~0.046 & ~0.046 & ~0.788 & ~0.049 & ~0.033 & ~0.034 & ~0.688\\
+$\tilde{\mu}_{100}$ & ~0.005 & ~0.081 & ~0.082 & ~0.936 & ~0.001 & ~0.054 & ~0.054 & ~0.922\\
+$\tilde{\mu}_{010}$ & -0.082 & ~0.056 & ~0.054 & ~0.653 & -0.069 & ~0.036 & ~0.037 & ~0.510\\
+$\tilde{\mu}_{001}$ & -0.107 & ~0.155 & ~0.128 & ~0.652 & -0.075 & ~0.093 & ~0.073 & ~0.589\\
+$\tilde{\mu}_{110}$ & ~0.002 & ~0.078 & ~0.081 & ~0.938 & -0.001 & ~0.053 & ~0.053 & ~0.926\\
+$\tilde{\mu}_{101}$ & -0.019 & ~0.096 & ~0.101 & ~0.934 & -0.014 & ~0.062 & ~0.064 & ~0.915\\
+$\tilde{\mu}_{011}$ & -0.110 & ~0.149 & ~0.128 & ~0.668 & -0.077 & ~0.089 & ~0.072 & ~0.615\\
+$\tilde{\mu}_{111}$ & -0.026 & ~0.094 & ~0.104 & ~0.936 & -0.019 & ~0.060 & ~0.066 & ~0.919\\
+\midrule
+\multicolumn{9}{c}{$n = 2000$} \\
+\midrule
+$\tilde{\mu}_{\text{IPW}}$ & ~0.024 & ~0.023 & ~0.023 & ~0.821 & ~0.024 & ~0.017 & ~0.017 & ~0.723\\
+$\tilde{\mu}_{100}$ & ~0.004 & ~0.041 & ~0.041 & ~0.950 & ~0.001 & ~0.028 & ~0.028 & ~0.952\\
+$\tilde{\mu}_{010}$ & -0.072 & ~0.027 & ~0.026 & ~0.221 & -0.057 & ~0.018 & ~0.018 & ~0.117\\
+$\tilde{\mu}_{001}$ & -0.145 & ~0.114 & ~0.099 & ~0.651 & -0.097 & ~0.067 & ~0.061 & ~0.620\\
+$\tilde{\mu}_{110}$ & ~0.003 & ~0.040 & ~0.041 & ~0.950 & ~0.001 & ~0.027 & ~0.028 & ~0.951\\
+$\tilde{\mu}_{101}$ & -0.003 & ~0.047 & ~0.045 & ~0.959 & -0.002 & ~0.030 & ~0.029 & ~0.962\\
+$\tilde{\mu}_{011}$ & -0.145 & ~0.112 & ~0.097 & ~0.649 & -0.097 & ~0.066 & ~0.060 & ~0.617\\
+$\tilde{\mu}_{111}$ & -0.005 & ~0.047 & ~0.047 & ~0.961 & -0.004 & ~0.030 & ~0.030 & ~0.965\\
+\bottomrule
+\end{tabularx}
+\end{threeparttable}
+\label{tab:setting15_8-3}
+\end{table}
+
+

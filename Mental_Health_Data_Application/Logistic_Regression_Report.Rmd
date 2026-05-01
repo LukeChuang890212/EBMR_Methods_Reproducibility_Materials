@@ -1,0 +1,694 @@
+---
+title: "Logistic Regression Analysis: Teacher-Reported Mental Health and Child Health Status"
+subtitle: "Using Ensemble-Based Multiply Robust (EBMR) Estimator"
+author: "Mental Health Data Analysis"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    number_sections: true
+    highlight: tango
+    latex_engine: xelatex
+header-includes:
+  - \usepackage{booktabs}
+  - \usepackage{longtable}
+  - \usepackage{array}
+  - \usepackage{multirow}
+  - \usepackage{float}
+  - \usepackage{colortbl}
+  - \usepackage{xcolor}
+  - \usepackage{pdflscape}
+  - \newcommand{\blandscape}{\begin{landscape}}
+  - \newcommand{\elandscape}{\end{landscape}}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
+                      fig.width = 6, fig.height = 4, fig.pos = "H")
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+```
+
+# Notation
+
+Throughout this report, we use the following notation for variables:
+
+| Symbol | Variable Name | Description |
+|:------:|:--------------|:------------|
+| $Y$ | teacher_report | Outcome variable: teacher-reported mental health (0 = normal, 1 = abnormal) |
+| $X_1$ | health | Child's health status (0 = no problems, 1 = health problems) |
+| $X_2$ | father | Father presence indicator |
+| $X_3$ | parent_report | Parent-reported mental health score |
+| $R$ | response | Response indicator: $R=1$ if $Y$ is observed, $R=0$ if missing |
+| $X$ | $(X_1, X_2, X_3)$ | Vector of all covariates |
+
+# Executive Summary
+
+This report presents a logistic regression analysis examining the association between child health status ($X_1$) and teacher-reported mental health outcomes ($Y$), using the Ensemble-Based Multiply Robust (EBMR) method to address **missing not at random (MNAR)** data.
+
+```{r load-data}
+# Load the summary data
+summary_data <- readRDS("MHD_results/logistic_reg_summary.RDS")
+```
+
+**Key Findings:**
+
+- **Sample size:** 2,486 observations with **42.7% missing** teacher reports
+- **Complete case analysis:**
+  - Log OR = `r round(summary_data$cc$theta[2], 4)` (SE = `r round(summary_data$cc$se[2], 4)`)
+  - OR = `r round(summary_data$cc$or, 4)` (95% CI: `r round(exp(summary_data$cc$theta[2] - 1.96*summary_data$cc$se[2]), 4)` - `r round(exp(summary_data$cc$theta[2] + 1.96*summary_data$cc$se[2]), 4)`)
+- **EBMR-adjusted analysis (all 3 models):**
+  - Log OR = `r round(summary_data$results[["111"]]$theta[2], 4)` (SE = `r round(summary_data$results[["111"]]$se[2], 4)`)
+  - OR = `r round(summary_data$results[["111"]]$or, 4)` (95% CI: `r round(exp(summary_data$results[["111"]]$theta[2] - 1.96*summary_data$results[["111"]]$se[2]), 4)` - `r round(exp(summary_data$results[["111"]]$theta[2] + 1.96*summary_data$results[["111"]]$se[2]), 4)`)
+- The EBMR method provides adjusted estimates accounting for potential MNAR missingness
+
+# Introduction
+
+## Background
+
+Teacher-reported mental health assessments are commonly used in educational and clinical settings. This analysis examines the association between a child's general health status and their teacher-reported mental health score using logistic regression, while accounting for missing data.
+
+## Research Question
+
+**Primary Question:** Is child health status ($X_1$) associated with teacher-reported mental health abnormality ($Y$)?
+
+The logistic regression model is:
+$$\text{logit}(P(Y = 1 | X_1)) = \theta_0 + \theta_1 X_1$$
+
+where $\theta_1$ represents the log odds ratio for the effect of health status on teacher-reported mental health.
+
+# Methodology
+
+## Problem Setup
+
+Let $(Y_i, X_i, R_i)_{i=1}^n$ be i.i.d. observations where:
+
+- $Y_i \in \{0, 1\}$ is the binary outcome (teacher-reported mental health)
+- $X_i = (X_{i1}, X_{i2}, X_{i3})^\top$ is the covariate vector
+- $R_i \in \{0, 1\}$ is the response indicator ($R_i = 1$ if $Y_i$ is observed)
+
+We assume a **logistic regression model** for the outcome:
+$$P(Y = 1 | X_1) = \frac{\exp(\theta_0 + \theta_1 X_1)}{1 + \exp(\theta_0 + \theta_1 X_1)}$$
+
+The goal is to estimate $\boldsymbol{\theta} = (\theta_0, \theta_1)^\top$ under **missing not at random (MNAR)** data, where the missingness may depend on the unobserved outcome $Y$.
+
+<!-- ## Propensity Score Model -->
+
+<!-- Under MNAR, we model the **response propensity** as: -->
+<!-- $$\pi(Y, X; \boldsymbol{\alpha}) = P(R = 1 | Y, X) = \frac{1}{1 + \exp(g_\alpha(Y, X)^\top \boldsymbol{\alpha})}$$ -->
+
+<!-- where $g_\alpha(Y, X)$ is a known function (design matrix) that includes an intercept, $Y$, selected covariates, and their interactions. For example: -->
+<!-- $$g_\alpha(Y, X) = (1, Y, X_1, X_2, Y \cdot X_1, Y \cdot X_2)^\top$$ -->
+
+<!-- Note: The implementation uses the **complement logistic** link where $\pi = 1/(1+\exp(\eta))$, which models the probability of response given the linear predictor. -->
+
+<!-- ## GMM Estimation of Propensity Score Parameters (Wang, Shao, and Kim 2014) -->
+
+<!-- The propensity score parameters $\boldsymbol{\alpha}$ are estimated via **Generalized Method of Moments (GMM)** using the moment conditions: -->
+<!-- $$\mathbb{E}\left[h_\alpha(X) \cdot \left\{\frac{R}{\pi(Y, X; \boldsymbol{\alpha})} - 1\right\}\right] = 0$$ -->
+
+<!-- where $h_\alpha(X)$ is a vector of **instrumental variables** constructed from covariates. These IVs must satisfy: -->
+
+<!-- 1. **Relevance**: $h_\alpha(X)$ is correlated with $R$ -->
+<!-- 2. **Exclusion restriction**: Variables in $h_\alpha(X)$ but not in $g_\alpha(Y,X)$ serve as instruments -->
+
+<!-- The GMM estimator minimizes: -->
+<!-- $$Q(\boldsymbol{\alpha}) = \bar{m}(\boldsymbol{\alpha})^\top W \bar{m}(\boldsymbol{\alpha})$$ -->
+
+<!-- where: -->
+<!-- $$\bar{m}(\boldsymbol{\alpha}) = \frac{1}{n}\sum_{i=1}^n h_\alpha(X_i) \cdot \left\{\frac{R_i}{\pi(Y_i, X_i; \boldsymbol{\alpha})} - 1\right\}$$ -->
+
+<!-- and $W$ is a positive definite weighting matrix (typically the identity or optimal GMM weight). -->
+
+## IPW Estimating Equations for Regression
+
+Given ensemble propensity scores $\hat{\pi}_i$, the **inverse probability weighted (IPW)** estimator for $\boldsymbol{\theta}$ solves:
+$$\frac{1}{n}\sum_{i=1}^n \frac{R_i}{\hat{\pi}_i} \cdot \Phi_\theta(Y_i, X_i; \boldsymbol{\theta}) = 0$$
+
+where $X_i = X_{i1}$ (the covariate of interest) and $\Phi_\theta$ is the **score function** for logistic regression:
+$$\Phi_\theta(Y, Z; \boldsymbol{\theta}) = \begin{pmatrix} 1 \\ Z \end{pmatrix} \left\{Y - \frac{\exp(\theta_0 + \theta_1 Z)}{1 + \exp(\theta_0 + \theta_1 Z)}\right\}$$
+
+<!-- ## EBMR: Ensemble-Based Multiple Robustness -->
+
+<!-- When multiple propensity score models $\{\pi_j\}_{j=1}^J$ are specified, the **EBMR estimator** combines them adaptively: -->
+
+<!-- ### Step 1: Estimate Individual PS Models -->
+
+<!-- For each candidate model $j = 1, \ldots, J$, estimate $\boldsymbol{\alpha}_j$ via GMM as described above, yielding fitted propensity scores $\hat{\pi}_{ij} = \pi_j(Y_i, X_i; \hat{\boldsymbol{\alpha}}_j)$. -->
+
+<!-- ### Step 2: Estimate Ensemble Coefficients -->
+
+<!-- The ensemble coefficients $\boldsymbol{\nu} = (\nu_1, \ldots, \nu_J)^\top$ are estimated by solving: -->
+<!-- $$\mathbb{E}\left[h_\nu(X) \cdot \left\{\frac{R}{\sum_{j=1}^J \nu_j \hat{\pi}_j} - 1\right\}\right] = 0$$ -->
+
+<!-- where $h_\nu(X)$ is an expanded IV function that may include higher-order interactions not present in individual $h_{\alpha_j}$. -->
+
+<!-- ### Step 3: Compute Ensemble Weights and Combined PS -->
+
+<!-- The final ensemble weights are computed via a **squared normalization**: -->
+<!-- $$w_j = \frac{\nu_j^2}{\sum_{l=1}^J \nu_l^2}, \quad j = 1, \ldots, J$$ -->
+
+<!-- This transformation ensures $w_j \geq 0$ and $\sum_j w_j = 1$. The EBMR propensity score is: -->
+<!-- $$\hat{\pi}_i = \sum_{j=1}^J w_j \hat{\pi}_{ij}$$ -->
+
+<!-- ### Step 4: Estimate Regression Parameters -->
+
+<!-- The final EBMR-IPW estimator solves: -->
+<!-- $$\frac{1}{n}\sum_{i=1}^n \frac{R_i}{\hat{\pi}_i} \cdot \Phi_\theta(Y_i, X_i; \boldsymbol{\theta}) = 0$$ -->
+
+## Analytical Standard Errors
+
+The variance of $\hat{\boldsymbol{\theta}}_{\text{EBMR}}$ accounts for uncertainty in both the regression parameters and the estimated propensity scores. Using the **influence function approach**, the asymptotic variance is:
+$$\widehat{\text{Var}}(\hat{\boldsymbol{\theta}}) = A^{-1} B (A^{-1})^\top$$
+
+**Bread matrix** $A$: The weighted average of the score function gradient:
+$$A = \frac{1}{n}\sum_{i=1}^n \frac{R_i}{\hat{\pi}_i} \cdot \frac{\partial \Phi_\theta}{\partial \boldsymbol{\theta}^\top}\Big|_{\boldsymbol{\theta}=\hat{\boldsymbol{\theta}}}$$
+
+For logistic regression: $\frac{\partial \Phi_\theta}{\partial \boldsymbol{\theta}^\top} = -\tilde{X}_i \tilde{X}_i^\top \cdot \mu_i(1-\mu_i)$ where $\tilde{X}_i = (1, X_i)^\top$ and $\mu_i = \text{expit}(\tilde{X}_i^\top \boldsymbol{\theta})$.
+
+**Meat matrix** $B$: The variance of the influence function, which includes adjustments for PS estimation:
+$$\psi_i = \frac{R_i}{\hat{\pi}_i} \Phi_\theta(Y_i, X_i; \hat{\boldsymbol{\theta}}) - H_\alpha \cdot \psi_{\alpha,i} - H_\nu \cdot (\dot{\nu} \cdot \psi_{\alpha,i} + \psi_{\nu,i})$$
+
+where:
+
+- $\psi_{\alpha,i}$ and $\psi_{\nu,i}$ are influence functions from PS and ensemble estimation
+- $H_\alpha$ and $H_\nu$ capture how $\hat{\boldsymbol{\theta}}$ depends on $\hat{\boldsymbol{\alpha}}$ and $\hat{\boldsymbol{\nu}}$
+- $\dot{\nu}$ is the derivative of $\hat{\boldsymbol{\nu}}$ with respect to $\hat{\boldsymbol{\alpha}}$
+
+Then $B = \text{Var}(\psi_i)/n$.
+
+<!-- ## Multiple Robustness Property -->
+
+<!-- The EBMR estimator $\hat{\boldsymbol{\theta}}_{\text{EBMR}}$ is **consistent** if **at least one** of the candidate propensity score models is correctly specified: -->
+
+<!-- - If Model $j$ is correct: $\hat{\boldsymbol{\theta}}_{\text{EBMR}} \xrightarrow{p} \boldsymbol{\theta}$ as $n \to \infty$ -->
+
+<!-- The ensemble weights $w_j$ adaptively concentrate on models that better satisfy the moment conditions, providing data-driven model selection within the estimation procedure. -->
+
+# Candidate Propensity Score Models
+
+## Model Specifications
+
+We specified three MNAR propensity score models, each including the outcome variable $Y$ and different covariates:
+
+**Model 1 ($\pi_1$):** $R \sim Y + X_1 + X_2 + Y \times X_1 + Y \times X_2$
+
+- Includes health status ($X_1$) and father presence ($X_2$) with outcome interactions
+- Implicitly assumes that $X_3$ (parent_report) is the IV
+- $h_{\alpha_1}(X) = (1, X_1, X_2, X_3, X_2 X_3, X_1 X_2, X_1 X_3)^\top$
+
+**Model 2 ($\pi_2$):** $R \sim Y + X_1 + X_3 + Y \times X_1 + Y \times X_3$
+
+- Includes health status ($X_1$) and parent report ($X_3$) with outcome interactions
+- Implicitly assumes that $X_2$ (father) is the IV
+- $h_{\alpha_2}(X) = (1, X_1, X_2, X_3, X_2 X_3, X_1 X_2, X_1 X_3)^\top$
+
+**Model 3 ($\pi_3$):** $R \sim Y + X_3 + X_2 + Y \times X_3 + Y \times X_2$
+
+- Includes parent report ($X_3$) and father presence ($X_2$) with outcome interactions
+- Implicitly assumes that $X_1$ (health) is the IV
+- $h_{\alpha_3}(X) = (1, X_1, X_2, X_3, X_2 X_3, X_1 X_2, X_1 X_3)^\top$
+
+
+In the ensemble step, we specify $h_{\nu}(X) = (1, X_1, X_2, X_3, X_2 X_3, X_1 X_2, X_1 X_3, X_1X_2X_3)^\top$.
+
+## Model Combinations
+
+We evaluate all 7 possible combinations of the three models:
+
+```{r model-combinations}
+model_df <- data.frame(
+  Label = c("100", "010", "001", "110", "101", "011", "111"),
+  Description = c(
+    "Model 1 only",
+    "Model 2 only",
+    "Model 3 only",
+    "Models 1 + 2",
+    "Models 1 + 3",
+    "Models 2 + 3",
+    "All 3 models"
+  ),
+  IV_Assumption = c(
+    "parent_report is IV",
+    "father is IV",
+    "health is IV",
+    "parent_report or father is IV",
+    "parent_report or health is IV",
+    "father or health is IV",
+    "At least one IV is valid"
+  )
+)
+
+kable(model_df, col.names = c("Label", "Description", "IV Assumption"),
+      caption = "Model Combinations and Their Identifying Assumptions",
+      booktabs = TRUE) %>%
+  kable_styling(latex_options = c("striped", "hold_position"))
+```
+
+# Logistic Regression Results
+
+## Main Results: Health Coefficient (Log Odds Ratio)
+
+```{r main-results}
+# Build results table
+results_list <- list()
+
+# Complete case
+results_list[[1]] <- data.frame(
+  Label = "CC",
+  Models = "Complete Case",
+  Estimate = summary_data$cc$theta[2],
+  SE = summary_data$cc$se[2],
+  CI_lower = summary_data$cc$theta[2] - 1.96 * summary_data$cc$se[2],
+  CI_upper = summary_data$cc$theta[2] + 1.96 * summary_data$cc$se[2]
+)
+
+# Each model combination
+for (label in summary_data$model_set_labels) {
+  res <- summary_data$results[[label]]
+  name <- summary_data$model_set_names[which(summary_data$model_set_labels == label)]
+  results_list[[length(results_list) + 1]] <- data.frame(
+    Label = label,
+    Models = name,
+    Estimate = res$theta[2],
+    SE = res$se[2],
+    CI_lower = res$theta[2] - 1.96 * res$se[2],
+    CI_upper = res$theta[2] + 1.96 * res$se[2]
+  )
+}
+
+results_df <- do.call(rbind, results_list)
+
+kable(results_df, col.names = c("Label", "Models", "Estimate", "SE", "95% CI Lower", "95% CI Upper"),
+      caption = "Health Coefficient Estimates (Log Odds Ratio)",
+      digits = 4, booktabs = TRUE, row.names = FALSE) %>%
+  kable_styling(latex_options = c("striped", "hold_position")) %>%
+  row_spec(which(results_df$Label == "111"), bold = TRUE)
+```
+
+## Model Weights
+
+The EBMR method assigns data-adaptive weights to each propensity score model:
+
+```{r model-weights}
+# Get weights for model 111
+w_hat <- summary_data$results[["111"]]$w
+
+weights_df <- data.frame(
+  Model = c("Model 1", "Model 2", "Model 3"),
+  Weight = w_hat,
+  Percentage = paste0(round(w_hat * 100, 2), "%")
+)
+
+kable(weights_df, col.names = c("Model", "Weight", "Percentage"),
+      caption = "EBMR Model Weights (for 111 combination)",
+      digits = 4, booktabs = TRUE) %>%
+  kable_styling(latex_options = c("striped", "hold_position"))
+```
+
+# Standard Error Comparison
+
+## All SE Methods
+
+```{r se-comparison-table}
+# Load bootstrap data for SE computation
+boot_data <- readRDS("MHD_results/logistic_reg_boot_B1000.RDS")
+boot_mat <- do.call(rbind, boot_data)
+perturb_data <- readRDS("MHD_results/logistic_reg_perturb_B1000.RDS")
+perturb_mat <- do.call(rbind, perturb_data)
+
+# Standardize column names
+model_labels <- summary_data$model_set_labels
+expected_cols <- c("cc_intercept", "cc_health",
+                   paste0(rep(model_labels, each = 2), c("_intercept", "_health")))
+colnames(boot_mat) <- expected_cols
+colnames(perturb_mat) <- expected_cols
+
+# Function to compute stats with and without outlier removal
+compute_se_stats <- function(x) {
+  x <- x[!is.na(x)]
+  n_total <- length(x)
+  if (n_total < 10) return(list(sd_raw = NA, sd_trim = NA, n_outlier = NA, pct_outlier = NA))
+
+  # Raw SD
+  sd_raw <- sd(x)
+
+  # Outlier detection (IQR x 1.5)
+  Q1 <- quantile(x, 0.25)
+  Q3 <- quantile(x, 0.75)
+  IQR_val <- Q3 - Q1
+  lower <- Q1 - 1.5 * IQR_val
+  upper <- Q3 + 1.5 * IQR_val
+
+  outlier_mask <- x < lower | x > upper
+  n_outlier <- sum(outlier_mask)
+  pct_outlier <- round(100 * n_outlier / n_total, 1)
+
+  # Trimmed SD
+  x_trim <- x[!outlier_mask]
+  sd_trim <- sd(x_trim)
+
+  list(sd_raw = sd_raw, sd_trim = sd_trim, n_outlier = n_outlier, pct_outlier = pct_outlier)
+}
+
+# Build SE comparison table
+se_list <- list()
+
+# Complete case
+boot_stats_cc <- compute_se_stats(boot_mat[, "cc_health"])
+perturb_stats_cc <- compute_se_stats(perturb_mat[, "cc_health"])
+se_list[[1]] <- data.frame(
+  Label = "CC",
+  Models = "Complete Case",
+  Analytical = summary_data$cc$se[2],
+  Boot_raw = boot_stats_cc$sd_raw,
+  Boot_trim = boot_stats_cc$sd_trim,
+  Boot_outlier = paste0(boot_stats_cc$n_outlier, " (", boot_stats_cc$pct_outlier, "%)"),
+  Perturb_raw = perturb_stats_cc$sd_raw,
+  Perturb_trim = perturb_stats_cc$sd_trim,
+  Perturb_outlier = paste0(perturb_stats_cc$n_outlier, " (", perturb_stats_cc$pct_outlier, "%)")
+)
+
+# Each model combination
+for (i in seq_along(summary_data$model_set_labels)) {
+  label <- summary_data$model_set_labels[i]
+  name <- summary_data$model_set_names[i]
+  res <- summary_data$results[[label]]
+  col_name <- paste0(label, "_health")
+
+  boot_stats <- compute_se_stats(boot_mat[, col_name])
+  perturb_stats <- compute_se_stats(perturb_mat[, col_name])
+
+  se_list[[length(se_list) + 1]] <- data.frame(
+    Label = label,
+    Models = name,
+    Analytical = res$se[2],
+    Boot_raw = boot_stats$sd_raw,
+    Boot_trim = boot_stats$sd_trim,
+    Boot_outlier = paste0(boot_stats$n_outlier, " (", boot_stats$pct_outlier, "%)"),
+    Perturb_raw = perturb_stats$sd_raw,
+    Perturb_trim = perturb_stats$sd_trim,
+    Perturb_outlier = paste0(perturb_stats$n_outlier, " (", perturb_stats$pct_outlier, "%)")
+  )
+}
+
+se_df <- do.call(rbind, se_list)
+
+kable(se_df, col.names = c("Label", "Models", "ASE", "Boot", "Boot(trim)", "Boot Outliers",
+                            "Perturb", "Perturb(trim)", "Perturb Outliers"),
+      caption = "Standard Error Comparison for Health Coefficient (with and without outlier removal)",
+      digits = 4, booktabs = TRUE, row.names = FALSE) %>%
+  kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  row_spec(which(se_df$Label == "111"), bold = TRUE)
+```
+
+**Notes:**
+
+- **ASE:** Analytical SE from sandwich variance estimator
+- **Boot / Perturb:** Raw SD of bootstrap/perturbation estimates
+- **Boot(trim) / Perturb(trim):** Trimmed SD after removing outliers (IQR x 1.5 method)
+- **Outliers:** Number and percentage of outliers removed
+
+## SE Comparison Plot
+
+```{r se-plot, fig.width=8, fig.height=5}
+# Create plot data with trimmed SE values
+se_plot_df <- se_df %>%
+  select(Label, Models, Analytical, Boot_trim, Perturb_trim) %>%
+  rename(Bootstrap = Boot_trim, Perturbation = Perturb_trim)
+
+se_long <- se_plot_df %>%
+  pivot_longer(cols = c(Analytical, Bootstrap, Perturbation),
+               names_to = "SE_Type", values_to = "SE")
+
+ggplot(se_long, aes(x = Label, y = SE, fill = SE_Type)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
+  theme_minimal() +
+  labs(title = "Standard Error Comparison Across Methods",
+       subtitle = "Health Coefficient (Bootstrap/Perturbation SE with outlier removal)",
+       x = "Model Combination",
+       y = "Standard Error",
+       fill = "SE Type") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_brewer(palette = "Set2")
+```
+
+**Observations:**
+
+- For complete case and single-model estimators, all three SE methods give similar results
+- For combinations including Model 2 without Model 1 (010, 011), bootstrap and perturbation SEs are larger, indicating potential instability
+- The full ensemble (111) shows consistent SE estimates across all methods
+
+# Analytical SE Stability
+
+## SD(ASE) Analysis
+
+We evaluated the stability of the analytical standard error estimates by computing them across 1,000 bootstrap samples. The SD(ASE) measures how much the analytical SE varies across samples.
+
+```{r ase-stability}
+# Load bootstrap ASE data for median computation
+ase_boot_data <- readRDS("MHD_results/logistic_reg_ase_boot_B1000.RDS")
+ase_boot_matrix <- do.call(rbind, ase_boot_data)
+
+# Build ASE stability table
+ase_list <- list()
+
+# Complete case (column name: cc_se_health.health)
+cc_ase_health <- ase_boot_matrix[, "cc_se_health.health"]
+ase_list[[1]] <- data.frame(
+  Label = "CC",
+  Models = "Complete Case",
+  ASE = summary_data$cc$se[2],
+  Median_ASE = median(cc_ase_health, na.rm = TRUE),
+  Mean_ASE = summary_data$cc$ase_mean[2],
+  SD_ASE = summary_data$cc$ase_sd[2],
+  SD_trim = summary_data$cc$ase_sd_trim[2],
+  CV_ASE = summary_data$cc$ase_cv[2]
+)
+
+# Each model combination (column name: <label>_se_health)
+for (i in seq_along(summary_data$model_set_labels)) {
+  label <- summary_data$model_set_labels[i]
+  name <- summary_data$model_set_names[i]
+  res <- summary_data$results[[label]]
+
+  # Get median from bootstrap data
+  col_name <- paste0(label, "_se_health")
+  model_ase_health <- ase_boot_matrix[, col_name]
+
+  ase_list[[length(ase_list) + 1]] <- data.frame(
+    Label = label,
+    Models = name,
+    ASE = res$se[2],
+    Median_ASE = median(model_ase_health, na.rm = TRUE),
+    Mean_ASE = summary_data$ase_mean["health", label],
+    SD_ASE = summary_data$ase_sd["health", label],
+    SD_trim = summary_data$ase_sd_trim["health", label],
+    CV_ASE = summary_data$ase_cv["health", label]
+  )
+}
+
+ase_df <- do.call(rbind, ase_list)
+
+kable(ase_df, col.names = c("Label", "Models", "ASE", "Median(ASE)", "Mean(ASE)", "SD(ASE)", "SD(trim)", "CV(ASE)"),
+      caption = "Analytical SE Stability for Health Coefficient",
+      digits = 4, booktabs = TRUE, row.names = FALSE) %>%
+  kable_styling(latex_options = c("striped", "hold_position", "scale_down")) %>%
+  row_spec(which(ase_df$Label == "111"), bold = TRUE)
+```
+
+**Notes:**
+
+- **ASE:** Original analytical SE from full sample
+- **Median(ASE):** Median analytical SE across bootstrap samples
+- **Mean(ASE):** Average analytical SE across bootstrap samples
+- **SD(ASE):** Standard deviation of analytical SE across bootstrap samples
+- **SD(trim):** Trimmed SD after removing outliers (IQR x 1.5 method)
+- **CV(ASE):** Coefficient of variation = SD(ASE) / Mean(ASE)
+
+**Interpretation:**
+
+- Lower CV(ASE) indicates more stable SE estimates
+- Complete case analysis has the most stable SE estimates (lowest CV)
+- Model combinations with Model 2 tend to have higher variability
+
+## Bootstrap ASE Distribution (111 Estimator)
+
+```{r ase-boxplot, fig.width=6, fig.height=4}
+# Load bootstrap ASE data
+ase_boot <- readRDS("MHD_results/logistic_reg_ase_boot_B1000.RDS")
+ase_matrix <- do.call(rbind, ase_boot)
+
+# Extract ASE for health coefficient (111 estimator)
+ase_111_health <- ase_matrix[, "111_se_health"]
+
+# Count NAs
+n_total <- length(ase_111_health)
+n_na <- sum(is.na(ase_111_health))
+pct_na <- round(100 * n_na / n_total, 1)
+
+# Remove NAs for statistics
+ase_valid <- ase_111_health[!is.na(ase_111_health)]
+
+# Compute outlier bounds (IQR x 1.5 method)
+Q1 <- quantile(ase_valid, 0.25)
+Q3 <- quantile(ase_valid, 0.75)
+IQR_val <- Q3 - Q1
+lower_bound <- Q1 - 1.5 * IQR_val
+upper_bound <- Q3 + 1.5 * IQR_val
+
+# Count outliers
+n_outliers <- sum(ase_valid < lower_bound | ase_valid > upper_bound)
+pct_outliers <- round(100 * n_outliers / length(ase_valid), 1)
+
+# Compute SD(trim) - SD after removing outliers
+ase_trimmed <- ase_valid[ase_valid >= lower_bound & ase_valid <= upper_bound]
+sd_trim <- sd(ase_trimmed)
+
+# Create data frame for ggplot
+ase_df_plot <- data.frame(ASE = ase_111_health)
+
+ggplot(ase_df_plot, aes(x = "", y = ASE)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.7, outlier.color = "red", outlier.alpha = 0.5) +
+  geom_hline(yintercept = summary_data$results[["111"]]$se[2],
+             linetype = "dashed", color = "darkred", linewidth = 1) +
+  annotate("text", x = 1.3, y = summary_data$results[["111"]]$se[2],
+           label = paste0("Original ASE = ", round(summary_data$results[["111"]]$se[2], 4)),
+           hjust = 0, color = "darkred", size = 3) +
+  theme_minimal() +
+  labs(title = "Distribution of Bootstrap ASE (111 Estimator)",
+       subtitle = paste0("Health Coefficient (n = ", n_total, ", Outliers: ", n_outliers, " [", pct_outliers, "%])"),
+       x = "",
+       y = "Analytical Standard Error") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+```
+
+**Summary Statistics:**
+
+- Total bootstrap samples: `r n_total`
+- Outliers (IQR x 1.5): `r n_outliers` (`r pct_outliers`%)
+- SD(ASE): `r round(sd(ase_valid), 4)`
+- SD(trim): `r round(sd_trim, 4)` (after removing outliers)
+
+The boxplot shows the distribution of analytical standard errors computed on bootstrap samples. The dashed red line indicates the original ASE from the full sample. A narrow distribution indicates stable SE estimation.
+
+# Bootstrap Confidence Intervals
+
+## 95% Confidence Intervals for Odds Ratio
+
+```{r bootstrap-ci}
+# Load bootstrap matrices
+boot_matrix <- readRDS("MHD_results/logistic_reg_boot_B1000.RDS")
+boot_matrix <- do.call(rbind, boot_matrix)
+perturb_matrix <- readRDS("MHD_results/logistic_reg_perturb_B1000.RDS")
+perturb_matrix <- do.call(rbind, perturb_matrix)
+
+# Standardize column names (raw results have names like "cc_health.health" from coef())
+model_set_labels <- summary_data$model_set_labels
+expected_colnames <- c("cc_intercept", "cc_health",
+                       paste0(rep(model_set_labels, each = 2), c("_intercept", "_health")))
+colnames(boot_matrix) <- expected_colnames
+colnames(perturb_matrix) <- expected_colnames
+
+# Build CI table
+ci_list <- list()
+
+# Complete case
+boot_or_cc <- exp(boot_matrix[, "cc_health"])
+perturb_or_cc <- exp(perturb_matrix[, "cc_health"])
+ci_list[[1]] <- data.frame(
+  Label = "CC",
+  Models = "Complete Case",
+  OR = summary_data$cc$or,
+  Boot_lower = quantile(boot_or_cc, 0.025, na.rm = TRUE),
+  Boot_upper = quantile(boot_or_cc, 0.975, na.rm = TRUE),
+  Perturb_lower = quantile(perturb_or_cc, 0.025, na.rm = TRUE),
+  Perturb_upper = quantile(perturb_or_cc, 0.975, na.rm = TRUE)
+)
+
+# Each model combination
+for (i in seq_along(summary_data$model_set_labels)) {
+  label <- summary_data$model_set_labels[i]
+  name <- summary_data$model_set_names[i]
+  res <- summary_data$results[[label]]
+  col_name <- paste0(label, "_health")
+  boot_or <- exp(boot_matrix[, col_name])
+  perturb_or <- exp(perturb_matrix[, col_name])
+  ci_list[[length(ci_list) + 1]] <- data.frame(
+    Label = label,
+    Models = name,
+    OR = res$or,
+    Boot_lower = quantile(boot_or, 0.025, na.rm = TRUE),
+    Boot_upper = quantile(boot_or, 0.975, na.rm = TRUE),
+    Perturb_lower = quantile(perturb_or, 0.025, na.rm = TRUE),
+    Perturb_upper = quantile(perturb_or, 0.975, na.rm = TRUE)
+  )
+}
+
+ci_df <- do.call(rbind, ci_list)
+ci_df$Boot_CI <- paste0("[", round(ci_df$Boot_lower, 4), ", ", round(ci_df$Boot_upper, 4), "]")
+ci_df$Perturb_CI <- paste0("[", round(ci_df$Perturb_lower, 4), ", ", round(ci_df$Perturb_upper, 4), "]")
+
+kable(ci_df[, c("Label", "Models", "OR", "Boot_CI", "Perturb_CI")],
+      col.names = c("Label", "Models", "OR", "Bootstrap 95% CI", "Perturbation 95% CI"),
+      caption = "Odds Ratio with Bootstrap Confidence Intervals",
+      digits = 4, booktabs = TRUE, row.names = FALSE) %>%
+  kable_styling(latex_options = c("striped", "hold_position")) %>%
+  row_spec(which(ci_df$Label == "111"), bold = TRUE)
+```
+
+## Forest Plot
+
+```{r forest-plot, fig.width=8, fig.height=6}
+# Prepare data for forest plot
+forest_df <- ci_df %>%
+  mutate(
+    Models = factor(Models, levels = rev(c("Complete Case", summary_data$model_set_names))),
+    significant = (Boot_lower > 1) | (Boot_upper < 1)
+  )
+
+ggplot(forest_df, aes(x = OR, y = Models)) +
+  geom_vline(xintercept = 1, linetype = "dashed", color = "gray50") +
+  geom_errorbarh(aes(xmin = Boot_lower, xmax = Boot_upper), height = 0.2, color = "steelblue") +
+  geom_point(size = 3, color = "steelblue") +
+  theme_minimal() +
+  labs(title = "Odds Ratio for Health Effect on Teacher-Reported Mental Health",
+       subtitle = "Bootstrap 95% Confidence Intervals",
+       x = "Odds Ratio",
+       y = "") +
+  theme(plot.title = element_text(face = "bold"),
+        axis.text.y = element_text(hjust = 0))
+```
+
+# Conclusions
+
+## Key Findings
+
+1. **Association Between Health and Mental Health Reports:**
+   - Complete case analysis: OR = `r round(summary_data$cc$or, 4)` (95% CI: `r round(exp(summary_data$cc$theta[2] - 1.96*summary_data$cc$se[2]), 4)` - `r round(exp(summary_data$cc$theta[2] + 1.96*summary_data$cc$se[2]), 4)`)
+   - EBMR-adjusted (111): OR = `r round(summary_data$results[["111"]]$or, 4)` (95% CI: `r round(exp(summary_data$results[["111"]]$theta[2] - 1.96*summary_data$results[["111"]]$se[2]), 4)` - `r round(exp(summary_data$results[["111"]]$theta[2] + 1.96*summary_data$results[["111"]]$se[2]), 4)`)
+
+2. **MNAR Adjustment:** The EBMR method provides consistent estimation under the assumption that at least one propensity score model is correctly specified.
+
+3. **Model Selection:** Model weights indicate which propensity score model best captures the missing data mechanism.
+
+4. **Standard Error Reliability:** Bootstrap and perturbation SE estimates are consistent with analytical SEs, supporting the validity of the variance estimation.
+
+## Interpretation
+
+- Children with health problems have higher odds of being reported as having abnormal mental health by teachers
+- The effect persists after adjusting for potential MNAR missingness using EBMR
+- The confidence intervals do not cross 1 for most model combinations, suggesting a statistically significant association
+
+## Limitations
+
+- The EBMR method assumes at least one propensity score model is correctly specified
+- The analysis relies on the parametric form of the propensity score and outcome models
+- Results may be sensitive to unmeasured confounding
+
+---
+
+*Report generated on `r Sys.Date()`*

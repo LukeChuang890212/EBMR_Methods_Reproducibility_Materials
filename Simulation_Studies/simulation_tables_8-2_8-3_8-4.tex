@@ -1,0 +1,77 @@
+
+\begin{table}[ht]
+\centering
+\caption{Estimation of $\mu_0 = 0.62$ is conducted under continuous outcome $Y$, where the set of candidate models includes a locally misspecified model with tilt function $\exp(n^{-1/2}(Y+U_1+U_2))$. The parameter vectors $\bm{\alpha}_0 = (0.73, 0.20, -0.40, -0.40)^{\top}$ and $(-0.15, 0.20, -0.40, -0.40)^{\top}$ correspond to missingness rates of 50\% and 30\%, respectively.}
+\begin{threeparttable}
+\begin{tabularx}{\textwidth}{l *{8}{>{\centering\arraybackslash}X}}
+\toprule
+\multicolumn{1}{c}{} & \multicolumn{4}{c}{$50\%$ missing} & \multicolumn{4}{c}{$30\%$ missing} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9}
+ & Bias & ESD & ESE & CP & Bias & ESD & ESE & CP \\
+\midrule
+\multicolumn{9}{c}{$n = 500$} \\
+\midrule
+$\tilde{\mu}_{\text{IPW}}$ & ~2.451 & ~0.291 & ~0.295 & ~0.001 & ~1.145 & ~0.143 & ~0.145 & ~0.001\\
+$\tilde{\mu}_{100}$ & -0.011 & ~0.156 & ~0.129 & ~0.925 & -0.006 & ~0.111 & ~0.096 & ~0.919\\
+$\tilde{\mu}_{010}$ & -0.106 & ~0.299 & ~0.113 & ~0.714 & ~0.017 & ~0.172 & ~0.092 & ~0.747\\
+$\tilde{\mu}_{001}$ & -0.176 & ~0.612 & ~0.300 & ~0.611 & -0.065 & ~0.321 & ~0.195 & ~0.665\\
+$\tilde{\mu}_{110}$ & -0.008 & ~0.153 & ~0.129 & ~0.927 & -0.005 & ~0.110 & ~0.097 & ~0.922\\
+$\tilde{\mu}_{101}$ & -0.023 & ~0.172 & ~0.135 & ~0.914 & -0.012 & ~0.122 & ~0.102 & ~0.911\\
+$\tilde{\mu}_{011}$ & -0.159 & ~0.551 & ~0.297 & ~0.679 & -0.064 & ~0.269 & ~0.189 & ~0.714\\
+$\tilde{\mu}_{111}$ & -0.017 & ~0.167 & ~0.140 & ~0.918 & -0.004 & ~0.116 & ~0.103 & ~0.913\\
+\midrule
+\multicolumn{9}{c}{$n = 2000$} \\
+\midrule
+$\tilde{\mu}_{\text{IPW}}$ & ~1.103 & ~0.098 & ~0.096 & ~0.001 & ~0.760 & ~0.063 & ~0.064 & ~0.001\\
+$\tilde{\mu}_{100}$ & -0.001 & ~0.054 & ~0.054 & ~0.943 & ~0.002 & ~0.044 & ~0.044 & ~0.956\\
+$\tilde{\mu}_{010}$ & -0.126 & ~0.077 & ~0.052 & ~0.298 & -0.043 & ~0.057 & ~0.043 & ~0.830\\
+$\tilde{\mu}_{001}$ & -0.290 & ~0.338 & ~0.210 & ~0.702 & -0.179 & ~0.261 & ~0.137 & ~0.629\\
+$\tilde{\mu}_{110}$ & -0.001 & ~0.053 & ~0.054 & ~0.943 & ~0.002 & ~0.044 & ~0.044 & ~0.956\\
+$\tilde{\mu}_{101}$ & -0.002 & ~0.054 & ~0.054 & ~0.947 & ~0.001 & ~0.044 & ~0.044 & ~0.958\\
+$\tilde{\mu}_{011}$ & -0.265 & ~0.290 & ~0.179 & ~0.701 & -0.155 & ~0.198 & ~0.125 & ~0.721\\
+$\tilde{\mu}_{111}$ & -0.002 & ~0.053 & ~0.054 & ~0.948 & ~0.001 & ~0.044 & ~0.044 & ~0.958\\
+\bottomrule
+\end{tabularx}
+\end{threeparttable}
+\label{tab:setting16_8-2}
+\end{table}
+
+
+\begin{table}[ht]
+\centering
+\caption{Estimation of $\mu_0 = 0.616$ is conducted under binary outcome $Y$, where the set of candidate models includes a locally misspecified model with tilt function $\exp(n^{-1/2}(Y+U_1+U_2))$. The parameter vectors $\bm{\alpha}_0 = (0.74, 0.20, -0.40, -0.40)^{\top}$ and $(-0.07, 0.20, -0.40, -0.40)^{\top}$ correspond to missingness rates of 50\% and 30\%, respectively.}
+\begin{threeparttable}
+\begin{tabularx}{\textwidth}{l *{8}{>{\centering\arraybackslash}X}}
+\toprule
+\multicolumn{1}{c}{} & \multicolumn{4}{c}{$50\%$ missing} & \multicolumn{4}{c}{$30\%$ missing} \\
+\cmidrule(lr){2-5} \cmidrule(lr){6-9}
+ & Bias & ESD & ESE & CP & Bias & ESD & ESE & CP \\
+\midrule
+\multicolumn{9}{c}{$n = 500$} \\
+\midrule
+$\tilde{\mu}_{\text{IPW}}$ & ~0.649 & ~0.082 & ~0.082 & ~0.001 & ~0.400 & ~0.051 & ~0.050 & ~0.001\\
+$\tilde{\mu}_{100}$ & ~0.002 & ~0.082 & ~0.068 & ~0.895 & ~0.003 & ~0.049 & ~0.046 & ~0.928\\
+$\tilde{\mu}_{010}$ & -0.199 & ~0.060 & ~0.045 & ~0.092 & -0.108 & ~0.037 & ~0.033 & ~0.154\\
+$\tilde{\mu}_{001}$ & -0.057 & ~0.214 & ~0.089 & ~0.382 & -0.042 & ~0.108 & ~0.053 & ~0.393\\
+$\tilde{\mu}_{110}$ & ~0.001 & ~0.082 & ~0.068 & ~0.895 & ~0.003 & ~0.049 & ~0.046 & ~0.929\\
+$\tilde{\mu}_{101}$ & -0.001 & ~0.084 & ~0.069 & ~0.894 & ~0.002 & ~0.049 & ~0.047 & ~0.927\\
+$\tilde{\mu}_{011}$ & -0.072 & ~0.193 & ~0.085 & ~0.369 & -0.049 & ~0.101 & ~0.058 & ~0.428\\
+$\tilde{\mu}_{111}$ & -0.011 & ~0.085 & ~0.077 & ~0.888 & -0.002 & ~0.049 & ~0.048 & ~0.927\\
+\midrule
+\multicolumn{9}{c}{$n = 2000$} \\
+\midrule
+$\tilde{\mu}_{\text{IPW}}$ & ~0.288 & ~0.030 & ~0.030 & ~0.001 & ~0.219 & ~0.020 & ~0.021 & ~0.001\\
+$\tilde{\mu}_{100}$ & -0.001 & ~0.031 & ~0.029 & ~0.944 & ~0.001 & ~0.020 & ~0.021 & ~0.957\\
+$\tilde{\mu}_{010}$ & -0.155 & ~0.031 & ~0.030 & ~0.001 & -0.104 & ~0.017 & ~0.019 & ~0.001\\
+$\tilde{\mu}_{001}$ & -0.159 & ~0.154 & ~0.076 & ~0.411 & -0.102 & ~0.082 & ~0.040 & ~0.341\\
+$\tilde{\mu}_{110}$ & -0.001 & ~0.031 & ~0.029 & ~0.944 & ~0.001 & ~0.020 & ~0.021 & ~0.957\\
+$\tilde{\mu}_{101}$ & -0.002 & ~0.031 & ~0.030 & ~0.945 & -0.001 & ~0.020 & ~0.021 & ~0.959\\
+$\tilde{\mu}_{011}$ & -0.164 & ~0.141 & ~0.071 & ~0.355 & -0.108 & ~0.065 & ~0.051 & ~0.378\\
+$\tilde{\mu}_{111}$ & -0.003 & ~0.031 & ~0.030 & ~0.950 & -0.002 & ~0.021 & ~0.021 & ~0.961\\
+\bottomrule
+\end{tabularx}
+\end{threeparttable}
+\label{tab:setting17_8-2}
+\end{table}
+
+
