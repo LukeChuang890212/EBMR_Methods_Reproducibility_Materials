@@ -140,52 +140,52 @@ correct_model_all_data_file.list = list(
       paste0(data_root, "setting15.A2_n2000_replicate1000.RDS")
     )
   ),
-  Cho_RM2 = list(
+  Cho_M1 = list(
     miss50 =list(
-      paste0(data_root, "Cho_RM2.A1_n4000_replicate1000.RDS")
+      paste0(data_root, "Cho_M1.A1_n4000_replicate1000.RDS")
     ),
     miss30 =list(
-      paste0(data_root, "Cho_RM2.A2_n4000_replicate1000.RDS")
+      paste0(data_root, "Cho_M1.A2_n4000_replicate1000.RDS")
     )
   ),
-  Cho_RM3 = list(
+  Cho_M2 = list(
     miss50 =list(
-      paste0(data_root, "Cho_RM3.A1_n4000_replicate1000.RDS")
+      paste0(data_root, "Cho_M2.A1_n4000_replicate1000.RDS")
     ),
     miss30 =list(
-      paste0(data_root, "Cho_RM3.A2_n4000_replicate1000.RDS")
+      paste0(data_root, "Cho_M2.A2_n4000_replicate1000.RDS")
     )
   ),
-  Cho_RM2p = list(
+  Cho_M1_gamma005 = list(
     miss50 =list(
-      paste0(data_root, "Cho_RM2p.A1_n2000_replicate1000.RDS")
+      paste0(data_root, "Cho_M1_gamma005.A1_n2000_replicate1000.RDS")
     ),
     miss30 =list(
-      paste0(data_root, "Cho_RM2p.A2_n2000_replicate1000.RDS")
+      paste0(data_root, "Cho_M1_gamma005.A2_n2000_replicate1000.RDS")
     )
   ),
-  Cho_RM3p = list(
+  Cho_M2_gamma005 = list(
     miss50 =list(
-      paste0(data_root, "Cho_RM3p.A1_n2000_replicate1000.RDS")
+      paste0(data_root, "Cho_M2_gamma005.A1_n2000_replicate1000.RDS")
     ),
     miss30 =list(
-      paste0(data_root, "Cho_RM3p.A2_n2000_replicate1000.RDS")
+      paste0(data_root, "Cho_M2_gamma005.A2_n2000_replicate1000.RDS")
     )
   ),
-  Cho_RM2q = list(
+  Cho_M1_gamma000 = list(
     miss50 =list(
-      paste0(data_root, "Cho_RM2q.A1_n2000_replicate1000.RDS")
+      paste0(data_root, "Cho_M1_gamma000.A1_n2000_replicate1000.RDS")
     ),
     miss30 =list(
-      paste0(data_root, "Cho_RM2q.A2_n2000_replicate1000.RDS")
+      paste0(data_root, "Cho_M1_gamma000.A2_n2000_replicate1000.RDS")
     )
   ),
-  Cho_RM3q = list(
+  Cho_M2_gamma000 = list(
     miss50 =list(
-      paste0(data_root, "Cho_RM3q.A1_n2000_replicate1000.RDS")
+      paste0(data_root, "Cho_M2_gamma000.A1_n2000_replicate1000.RDS")
     ),
     miss30 =list(
-      paste0(data_root, "Cho_RM3q.A2_n2000_replicate1000.RDS")
+      paste0(data_root, "Cho_M2_gamma000.A2_n2000_replicate1000.RDS")
     )
   ),
   Cho_RM4 = list(
@@ -510,7 +510,7 @@ correct_model_alpha.true.list = list(
       setting15_2 = c(-0.7946, 0.2, -0.4, -0.4)
     )
   ),
-  Cho_RM2 = list(
+  Cho_M1 = list(
     miss50 =list(
       c(-0.98, 0.5, 0.25)
     ),
@@ -519,7 +519,7 @@ correct_model_alpha.true.list = list(
       # c(-0.25, 0.25, 0.25, 0.25)
     )
   ),
-  Cho_RM3 = list(
+  Cho_M2 = list(
     miss50 =list(
       c(0.02, 0.5, - 0.25)
     ),
@@ -527,7 +527,7 @@ correct_model_alpha.true.list = list(
       c(0.865, 0.5, - 0.25)
     )
   ),
-  Cho_RM2p = list(
+  Cho_M1_gamma005 = list(
     miss50 =list(
       c(0.1244, -0.5, -0.25)
     ),
@@ -535,7 +535,7 @@ correct_model_alpha.true.list = list(
       c(1.0098, -0.5, -0.25)
     )
   ),
-  Cho_RM3p = list(
+  Cho_M2_gamma005 = list(
     miss50 =list(
       c(-0.125, 0.5, 0.25)
     ),
@@ -543,7 +543,7 @@ correct_model_alpha.true.list = list(
       c(0.7679, 0.5, 0.25)
     )
   ),
-  Cho_RM2q = list(
+  Cho_M1_gamma000 = list(
     miss50 =list(
       c(0.1246, -0.5, -0.25)
     ),
@@ -551,7 +551,7 @@ correct_model_alpha.true.list = list(
       c(1.0099, -0.5, -0.25)
     )
   ),
-  Cho_RM3q = list(
+  Cho_M2_gamma000 = list(
     miss50 =list(
       c(-0.125, 0.5, 0.25)
     ),

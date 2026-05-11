@@ -99,7 +99,7 @@ summarize_cho_setting <- function(setting,
 #------------------------------------------------------------------------------#
 
 # Settings to process
-cho_settings <- c("Cho_RM2q", "Cho_RM2p", "Cho_RM3q", "Cho_RM3p")
+cho_settings <- c("Cho_M1_gamma000", "Cho_M1_gamma005", "Cho_M2_gamma000", "Cho_M2_gamma005")
 
 # Step 1: Slice and save
 cat("\n")

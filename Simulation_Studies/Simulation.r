@@ -21,12 +21,12 @@ library(kableExtra)
 #' This is the common logic used for cleaning simulation results.
 #' It checks all first 4 rows for NAs. Outliers are detected based on
 #' mu_ipw (row 1) using the IQR method with the given multiplier. If the
-#' number of detected outliers exceeds 1% of valid replicates, only the
-#' most extreme 1% (by distance from median) are removed.
+#' number of detected outliers exceeds max_pct of valid replicates, only the
+#' most extreme max_pct (by distance from median) are removed.
 #'
 #' @param sim_result Simulation result matrix (rows are statistics, columns are replicates)
-#' @param multiplier IQR multiplier for outlier detection (default: 3)
-#' @param max_pct Maximum fraction of replicates to remove as outliers (default: 0.01)
+#' @param multiplier IQR multiplier for outlier detection (default: 2)
+#' @param max_pct Maximum fraction of replicates to remove as outliers (default: 0.02)
 #' @param verbose Whether to print summary messages (default: TRUE)
 #' @return List with:
 #'   - result: cleaned simulation result matrix
@@ -34,7 +34,7 @@ library(kableExtra)
 #'   - n_na: number of replicates removed due to NA
 #'   - n_outliers: number of replicates removed as outliers
 #'   - n_successful: number of successful (clean) replicates
-clean_sim_result <- function(sim_result, multiplier = 3, max_pct = 0.01, verbose = TRUE) {
+clean_sim_result <- function(sim_result, multiplier = 2, max_pct = 0.02, verbose = TRUE) {
   n_total <- ncol(sim_result)
   n_na <- 0
   n_outliers <- 0
@@ -57,7 +57,6 @@ clean_sim_result <- function(sim_result, multiplier = 3, max_pct = 0.01, verbose
     # Cap removal at max_pct of valid replicates
     max_remove <- floor(max_pct * n_after_na)
     if (sum(is_outlier) > max_remove && max_remove > 0) {
-      # Keep only the most extreme max_remove outliers
       dist_from_median <- abs(mu_ipw - median(mu_ipw))
       outlier_idx <- which(is_outlier)
       keep_idx <- outlier_idx[order(dist_from_median[outlier_idx], decreasing = TRUE)[(max_remove + 1):length(outlier_idx)]]
@@ -133,12 +132,12 @@ get_mu_true <- function(setting, n_large = 10^7) {
                       "setting10" = 0.646,
                       "setting11" = 0.7,
                       "setting12" = 0.646,
-                      "Cho_RM2" = 2,
-                      "Cho_RM3" = 2,
-                      "Cho_RM2p" = 0.5,
-                      "Cho_RM3p" = 0.5,
-                      "Cho_RM2q" = 0.5,
-                      "Cho_RM3q" = 0.5,
+                      "Cho_M1" = 2,
+                      "Cho_M2" = 2,
+                      "Cho_M1_gamma005" = 0.5,
+                      "Cho_M2_gamma005" = 0.5,
+                      "Cho_M1_gamma000" = 0.5,
+                      "Cho_M2_gamma000" = 0.5,
                       0.7)  # default
     return(mu_true)
   }
@@ -273,8 +272,9 @@ generate_data <- function(setting_name, n = 2000, replicate_num = 1000,
 #' @param save_file Path to save results (optional)
 #' @return Simulation results matrix (invisibly)
 simulate <- function(all_data, ps_model.true, alpha.true, ps_specifications,
-                     n, replicate_num, save_file = NULL, type = "HT") {
-  library(EBMRalgorithmFast4)
+                     n, replicate_num, save_file = NULL, type = "HT",
+                     setting = NULL) {
+  library(EBMRalgorithmFast5)
   library(parallel)
   library(foreach)
   library(doSNOW)
@@ -288,7 +288,7 @@ simulate <- function(all_data, ps_model.true, alpha.true, ps_specifications,
   registerDoSNOW(cl)
 
   # Export local variables to workers
-  clusterExport(cl, c("ps_model.true", "alpha.true", "ps_specifications", "n", "all_data", "type"),
+  clusterExport(cl, c("ps_model.true", "alpha.true", "ps_specifications", "n", "all_data", "type", "setting"),
                 envir = environment())
 
   # Progress bar
@@ -296,7 +296,7 @@ simulate <- function(all_data, ps_model.true, alpha.true, ps_specifications,
   pb <- txtProgressBar(max = replicate_num, style = 3)
   progress <- function(n) setTxtProgressBar(pb, n)
   opts <- list(progress = progress)
-  parallel_packages <- c("EBMRalgorithmFast4", "stringr", "Matrix", "numDeriv")
+  parallel_packages <- c("EBMRalgorithmFast5", "stringr", "Matrix", "numDeriv")
 
   start <- Sys.time()
 
@@ -315,32 +315,21 @@ simulate <- function(all_data, ps_model.true, alpha.true, ps_specifications,
         return(solve(t(g.matrix)%*%g.matrix/nrow(g.matrix)))
       }
       # W <-  function(g.matrix) diag(ncol(g.matrix))
+      # W <- function(g.matrix) {
+      #   return(solve(var(g.matrix)))
+      # }
+
+      # Select h_nu based on setting
+      h_nu <- if (!is.null(setting) && grepl("^Cho_", setting)) {
+        function(dat) cbind(x1 = dat$x1, x2 = dat$x2, x3 = dat$x3, x1_x2 = dat$x1*dat$x2)
+      } else {
+        function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2, u1_u2 = dat$u1*dat$u2)
+      }
 
       # EBMR algorithm using Fast version with analytical gradients
-      ebmr <- EBMRAlgorithmFast4$new("y", ps_specifications, dat, W)
+      ebmr <- EBMRAlgorithmFast5$new("y", ps_specifications, dat, W)
       result <- ebmr$EBMR_IPW(
-        # h_nu = function(dat) cbind(
-        #   u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2,
-        #   u1_u2 = dat$u1*dat$u2, z1_z2 = dat$z1*dat$z2,
-        #   u1_z1 = dat$u1*dat$z1, z1_u2 = dat$z1*dat$u2,
-        #   u1_z2 = dat$u1*dat$z2, u2_z2 = dat$u2*dat$z2,
-        #   u1_u2_z1 = dat$u1*dat$u2*dat$z1, u1_u2_z2 = dat$u1*dat$u2*dat$z2,
-        #   u1_z1_z2 = dat$u1*dat$z1*dat$z2, u2_z1_z2 = dat$u2*dat$z1*dat$z2),
-        # h_nu = function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2,
-        #                            u2_sq = dat$u2^2, z2_sq = dat$z2^2, u1_u2 = dat$u1*dat$u2),
-        # h_nu = function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2, u1_u2 = dat$u1*dat$u2),
-        h_nu = function(dat) cbind(
-          u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2,
-          u1u2 = dat$u1*dat$u2, u1z1 = dat$u1*dat$z1, u1z2 = dat$u1*dat$z2,
-          u2z1 = dat$u2*dat$z1, u2z2 = dat$u2*dat$z2, z1z2 = dat$z1*dat$z2,
-          u2sq = dat$u2^2, z2sq = dat$z2^2,
-          u1u2z1 = dat$u1*dat$u2*dat$z1, u1u2z2 = dat$u1*dat$u2*dat$z2,
-          u1z1z2 = dat$u1*dat$z1*dat$z2, u2z1z2 = dat$u2*dat$z1*dat$z2,
-          u2sq_u1 = dat$u2^2*dat$u1, u2sq_z1 = dat$u2^2*dat$z1, u2sq_z2 = dat$u2^2*dat$z2,
-          z2sq_u1 = dat$z2^2*dat$u1, z2sq_u2 = dat$z2^2*dat$u2, z2sq_z1 = dat$z2^2*dat$z1,
-          u2cu = dat$u2^3, z2cu = dat$z2^3
-        ),
-        # # h_nu = function(dat) cbind(x1 = dat$x1, x2 = dat$x2, x3 = dat$x3, x1_x2 = dat$x1*dat$x2),
+        h_nu = h_nu,
         true_ps = ps_model.true(dat, alpha.true),
         type = type
       )
@@ -386,7 +375,7 @@ simulate <- function(all_data, ps_model.true, alpha.true, ps_specifications,
 #' @param label Optional label for identifying the estimator in cleaning output
 #' @return Formatted vector of (Bias, ESD, ESE, CP)
 summarize_results <- function(sim_result, pe_index, ese_index, mu.true, label = NULL) {
-  cleaned <- clean_sim_result(sim_result, multiplier = 3, verbose = FALSE)
+  cleaned <- clean_sim_result(sim_result, multiplier = 2, verbose = FALSE)
   sim_result <- cleaned$result
 
   pe <- mean(sim_result[pe_index, ], na.rm = TRUE)
@@ -511,7 +500,7 @@ print_console_summary <- function(setting, scenario, missing_rates, n.vector,
                      "-scenario", scenario, "_1_n", n, "_replicate", replicate_num, "_", version, type_suffix, ".RDS")
       if (file.exists(file)) {
         sim_result <- readRDS(file)
-        cleaned <- clean_sim_result(sim_result, multiplier = 3, verbose = FALSE)
+        cleaned <- clean_sim_result(sim_result, multiplier = 2, verbose = FALSE)
         sim_clean <- cleaned$result
         bias <- round_3dp(mean(sim_clean[2, ], na.rm = TRUE) - mu.true)
         esd <- round_3dp(sd(sim_clean[2, ], na.rm = TRUE))
@@ -539,7 +528,7 @@ print_console_summary <- function(setting, scenario, missing_rates, n.vector,
                        "_replicate", replicate_num, "_", version, type_suffix, ".RDS")
         if (file.exists(file)) {
           sim_result <- readRDS(file)
-          cleaned <- clean_sim_result(sim_result, multiplier = 3, verbose = FALSE)
+          cleaned <- clean_sim_result(sim_result, multiplier = 2, verbose = FALSE)
           sim_clean <- cleaned$result
           # Fixed indices for EBMRalgorithmOld-only output
           pe_idx <- 1   # mu_ipw
@@ -600,60 +589,93 @@ summarize_all_settings_with_all_missing_rates <- function(
         )
     }
 
-    # Estimator names for LaTeX (Cho2025/MCEL removed)
-    estimator_names <- if (substr(scenario, 3, 3) == "1" || scenario %in% c("cho1", "cho2")) {
-      rep(c("$\\hat{\\mu}_{\\text{IPW}}$",
-            "$\\hat{\\mu}_{100}$", "$\\hat{\\mu}_{010}$", "$\\hat{\\mu}_{001}$",
-            "$\\hat{\\mu}_{110}$", "$\\hat{\\mu}_{101}$", "$\\hat{\\mu}_{011}$",
-            "$\\hat{\\mu}_{111}$"),
-          length(n.vector))
+    # Estimator names for LaTeX
+    est_names <- if (substr(scenario, 3, 3) == "1" || scenario %in% c("cho1", "cho2")) {
+      c("$\\hat{\\mu}_{\\text{IPW}}$",
+        "$\\hat{\\mu}_{100}$", "$\\hat{\\mu}_{010}$", "$\\hat{\\mu}_{001}$",
+        "$\\hat{\\mu}_{110}$", "$\\hat{\\mu}_{101}$", "$\\hat{\\mu}_{011}$",
+        "$\\hat{\\mu}_{111}$")
     } else {
-      rep(c("$\\tilde{\\mu}_{\\text{IPW}}$",
-            "$\\tilde{\\mu}_{100}$", "$\\tilde{\\mu}_{010}$", "$\\tilde{\\mu}_{001}$",
-            "$\\tilde{\\mu}_{110}$", "$\\tilde{\\mu}_{101}$", "$\\tilde{\\mu}_{011}$",
-            "$\\tilde{\\mu}_{111}$"),
-          length(n.vector))
+      c("$\\tilde{\\mu}_{\\text{IPW}}$",
+        "$\\tilde{\\mu}_{100}$", "$\\tilde{\\mu}_{010}$", "$\\tilde{\\mu}_{001}$",
+        "$\\tilde{\\mu}_{110}$", "$\\tilde{\\mu}_{101}$", "$\\tilde{\\mu}_{011}$",
+        "$\\tilde{\\mu}_{111}$")
+    }
+    n_est <- length(est_names)
+
+    # Format values: add "~" prefix to positive numbers for alignment
+    fmt_val <- function(x) {
+      if (is.na(x)) return("")
+      num_val <- as.numeric(x)
+      if (is.na(num_val)) return(trimws(x))
+      if (num_val >= 0) paste0("~", trimws(x)) else trimws(x)
     }
 
-    # Check if there are any negative numbers in the results
-    has_negative <- any(as.numeric(results_with_all_missing_rates) < 0, na.rm = TRUE)
+    # Build caption
+    mu_str <- sprintf("%.3f", round(mu.true, 3))
+    alpha50 <- paste(sprintf("%.2f", round(alpha_true.list[[setting]][[1]][[1]], 2)), collapse = ", ")
+    alpha30 <- paste(sprintf("%.2f", round(alpha_true.list[[setting]][[2]][[1]], 2)), collapse = ", ")
 
-    # If there are negative numbers, add "~" prefix to positive numbers for alignment
-    if (has_negative) {
-      results_with_all_missing_rates <- apply(results_with_all_missing_rates, c(1, 2), function(x) {
-        if (is.na(x)) return(NA)
-        num_val <- as.numeric(x)
-        if (!is.na(num_val) && num_val >= 0) {
-          # Remove leading/trailing whitespace before adding "~"
-          return(paste0("~", trimws(x)))
-        }
-        # Also trim whitespace for negative numbers
-        return(trimws(x))
-      })
-    }
-
-    results_with_all_missing_rates <- cbind(estimator_names,
-                                            as.data.frame(results_with_all_missing_rates))
-    colnames(results_with_all_missing_rates) <- c("",
-                                                  rep(c("Bias", "ESD", "ESE", "CP"), length(missing_rates)))
-
-    summary_tbls[[j]] <- kable(
-      results_with_all_missing_rates,
-      format = "latex", align = "c", booktabs = TRUE,
-      escape = FALSE, linesep = "",
-      caption = paste0(
-        "Comparison between different estimators under the Scenario ", scenario,
-        " of Setting ", substr(setting, 9, 9),
-        " with $\\mu_0$ approximately ", round(mu.true, 3), ". ",
-        "The $\\bm{\\alpha}_0$ in $\\pi(\\bm{U}, Y; \\bm{\\alpha}_0)$ ",
-        "that leads to $50\\%$ of missingness in $Y$ is $(",
-        paste(alpha_true.list[[setting]][[1]][[1]], collapse = ", "),
-        ")^{\\top}$ and that leads to $30\\%$ of missingness is $(",
-        paste(alpha_true.list[[setting]][[2]][[1]], collapse = ", "), ")^{\\top}$."
+    caption_text <- if (grepl("^Cho_", setting)) {
+      mech_label <- if (grepl("Cho_M1", setting)) "(M1)" else "(M2)"
+      gamma_val <- if (grepl("gamma005", setting)) "0.05" else "0"
+      paste0(
+        "Estimation of $\\mu_0 = ", mu_str, "$ is conducted under continuous outcome $Y$, ",
+        "where the set of candidate models includes a correctly specified model ",
+        "with $\\gamma = ", gamma_val, "$ and missing mechanism ", mech_label, ". ",
+        "The parameter vectors $\\bm{\\alpha}_0 = (", alpha50, ")^{\\top}$ and ",
+        "$(", alpha30, ")^{\\top}$ correspond to missingness rates of 50\\% and 30\\%, respectively."
       )
-    ) %>%
-      kable_styling(full_width = FALSE, latex_options = c("hold_position", "scale_down")) %>%
-      add_header_above(c("", "$50\\%$ missing" = 4, "$30\\%$ missing" = 4))
+    } else {
+      outcome_type <- if (setting %in% c("setting3")) "continuous" else "binary"
+      paste0(
+        "Estimation of $\\mu_0 = ", mu_str, "$ is conducted under ", outcome_type, " outcome $Y$, ",
+        "where the set of candidate models includes a correctly specified model. ",
+        "The parameter vectors $\\bm{\\alpha}_0 = (", alpha50, ")^{\\top}$ and ",
+        "$(", alpha30, ")^{\\top}$ correspond to missingness rates of 50\\% and 30\\%, respectively."
+      )
+    }
+
+    # Build LaTeX table with clean formatting
+    I  <- "  "   # one indent level
+    II <- "    " # two indent levels
+
+    tex <- c()
+    tex <- c(tex, "\\begin{table}[ht]")
+    tex <- c(tex, paste0(I, "\\centering"))
+    tex <- c(tex, paste0(I, "\\caption{", caption_text, "}"))
+    tex <- c(tex, paste0(I, "\\begin{threeparttable}"))
+    tex <- c(tex, paste0(I, "\\begin{tabularx}{\\textwidth}{l *{8}{>{\\centering\\arraybackslash}X}}"))
+    tex <- c(tex, paste0(II, "\\toprule"))
+    tex <- c(tex, paste0(II, "\\multicolumn{1}{c}{} & \\multicolumn{4}{c}{$50\\%$ missing} & \\multicolumn{4}{c}{$30\\%$ missing} \\\\"))
+    tex <- c(tex, paste0(II, "\\cmidrule(lr){2-5} \\cmidrule(lr){6-9}"))
+    tex <- c(tex, paste0(II, " & Bias & ESD & ESE & CP & Bias & ESD & ESE & CP \\\\"))
+
+    # Output n blocks in ascending order
+    n_order <- order(n.vector)
+    for (k in n_order) {
+      tex <- c(tex, paste0(II, "\\midrule"))
+      tex <- c(tex, paste0(II, "\\multicolumn{9}{c}{$n = ", n.vector[k], "$} \\\\"))
+      tex <- c(tex, paste0(II, "\\midrule"))
+
+      row_offset <- (k - 1) * n_est
+      for (e in 1:n_est) {
+        row_idx <- row_offset + e
+        vals <- sapply(1:ncol(results_with_all_missing_rates), function(col) {
+          fmt_val(results_with_all_missing_rates[row_idx, col])
+        })
+        tex <- c(tex, paste0(II, est_names[e], " & ",
+                             paste(vals, collapse = " & "), "\\\\"))
+      }
+    }
+
+    tex <- c(tex, paste0(II, "\\bottomrule"))
+    tex <- c(tex, paste0(I, "\\end{tabularx}"))
+    tex <- c(tex, paste0(I, "\\end{threeparttable}"))
+    tex <- c(tex, paste0(I, "\\label{tab:", setting, "_", scenario, "}"))
+    tex <- c(tex, "\\end{table}")
+
+    summary_tbls[[j]] <- paste(tex, collapse = "\n")
   }
 
   return(summary_tbls)

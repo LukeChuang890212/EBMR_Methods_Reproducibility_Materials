@@ -1,0 +1,21 @@
+# Optimizer overrides for specific simulation settings
+# Format: scenario | setting | missing_rate | n | models | optimizer | cond_threshold
+#
+# When running Simulation_demo.r, the code checks this file.
+# If a matching entry is found, the specified optimizer and cond_threshold are used.
+# If no match is found, the default optimizer (L-BFGS-B) is used.
+#
+# "models" specifies which model combinations trigger the override.
+# Use comma-separated model indices: e.g., "2" means mu_010, "1,2" means mu_110, etc.
+# Any combination containing a listed model index will use the override.
+# Use "any" to apply to all model combinations.
+#
+# Lines starting with # are comments.
+
+# Scenario 7-1 and 8-1, setting3, miss30, n=2000: estimators involving M2
+7-1 | setting3 | miss30 | 2000 | 2 | constrained_nr | 1e2
+8-1 | setting3 | miss30 | 2000 | 2 | constrained_nr | 1e2
+
+# Scenario 7-1 and 8-1, setting3, miss50, n=2000: estimators involving M2
+7-1 | setting3 | miss50 | 2000 | 2 | constrained_nr | 1e2
+8-1 | setting3 | miss50 | 2000 | 2 | constrained_nr | 1e2

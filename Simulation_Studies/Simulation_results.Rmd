@@ -178,7 +178,7 @@ summary_tbls[[2]]
 
 ```{r scenario-cho1, eval=FALSE}
 summary_tbls <- summarize_all_settings_with_all_missing_rates(
-  settings = c("Cho_RM2q", "Cho_RM2p", "Cho_RM3q", "Cho_RM3p"),
+  settings = c("Cho_M1_gamma000", "Cho_M1_gamma005", "Cho_M2_gamma000", "Cho_M2_gamma005"),
   missing_rates = c("miss50", "miss30"),
   scenario = "cho1",
   J = 3,

@@ -1,13 +1,13 @@
 #' EBMRAlgorithm Class
 #'
-#' The `EBMRAlgorithmFast4` class provides an implementation for estimating
+#' The `EBMRAlgorithmFast5` class provides an implementation for estimating
 #' the coefficients in a propensity score model and related functionalities
 #' based on the ensemble method for inverse probability weighting (IPW).
 #'
 #' @import R6
 #'
 #' @section Public Methods:
-#' The following methods are available in the EBMRAlgorithmFast4 class:
+#' The following methods are available in the EBMRAlgorithmFast5 class:
 #'
 #' \code{initialize(y_names, ps_specifications, data, W, wt = NULL, W_nu = NULL)}:
 #' Initializes the class and estimates the propensity scores.
@@ -34,12 +34,12 @@
 #'   inv_link = inv_link_function
 #' )
 #'
-#' ebmr = EBMRAlgorithmFast4$new("y", ps_specifications, data, W)
+#' ebmr = EBMRAlgorithmFast5$new("y", ps_specifications, data, W)
 #' }
 #'
 #' @export
 #'
-#' @name EBMRAlgorithmFast4
+#' @name EBMRAlgorithmFast5
 
 library(R6)
 library(stringr)
@@ -52,7 +52,7 @@ source("./R/Methods.r")
 source("./R/Preprocessor.r")
 source("./R/Fool_proofing.r")
 
-EBMRAlgorithmFast4 <- R6Class("EBMRAlgorithmFast4",
+EBMRAlgorithmFast5 <- R6Class("EBMRAlgorithmFast5",
                   public = list(
                     # Public fields (variables)
                     data = NULL,

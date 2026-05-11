@@ -65,21 +65,21 @@ show_config()
 # Step 1: Generate data (required before running simulations)
 #------------------------------------------------------------------------------#
 
-# For setting1 - correct models (7-1, 8-1, 9-1), need A1 and A2 data at n=2000
+# For setting3 (continuous Y) - correct models, need A1 and A2 data at n=2000
 generate_data("setting3.A1", n = 2000, replicate_num = 1000)
 generate_data("setting3.A2", n = 2000, replicate_num = 1000)
 
-# For setting2 - correct models need A1 and A2 at n=2000
+# For setting4 (binary Y) - correct models, need A1 and A2 at n=2000
 generate_data("setting4.A1", n = 2000, replicate_num = 1000)
 generate_data("setting4.A2", n = 2000, replicate_num = 1000)
 
-# For setting1 - misspecified models need B1 and B2 at n=2000 and n=300
+# For setting3 - misspecified models need B1 and B2 at n=2000 and n=500
 generate_data("setting3.B1", n = 2000, replicate_num = 1000)
 generate_data("setting3.B1", n = 500, replicate_num = 1000)
 generate_data("setting3.B2", n = 2000, replicate_num = 1000)
 generate_data("setting3.B2", n = 500, replicate_num = 1000)
 
-# For setting2 - misspecified models need B1 and B2 at n=2000 and n=300
+# For setting4 - misspecified models need B1 and B2 at n=2000 and n=500
 generate_data("setting4.B1", n = 2000, replicate_num = 1000)
 generate_data("setting4.B1", n = 500, replicate_num = 1000)
 generate_data("setting4.B2", n = 2000, replicate_num = 1000)
@@ -130,14 +130,14 @@ generate_data("setting4.B2", n = 500, replicate_num = 1000)
 # generate_data("setting19.B2", n = 500, replicate_num = 1000)
 
 # For Cho settings - need A1 and A2 data at n=2000
-generate_data("Cho_RM2p.A1", n = 2000, replicate_num = 1000)
-generate_data("Cho_RM2p.A2", n = 2000, replicate_num = 1000)
-generate_data("Cho_RM2q.A1", n = 2000, replicate_num = 1000)
-generate_data("Cho_RM2q.A2", n = 2000, replicate_num = 1000)
-generate_data("Cho_RM3p.A1", n = 2000, replicate_num = 1000)
-generate_data("Cho_RM3p.A2", n = 2000, replicate_num = 1000)
-generate_data("Cho_RM3q.A1", n = 2000, replicate_num = 1000)
-generate_data("Cho_RM3q.A2", n = 2000, replicate_num = 1000)
+generate_data("Cho_M1_gamma005.A1", n = 2000, replicate_num = 1000)
+generate_data("Cho_M1_gamma005.A2", n = 2000, replicate_num = 1000)
+generate_data("Cho_M1_gamma000.A1", n = 2000, replicate_num = 1000)
+generate_data("Cho_M1_gamma000.A2", n = 2000, replicate_num = 1000)
+generate_data("Cho_M2_gamma005.A1", n = 2000, replicate_num = 1000)
+generate_data("Cho_M2_gamma005.A2", n = 2000, replicate_num = 1000)
+generate_data("Cho_M2_gamma000.A1", n = 2000, replicate_num = 1000)
+generate_data("Cho_M2_gamma000.A2", n = 2000, replicate_num = 1000)
 
 #------------------------------------------------------------------------------#
 # Step 2: Run scenarios 7-1, 7-2, 8-1, 8-2, 9-1, 9-2
@@ -199,61 +199,35 @@ generate_data("Cho_RM3q.A2", n = 2000, replicate_num = 1000)
 #   }
 # }
 
-
-#------------------------------------------------------------------------------#
-# Full scenario runs (commented out)
-#------------------------------------------------------------------------------#
-
-# scenarios_to_run <- c("8-1", "9-1")
-# # scenarios_to_run <- c("7-2", "7-3", "7-4")
-# settings_to_run <- c("setting15")
-#
-# for (scenario_id in scenarios_to_run) {
-#   for (setting in settings_to_run) {
-#     # Run the scenario
-#     run_scenario(scenario_id,
-#                  setting = setting,
-#                  version = "test22")
-#
-#     # Summarize immediately after completion
-#     cat("\n")
-#     cat(strrep("=", 70), "\n")
-#     cat("Summarizing scenario:", scenario_id, "for", setting, "\n")
-#     cat(strrep("=", 70), "\n")
-#
-#     scenario <- SCENARIOS[[scenario_id]]
-#     params <- get_model_params(scenario$model_type)
-#
-#     summary_table <- summarize_all_settings_with_all_missing_rates(
-#       settings = setting,
-#       missing_rates = c("miss50", "miss30"),
-#       scenario = scenario_id,
-#       J = 3,
-#       n.vector = unlist(params$n_vector),
-#       all_data_file.list = params$data_files,
-#       alpha_true.list = params$alpha_true,
-#       version = "test22"
-#     )
-#
-#     print(summary_table)
-#   }
-# }
-
 #------------------------------------------------------------------------------#
 # Scenario 8-2: setting16 and setting17 (tilt = y+u1+u2)
 #------------------------------------------------------------------------------#
 # test46/48: include u2^2, z2^2 in h_alpha and h_nu
 # test47/49: include only 1st moments in h_alpha and h_nu
-scenarios_to_run <- c("9-3", "7-1", "8-1", "9-1", "9-2")
-# scenarios_to_run <- c("7-2", "7-3", "7-4")
-settings_to_run <- c("setting4")
+# Each entry: list(scenario, settings)
+# runs sequentially as listed
+run_list <- list(
+  list(scenario = "9-1", settings = c("setting3", "setting4")),
+  list(scenario = "9-2", settings = c("setting3", "setting4")),
+  list(scenario = "9-1", settings = c("setting14")),
+  list(scenario = "7-1", settings = c("setting3", "setting4")),
+  list(scenario = "8-1", settings = c("setting3", "setting4")),
+  list(scenario = "9-3", settings = c("setting3", "setting4")),
+  list(scenario = "cho1", settings = c("Cho_M1_gamma000")),
+  list(scenario = "cho2", settings = c("Cho_M2_gamma000")),
+  list(scenario = "cho1", settings = c("Cho_M1_gamma005")),
+  list(scenario = "cho2", settings = c("Cho_M2_gamma005"))
+)
 
-for (scenario_id in scenarios_to_run) {
-  for (setting in settings_to_run) {
+all_latex_tables <- list()
+
+for (entry in run_list) {
+  scenario_id <- entry$scenario
+  for (setting in entry$settings) {
     # Run the scenario
     run_scenario(scenario_id,
                  setting = setting,
-                 version = "test59",
+                 version = "test63",
                  type = "HT")
 
     # Summarize immediately after completion
@@ -273,81 +247,23 @@ for (scenario_id in scenarios_to_run) {
       n.vector = unlist(params$n_vector),
       all_data_file.list = params$data_files,
       alpha_true.list = params$alpha_true,
-      version = "test59",
+      version = "test63",
       type = "HT"
     )
 
-    print(summary_table)
+    all_latex_tables <- c(all_latex_tables, summary_table)
   }
 }
 
-# scenarios_to_run <- c("cho2")
-# # scenarios_to_run <- c("7-3", "7-4")
-# settings_to_run <- c("Cho_RM3q", "Cho_RM3p")
-# 
-# for (scenario_id in scenarios_to_run) {
-#   for (setting in settings_to_run) {
-#     # Run the scenario
-#     run_scenario(scenario_id,
-#                  setting = setting,
-#                  version = "test22-6")
-# 
-#     # Summarize immediately after completion
-#     cat("\n")
-#     cat(strrep("=", 70), "\n")
-#     cat("Summarizing scenario:", scenario_id, "for", setting, "\n")
-#     cat(strrep("=", 70), "\n")
-# 
-#     scenario <- SCENARIOS[[scenario_id]]
-#     params <- get_model_params(scenario$model_type)
-# 
-#     summary_table <- summarize_all_settings_with_all_missing_rates(
-#       settings = setting,
-#       missing_rates = c("miss50", "miss30"),
-#       scenario = scenario_id,
-#       J = 3,
-#       n.vector = unlist(params$n_vector),
-#       all_data_file.list = params$data_files,
-#       alpha_true.list = params$alpha_true,
-#       version = "test22-6"
-#     )
-# 
-#     print(summary_table)
-#   }
-# }
-# 
-# scenarios_to_run <- c("cho1")
-# # scenarios_to_run <- c("7-3", "7-4")
-# settings_to_run <- c("Cho_RM2q", "Cho_RM2p")
-# 
-# for (scenario_id in scenarios_to_run) {
-#   for (setting in settings_to_run) {
-#     # Run the scenario
-#     run_scenario(scenario_id,
-#                  setting = setting,
-#                  version = "test22-6")
-# 
-#     # Summarize immediately after completion
-#     cat("\n")
-#     cat(strrep("=", 70), "\n")
-#     cat("Summarizing scenario:", scenario_id, "for", setting, "\n")
-#     cat(strrep("=", 70), "\n")
-# 
-#     scenario <- SCENARIOS[[scenario_id]]
-#     params <- get_model_params(scenario$model_type)
-# 
-#     summary_table <- summarize_all_settings_with_all_missing_rates(
-#       settings = setting,
-#       missing_rates = c("miss50", "miss30"),
-#       scenario = scenario_id,
-#       J = 3,
-#       n.vector = unlist(params$n_vector),
-#       all_data_file.list = params$data_files,
-#       alpha_true.list = params$alpha_true,
-#       version = "test22-6"
-#     )
-# 
-#     print(summary_table)
-#   }
-# }
+#------------------------------------------------------------------------------#
+# Print all LaTeX tables at the end
+#------------------------------------------------------------------------------#
+cat("\n\n")
+cat(strrep("=", 70), "\n")
+cat("                    ALL LATEX TABLES                                \n")
+cat(strrep("=", 70), "\n\n")
+
+for (tbl in all_latex_tables) {
+  cat(tbl, "\n\n")
+}
 

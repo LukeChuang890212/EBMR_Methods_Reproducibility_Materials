@@ -42,18 +42,18 @@ setting.list = list(
   setting12.B1 = setting12.B1,
   setting12.B2 = setting12.B2,
   # Cho_RM1 = Cho_RM1,
-  Cho_RM2.A1 = Cho_RM2.A1,
-  Cho_RM2.A2 = Cho_RM2.A2,
-  Cho_RM3.A1 = Cho_RM3.A1,
-  Cho_RM3.A2 = Cho_RM3.A2,
-  Cho_RM2p.A1 = Cho_RM2p.A1,
-  Cho_RM2p.A2 = Cho_RM2p.A2,
-  Cho_RM3p.A1 = Cho_RM3p.A1,
-  Cho_RM3p.A2 = Cho_RM3p.A2,
-  Cho_RM2q.A1 = Cho_RM2q.A1,
-  Cho_RM2q.A2 = Cho_RM2q.A2,
-  Cho_RM3q.A1 = Cho_RM3q.A1,
-  Cho_RM3q.A2 = Cho_RM3q.A2
+  Cho_M1.A1 = Cho_M1.A1,
+  Cho_M1.A2 = Cho_M1.A2,
+  Cho_M2.A1 = Cho_M2.A1,
+  Cho_M2.A2 = Cho_M2.A2,
+  Cho_M1_gamma005.A1 = Cho_M1_gamma005.A1,
+  Cho_M1_gamma005.A2 = Cho_M1_gamma005.A2,
+  Cho_M2_gamma005.A1 = Cho_M2_gamma005.A1,
+  Cho_M2_gamma005.A2 = Cho_M2_gamma005.A2,
+  Cho_M1_gamma000.A1 = Cho_M1_gamma000.A1,
+  Cho_M1_gamma000.A2 = Cho_M1_gamma000.A2,
+  Cho_M2_gamma000.A1 = Cho_M2_gamma000.A1,
+  Cho_M2_gamma000.A2 = Cho_M2_gamma000.A2
   # Cho_RM4 = Cho_RM4
 )
 
@@ -101,7 +101,7 @@ for(j in 1:length(setting.list)){
 
 # settings = c("setting1", "setting2", "setting3")
 settings = c("setting11", "setting12")
-# settings = c("Cho_RM2", "Cho_RM3")
+# settings = c("Cho_M1", "Cho_M2")
 missing_rates = c("miss50", "miss30")
 replicate_num = 1000
 
@@ -591,7 +591,7 @@ full_ps_specifications = list(
 
 
 ##  Scenario cho1 ----
-simulate_all_settings_with_all_missing_rates(settings = c("Cho_RM2q", "Cho_RM2p", "Cho_RM3q", "Cho_RM3p"),
+simulate_all_settings_with_all_missing_rates(settings = c("Cho_M1_gamma000", "Cho_M1_gamma005", "Cho_M2_gamma000", "Cho_M2_gamma005"),
                                              missing_rates = c("miss30", "miss50"),
                                              scenario = "cho1",
                                              full_ps_specifications,
@@ -604,7 +604,7 @@ all_data_file.list = correct_model_all_data_file.list
 alpha.true.list = correct_model_alpha.true.list
 
 ##  Scenario cho2 ----
-simulate_all_settings_with_all_missing_rates(settings = c("Cho_RM2", "Cho_RM3"),
+simulate_all_settings_with_all_missing_rates(settings = c("Cho_M1", "Cho_M2"),
                                              missing_rates = missing_rates,
                                              scenario = "cho2",
                                              full_ps_specifications,

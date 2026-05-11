@@ -171,21 +171,21 @@ TABLE_CONFIG <- list(
        mu_desc = "binary outcome $Y$, where the set of candidate models includes a locally misspecified model with tilt function $\\exp(n^{-1/2}(Y+U_1+U_2))$"),
 
   # Cho et al. scenarios
-  list(setting = "Cho_RM2q", scenario = "cho1",
-       description = "Cho RM2' gamma=0",
-       mu_desc = "$\\gamma = 0$ and missing mechanism (RM2'), where $\\pi_2(\\bm{X}, Y; \\bm{\\alpha}_2)$ is the correctly specified model"),
+  list(setting = "Cho_M1_gamma000", scenario = "cho1",
+       description = "Cho M1 gamma=0",
+       mu_desc = "$\\gamma = 0$ and missing mechanism (M1), where $\\pi_1(\\bm{X}, Y; \\bm{\\alpha}_1)$ is the correctly specified model"),
 
-  list(setting = "Cho_RM3q", scenario = "cho2",
-       description = "Cho RM3' gamma=0",
-       mu_desc = "$\\gamma = 0$ and missing mechanism (RM3'), where $\\pi_3(\\bm{X}, Y; \\bm{\\alpha}_3)$ is the correctly specified model"),
+  list(setting = "Cho_M2_gamma000", scenario = "cho2",
+       description = "Cho M2 gamma=0",
+       mu_desc = "$\\gamma = 0$ and missing mechanism (M2), where $\\pi_2(\\bm{X}, Y; \\bm{\\alpha}_2)$ is the correctly specified model"),
 
-  list(setting = "Cho_RM2p", scenario = "cho1",
-       description = "Cho RM2' gamma=0.05",
-       mu_desc = "$\\gamma = 0.05$ and missing mechanism (RM2'), where $\\pi_2(\\bm{X}, Y; \\bm{\\alpha}_2)$ is the correctly specified model"),
+  list(setting = "Cho_M1_gamma005", scenario = "cho1",
+       description = "Cho M1 gamma=0.05",
+       mu_desc = "$\\gamma = 0.05$ and missing mechanism (M1), where $\\pi_1(\\bm{X}, Y; \\bm{\\alpha}_1)$ is the correctly specified model"),
 
-  list(setting = "Cho_RM3p", scenario = "cho2",
-       description = "Cho RM3' gamma=0.05",
-       mu_desc = "$\\gamma = 0.05$ and missing mechanism (RM3'), where $\\pi_3(\\bm{X}, Y; \\bm{\\alpha}_3)$ is the correctly specified model")
+  list(setting = "Cho_M2_gamma005", scenario = "cho2",
+       description = "Cho M2 gamma=0.05",
+       mu_desc = "$\\gamma = 0.05$ and missing mechanism (M2), where $\\pi_2(\\bm{X}, Y; \\bm{\\alpha}_2)$ is the correctly specified model")
 )
 
 #------------------------------------------------------------------------------#
@@ -583,10 +583,10 @@ generate_all_tables(configs = configs_test49, version = "test53")
 #                     output_file = "simulation_tables_8-2_8-3_8-4.tex")
 
 # Generate Cho et al. tables with test22-6 version
-# Cho_RM2p, Cho_RM2q under cho1; Cho_RM3p, Cho_RM3q under cho2
+# Cho_M1_gamma005, Cho_M1_gamma000 under cho1; Cho_M2_gamma005, Cho_M2_gamma000 under cho2
 cho_configs <- TABLE_CONFIG[sapply(TABLE_CONFIG, function(x) {
-  (x$setting %in% c("Cho_RM2p", "Cho_RM2q") && x$scenario == "cho1") ||
-  (x$setting %in% c("Cho_RM3p", "Cho_RM3q") && x$scenario == "cho2")
+  (x$setting %in% c("Cho_M1_gamma005", "Cho_M1_gamma000") && x$scenario == "cho1") ||
+  (x$setting %in% c("Cho_M2_gamma005", "Cho_M2_gamma000") && x$scenario == "cho2")
 })]
 generate_all_tables(configs = cho_configs, version = "test22-6",
                     output_file = "simulation_tables_cho.tex")

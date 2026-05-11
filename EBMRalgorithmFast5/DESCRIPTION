@@ -1,0 +1,19 @@
+Package: EBMRalgorithmFast5
+Type: Package
+Title: EBMR Algorithm with Analytical Gradients for Fast GMM Estimation
+Version: 5.0.0
+Author: Ming-Ju Chuang
+Maintainer: Ming-Ju Chuang <yourself@somewhere.net>
+Description: Enhanced EBMR algorithm with analytical gradients and Gauss-Newton
+    solver for fast GMM estimation of propensity score models and ensemble weights.
+License: MIT
+Encoding: UTF-8
+LazyData: true
+Imports:
+  R6,
+  stringr,
+  Matrix,
+  dplyr,
+  numDeriv
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3

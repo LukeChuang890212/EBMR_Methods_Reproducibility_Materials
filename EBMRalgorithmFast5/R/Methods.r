@@ -425,69 +425,38 @@ ensemble = function(ps.matrix, h_nu, init = NULL, se.fit = T, wt = NULL) {
   # Precompute r as vector once
   r_vec = as.vector(r)
 
-  # Optimized Phi_nu: avoid redundant as.vector calls
+  # Precompute inverse PS matrix: 1/pi_j for each model
+  inv_ps.matrix = 1 / ps.matrix  # n x J
+
+  # New Phi_nu: g(nu) = (r * (nu_1/pi_1 + ... + nu_J/pi_J) - 1) * h_x
+  # Linear in nu — eliminates CUE bimodality
   Phi_nu = function(param){
-    ps_nu = as.vector(ps.matrix %*% param)
-    rw = r_vec / ps_nu
+    rw = r_vec * as.vector(inv_ps.matrix %*% param)
     g.matrix = (rw - 1) * h_x
     return(wt * g.matrix)
   }
 
-  # Analytical gradient of g(nu) for ensemble - OPTIMIZED
-  # g(nu) = (r/(ps.matrix %*% nu) - 1) * h_x
-  # d(g_l)/d(nu_j) = -r/(ps.matrix %*% nu)^2 * ps.matrix[,j] * h_x[,l]
-  #
-  # Precompute constant parts outside the function
+  # Analytical gradient: dg_i/dnu_j = r_i / pi_ji * h_x_i
+  # This is CONSTANT w.r.t. nu — precompute once
+  # dg_nu returns 3D array (n, J, h_dim)
+  dg_nu_arr = array(0, dim = c(n, J, h_dim))
+  for (j in 1:J) {
+    dg_nu_arr[, j, ] = (wt * r_vec * inv_ps.matrix[, j]) * h_x
+  }
+
   dg_nu <- function(param) {
-    ps_nu = as.vector(ps.matrix %*% param)
-    # wt folded into neg_r_ps2 to avoid broadcasting issues with 3D arrays
-    neg_r_ps2 = wt * (-r_vec / (ps_nu * ps_nu))  # n vector
-
-    # Build 3D array: Gamma_arr[i, j, l] = neg_r_ps2[i] * ps.matrix[i,j] * h_x[i,l]
-    base_mat = neg_r_ps2 * ps.matrix  # n x J matrix
-
-    # Efficient construction using array recycling
-    Gamma_arr = array(0, dim = c(n, J, h_dim))
-    for (l in 1:h_dim) {
-      Gamma_arr[, , l] = base_mat * h_x[, l]
-    }
-
-    return(Gamma_arr)
+    return(dg_nu_arr)
   }
 
-  # Analytical second derivative (Hessian) for Gamma_2 in ensemble - OPTIMIZED
-  # d(Gamma[l,j])/d(nu_k) = mean(dc_factor * ps.matrix[,k] * ps.matrix[,j] * h_x[,l])
-  # Output is (h_dim * J) x J matrix
+  # Second derivative: d(Gamma)/d(nu) = 0 (Gamma is constant)
   d2g_nu <- function(param) {
-    ps_nu = as.vector(ps.matrix %*% param)
-    dc_factor = 2 * r_vec / (ps_nu * ps_nu * ps_nu)  # n vector
-
-    # Precompute dc_factor * ps.matrix
-    dc_ps = dc_factor * ps.matrix  # n x J
-
-    # Use crossprod for faster computation
-    # result[row_idx, k] = mean(dc_ps[,k] * ps_j * h_x[,l]) = crossprod(dc_ps, ps_j * h_x[,l]) / n
-    result = matrix(0, h_dim * J, J)
-
-    for (j in 1:J) {
-      ps_j_h_x = ps.matrix[, j] * h_x  # n x h_dim matrix
-      # For all l at once: crossprod(dc_ps, ps_j_h_x) gives J x h_dim matrix
-      # Each column l gives result[(l-1)*J + j, ] for all k
-      block = crossprod(dc_ps, ps_j_h_x) / n  # J x h_dim
-      for (l in 1:h_dim) {
-        result[(l-1)*J + j, ] = block[, l]
-      }
-    }
-    return(result)
+    matrix(0, h_dim * J, J)
   }
 
-  # Fast Gamma function for ensemble: returns E[dg_nu/dnu] (h_dim x J) directly
-  # Gamma_mat[l,j] = mean_i(neg_r_ps2[i] * ps.matrix[i,j] * h_x[i,l])
-  #                = (1/n) * crossprod(h_x * neg_r_ps2, ps.matrix)[l,j]
+  # Fast Gamma function: constant, Gamma[l,j] = mean(r/pi_j * h_x_l)
+  Gamma_nu_const = crossprod(h_x * (wt * r_vec), inv_ps.matrix) / n  # h_dim x J
   Gamma_nu_direct <- function(param) {
-    ps_nu = as.vector(ps.matrix %*% param)
-    neg_r_ps2 = wt * (-r_vec / (ps_nu * ps_nu))
-    crossprod(h_x * neg_r_ps2, ps.matrix) / n  # h_dim x J
+    Gamma_nu_const
   }
 
   # Starting value: use init if provided, otherwise uniform
@@ -574,24 +543,24 @@ EBMR_IPW = function(h_nu, model_indices = NULL, nu_init = rep(1/J, J), se.fit = 
   #-----------------------------------------------------------------------------#
 
   #-----------------------------------------------------------------------------#
-  # IPW estimator for the population mean mu_0 with propensity score being estimated
-  # by the methods of Wang, Shao and Kim (2014).
+  # IPW estimator: mu = (1/n) sum r_i * (w1/pi1_i + ... + wJ/piJ_i) * y_i
   #-----------------------------------------------------------------------------#
+  inv_ps.matrix = 1 / ps.matrix  # n x J
+  w_ipw = as.vector(inv_ps.matrix %*% w.hat)  # per-obs IPW weight
+
   if (type == "HT") {
-    mu_ipw = ifelse(is.null(wt), mean(r/ensemble_ps*y), mean(wt*r/ensemble_ps*y))
+    mu_ipw = ifelse(is.null(wt), mean(r*w_ipw*y), mean(wt*r*w_ipw*y))
   } else {
-    A_hat = ifelse(is.null(wt), mean(r/ensemble_ps*y), mean(wt*r/ensemble_ps*y))
-    B_hat = ifelse(is.null(wt), mean(r/ensemble_ps), mean(wt*r/ensemble_ps))
+    A_hat = ifelse(is.null(wt), mean(r*w_ipw*y), mean(wt*r*w_ipw*y))
+    B_hat = ifelse(is.null(wt), mean(r*w_ipw), mean(wt*r*w_ipw))
     mu_ipw = A_hat / B_hat
   }
   se_ipw = NA
   if(se.fit){
     #--------------------------------------------------------------------------#
-    # Compute necessary quantities to estimate the influence function:
-    # \psi(\bm{\alpha}_*, \bm{\nu}_*)
+    # Compute necessary quantities to estimate the influence function
     #--------------------------------------------------------------------------#
     # Analytical gradient for dot_pi
-    # Raw model: pi = f(eta), d(pi)/d(alpha) = f'(eta)*X
     dot_pi = matrix(NA, n, sum(alpha_dim))
     for(j in 1:J){
       pi_j = ps_fit.list[[j]]$fitted.values
@@ -611,10 +580,8 @@ EBMR_IPW = function(h_nu, model_indices = NULL, nu_init = rep(1/J, J), se.fit = 
 
       col_idx = (sum(alpha_dim[0:(j-1)])+1):sum(alpha_dim[1:j])
       if (link_type_j == "logistic_complement") {
-        # f'(eta) = -pi*(1-pi)
         dot_pi[, col_idx] = -design_mat * (pi_j * (1 - pi_j))
       } else if (link_type_j == "logistic") {
-        # f'(eta) = pi*(1-pi)
         dot_pi[, col_idx] = design_mat * (pi_j * (1 - pi_j))
       } else if (link_type_j == "probit") {
         eta_j = qnorm(pi_j)
@@ -629,36 +596,63 @@ EBMR_IPW = function(h_nu, model_indices = NULL, nu_init = rep(1/J, J), se.fit = 
       nu = as.vector(nu)
       (diag(2*nu)*sum(nu^2)-2*(nu)%*%t(nu^2))/(sum(nu^2)^2)
     }
-    # Precompute common factor used multiple times
+
+    # H_alpha.w: dmu/dalpha (sign convention: positive, subtracted later)
+    # mu = mean(r * sum_j(w_j/pi_j) * y)
+    # dmu/dalpha_{j,m} = mean(r * y * w_j * (-1/pi_j^2) * dpi_j/dalpha_{j,m})
+    # Store as positive (drop the negative) to match subtraction in iid formula
     if (type == "HT") {
-      ry_ps_inv2 = as.vector(r*y*((ensemble_ps)^(-2)))
+      H_alpha.w = numeric(sum(alpha_dim))
+      for (j in 1:J) {
+        pi_j = ps_fit.list[[j]]$fitted.values
+        col_idx = (sum(alpha_dim[0:(j-1)])+1):sum(alpha_dim[1:j])
+        factor_j = as.vector(r * y * w.hat[j] / (pi_j^2))
+        H_alpha.w[col_idx] = colMeans(factor_j * dot_pi[, col_idx, drop=FALSE])
+      }
     } else {
-      ry_ps_inv2 = as.vector(r*(y - mu_ipw)*((ensemble_ps)^(-2)) / B_hat)
+      H_alpha.w = numeric(sum(alpha_dim))
+      for (j in 1:J) {
+        pi_j = ps_fit.list[[j]]$fitted.values
+        col_idx = (sum(alpha_dim[0:(j-1)])+1):sum(alpha_dim[1:j])
+        factor_j = as.vector(r * (y - mu_ipw) * w.hat[j] / (pi_j^2) / B_hat)
+        H_alpha.w[col_idx] = colMeans(factor_j * dot_pi[, col_idx, drop=FALSE])
+      }
     }
 
-    H_alpha.w = colMeans(t(t(dot_pi)*rep(w.hat, alpha_dim))*ry_ps_inv2)
     psi_alpha = do.call(rbind, lapply(ps_fit.list, function(ps_fit) ps_fit$gmm_fit$psi))
 
     # Base influence function (alpha estimation uncertainty only)
     if (type == "HT") {
-      mu_ipw.iid = as.vector(t(r/ensemble_ps*y) - t(H_alpha.w)%*%psi_alpha)
+      mu_ipw.iid = as.vector(t(r*w_ipw*y) - t(H_alpha.w)%*%psi_alpha)
     } else {
-      base_term = as.vector(r/ensemble_ps*(y - mu_ipw) / B_hat)
+      base_term = as.vector(r*w_ipw*(y - mu_ipw) / B_hat)
       mu_ipw.iid = as.vector(t(base_term) - t(H_alpha.w)%*%psi_alpha)
     }
 
     # Add ensemble (nu) estimation uncertainty when J > 1
     if (J > 1) {
       dot_W_nu_hat = dot_W(nu.hat)
-      w.H_nu = colMeans(ps.matrix%*%t(dot_W_nu_hat) * ry_ps_inv2)
+
+      # w.H_nu: dmu/dnu = mean(r * y * inv_ps.matrix %*% t(dot_W))
+      if (type == "HT") {
+        w.H_nu = colMeans(as.vector(r*y) * (inv_ps.matrix %*% t(dot_W_nu_hat)))
+      } else {
+        w.H_nu = colMeans(as.vector(r*(y - mu_ipw)/B_hat) * (inv_ps.matrix %*% t(dot_W_nu_hat)))
+      }
+
       psi_nu = ensemble_fit$gmm_fit$psi
       Gamma_nu = ensemble_fit$gmm_fit$Gamma.hat
       W_nu = ensemble_fit$gmm_fit$W.hat
       h_nu = ensemble_fit$h_x
 
-      ps_nu = as.vector(ps.matrix%*%nu.hat)
-      r_ps_nu_inv2 = as.vector(-r*(ps_nu^(-2)))
-      Phi_nu.alpha = crossprod(cbind(h_nu)*r_ps_nu_inv2, t(t(dot_pi)*rep(nu.hat, alpha_dim)))/n
+      # Phi_nu.alpha for new g: dG_nu/dalpha
+      Phi_nu.alpha = matrix(0, ncol(h_nu), sum(alpha_dim))
+      for (jj in 1:J) {
+        pi_jj = ps_fit.list[[jj]]$fitted.values
+        col_idx = (sum(alpha_dim[0:(jj-1)])+1):sum(alpha_dim[1:jj])
+        factor_jj = as.vector(-r * nu.hat[jj] / (pi_jj^2))
+        Phi_nu.alpha[, col_idx] = crossprod(cbind(h_nu) * factor_jj, dot_pi[, col_idx, drop=FALSE]) / n
+      }
 
       GtW_nu = crossprod(Gamma_nu, W_nu)
       dot_nu = -solve(GtW_nu %*% Gamma_nu) %*% GtW_nu %*% Phi_nu.alpha
@@ -816,13 +810,15 @@ EBMR_IPW_with_locally_misspecified_model = function(ps.matrix, perturb_ps, exp_t
     W_nu = ensemble_fit$gmm_fit$W.hat
     h_nu = ensemble_fit$h_x
 
-    # Precompute ps.matrix %*% nu.hat once
-    ps_nu = as.vector(ps.matrix%*%nu.hat)
-    r_ps_nu_inv2 = as.vector(-r*(ps_nu^(-2)))
-
-    # Use crossprod for better performance: crossprod(A, B) = t(A) %*% B
-    # Optimized: avoid double transpose in second argument
-    Phi_nu.alpha = crossprod(cbind(h_nu)*r_ps_nu_inv2, dot_pi * rep(nu.hat, alpha_dim))/n
+    # Phi_nu.alpha for new g: dG_nu/dalpha
+    # dg_i/dalpha_j = -r_i * nu_j / pi_j^2 * dpi_j/dalpha_j * h_x_i
+    Phi_nu.alpha = matrix(0, ncol(h_nu), sum(alpha_dim))
+    for (jj in 1:J) {
+      pi_jj = ps_fit.list[[jj]]$fitted.values
+      col_idx = (sum(alpha_dim[0:(jj-1)])+1):sum(alpha_dim[1:jj])
+      factor_jj = as.vector(-r * nu.hat[jj] / (pi_jj^2))
+      Phi_nu.alpha[, col_idx] = crossprod(cbind(h_nu) * factor_jj, dot_pi[, col_idx, drop=FALSE]) / n
+    }
 
     # Use crossprod for t(Gamma_nu)%*%W_nu
     GtW_nu = crossprod(Gamma_nu, W_nu)  # t(Gamma_nu) %*% W_nu
@@ -1200,12 +1196,14 @@ EBMR_IPW_regression = function(h_nu, reg_formula, family = "gaussian",
     W_nu = ensemble_fit$gmm_fit$W.hat
     h_nu_mat = ensemble_fit$h_x
 
-    # Precompute ps.matrix %*% nu.hat once
-    ps_nu = as.vector(ps.matrix %*% nu.hat)
-    r_ps_nu_inv2 = as.vector(-r_vec * (ps_nu^(-2)))
-
-    # Phi_nu.alpha for ensemble (same structure as EBMR_IPW)
-    Phi_nu.alpha = crossprod(cbind(h_nu_mat) * r_ps_nu_inv2, t(t(dot_pi) * rep(nu.hat, alpha_dim))) / n
+    # Phi_nu.alpha for new g: dG_nu/dalpha
+    Phi_nu.alpha = matrix(0, ncol(h_nu_mat), sum(alpha_dim))
+    for (jj in 1:J) {
+      pi_jj = ps_fit.list[[jj]]$fitted.values
+      col_idx = (sum(alpha_dim[0:(jj-1)])+1):sum(alpha_dim[1:jj])
+      factor_jj = as.vector(-r_vec * nu.hat[jj] / (pi_jj^2))
+      Phi_nu.alpha[, col_idx] = crossprod(cbind(h_nu_mat) * factor_jj, dot_pi[, col_idx, drop=FALSE]) / n
+    }
 
     GtW_nu = crossprod(Gamma_nu, W_nu)
     dot_nu = -solve(GtW_nu %*% Gamma_nu) %*% GtW_nu %*% Phi_nu.alpha

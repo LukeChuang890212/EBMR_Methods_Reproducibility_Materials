@@ -1589,7 +1589,7 @@ setting19.B2 = function(n){
   return(dat)
 }
 
-Cho_RM2.A1 = function(n, response.rate){
+Cho_M1.A1 = function(n, response.rate){
   x1 = rnorm(n, mean = 1, sd = sqrt(1/3))
   x2 = rnorm(n, mean = 1, sd = sqrt(1/3))
   x3 = rnorm(n, mean = 1, sd = sqrt(1/3))
@@ -1615,7 +1615,7 @@ Cho_RM2.A1 = function(n, response.rate){
   return(dat)
 }
 
-Cho_RM2.A2 = function(n, response.rate){
+Cho_M1.A2 = function(n, response.rate){
   x1 = rnorm(n, mean = 1, sd = sqrt(1/3))
   x2 = rnorm(n, mean = 1, sd = sqrt(1/3))
   # x2 = rbinom(n, size = 1, prob = 0.35)
@@ -1644,7 +1644,7 @@ Cho_RM2.A2 = function(n, response.rate){
   return(dat)
 }
 
-Cho_RM3.A1 = function(n, response.rate){
+Cho_M2.A1 = function(n, response.rate){
   x1 = rnorm(n, mean = 1, sd = sqrt(1/3))
   x2 = rnorm(n, mean = 1, sd = sqrt(1/3))
 
@@ -1669,7 +1669,7 @@ Cho_RM3.A1 = function(n, response.rate){
   return(dat)
 }
 
-Cho_RM3.A2 = function(n, response.rate){
+Cho_M2.A2 = function(n, response.rate){
   x1 = rnorm(n, mean = 1, sd = sqrt(1/3))
   x2 = rnorm(n, mean = 1, sd = sqrt(1/3))
 
@@ -1719,7 +1719,7 @@ Cho_RM4 = function(n, response.rate){
   return(dat)
 }
 
-Cho_RM2p.A1 = function(n, response.rate){
+Cho_M1_gamma005.A1 = function(n, response.rate){
   x1 = rnorm(n, mean = 0, sd = sqrt(1/3))
   x2 = rnorm(n, mean = 0, sd = sqrt(1/3))
   x3 = rnorm(n, mean = 0, sd = 1)
@@ -1745,7 +1745,7 @@ Cho_RM2p.A1 = function(n, response.rate){
   return(dat)
 }
 
-Cho_RM2p.A2 = function(n, response.rate){
+Cho_M1_gamma005.A2 = function(n, response.rate){
   x1 = rnorm(n, mean = 0, sd = sqrt(1/3))
   x2 = rnorm(n, mean = 0, sd = sqrt(1/3))
   x3 = rnorm(n, mean = 0, sd = 1)
@@ -1772,7 +1772,7 @@ Cho_RM2p.A2 = function(n, response.rate){
   return(dat)
 }
 
-Cho_RM3p.A1 = function(n, response.rate){
+Cho_M2_gamma005.A1 = function(n, response.rate){
   x1 = rnorm(n, mean = 0, sd = sqrt(1/3))
   x2 = rnorm(n, mean = 0, sd = sqrt(1/3))
   x3 = rnorm(n, mean = 0, sd = 1)
@@ -1798,7 +1798,7 @@ Cho_RM3p.A1 = function(n, response.rate){
   return(dat)
 }
 
-Cho_RM3p.A2 = function(n, response.rate){
+Cho_M2_gamma005.A2 = function(n, response.rate){
   x1 = rnorm(n, mean = 0, sd = sqrt(1/3))
   x2 = rnorm(n, mean = 0, sd = sqrt(1/3))
   x3 = rnorm(n, mean = 0, sd = 1)
@@ -1824,7 +1824,7 @@ Cho_RM3p.A2 = function(n, response.rate){
   return(dat)
 }
 
-Cho_RM2q.A1 = function(n, response.rate){
+Cho_M1_gamma000.A1 = function(n, response.rate){
   x1 = rnorm(n, mean = 0, sd = sqrt(1/3))
   x2 = rnorm(n, mean = 0, sd = sqrt(1/3))
   x3 = rnorm(n, mean = 0, sd = 1)
@@ -1850,7 +1850,7 @@ Cho_RM2q.A1 = function(n, response.rate){
   return(dat)
 }
 
-Cho_RM2q.A2 = function(n, response.rate){
+Cho_M1_gamma000.A2 = function(n, response.rate){
   x1 = rnorm(n, mean = 0, sd = sqrt(1/3))
   x2 = rnorm(n, mean = 0, sd = sqrt(1/3))
   x3 = rnorm(n, mean = 0, sd = 1)
@@ -1877,7 +1877,7 @@ Cho_RM2q.A2 = function(n, response.rate){
   return(dat)
 }
 
-Cho_RM3q.A1 = function(n, response.rate){
+Cho_M2_gamma000.A1 = function(n, response.rate){
   x1 = rnorm(n, mean = 0, sd = sqrt(1/3))
   x2 = rnorm(n, mean = 0, sd = sqrt(1/3))
   x3 = rnorm(n, mean = 0, sd = 1)
@@ -1903,7 +1903,7 @@ Cho_RM3q.A1 = function(n, response.rate){
   return(dat)
 }
 
-Cho_RM3q.A2 = function(n, response.rate){
+Cho_M2_gamma000.A2 = function(n, response.rate){
   x1 = rnorm(n, mean = 0, sd = sqrt(1/3))
   x2 = rnorm(n, mean = 0, sd = sqrt(1/3))
   x3 = rnorm(n, mean = 0, sd = 1)
@@ -1928,3 +1928,205 @@ Cho_RM3q.A2 = function(n, response.rate){
   dat = data.frame(x1 = x1, x2 = x2, x3 = x3, y = y, r = r)
   return(dat)
 }
+
+# Cho_M1_gamma005.A1 = function(n, response.rate){
+#   x1 = rnorm(n, mean = 0, sd = sqrt(1/3))
+#   x2 = rnorm(n, mean = 0, sd = sqrt(1/3))
+#   
+#   m = function(x1, x2, x3) 0.5+0.5*x1+x2+0.05*(x1^2-1/3)
+#   y = rnorm(n, mean = m(x1, x2, x3), sd = sqrt(1/3))
+#   mean(y)
+#   
+#   response.prob = function(y, x1, x2){
+#     eta = 0.1244 - 0.5*x1 - 0.25*y
+#     propensity = exp(eta)/(1+exp(eta))
+#     return(propensity)
+#   }
+#   
+#   propensity = response.prob(y, x1, x2)
+#   # propensity[propensity > 1] = 0.95
+#   r = rbinom(n, size = 1, prob = propensity)
+#   mean(r)
+#   
+#   mean(y[r == 1]); mean(y[r == 0]);
+#   
+#   dat = data.frame(x1 = x1, x2 = x2, y = y, r = r)
+#   return(dat)
+# }
+# 
+# Cho_M1_gamma005.A2 = function(n, response.rate){
+#   x1 = rnorm(n, mean = 0, sd = sqrt(1/3))
+#   x2 = rnorm(n, mean = 0, sd = sqrt(1/3))
+#   
+#   m = function(x1, x2, x3, x4) 0.5+0.5*x1+x2+0.05*(x1^2-1/3)
+#   y = rnorm(n, mean = m(x1, x2, x3, x4), sd = sqrt(1/3))
+#   # y = rbinom(n, size = 1, prob = exp(m(x1, x2, x3))/(1+exp(m(x1, x2, x3))))
+#   mean(y)
+#   
+#   response.prob = function(y, x1, x2){
+#     eta = 1.0098 - 0.5*x1 - 0.25*y
+#     propensity = exp(eta)/(1+exp(eta))
+#     return(propensity)
+#   }
+#   
+#   propensity = response.prob(y, x1, x2)
+#   # propensity[propensity > 1] = 0.95
+#   r = rbinom(n, size = 1, prob = propensity)
+#   mean(r)
+#   
+#   mean(y[r == 1]); mean(y[r == 0]);
+#   
+#   dat = data.frame(x1 = x1, x2 = x2, y = y, r = r)
+#   return(dat)
+# }
+# 
+# Cho_M2_gamma005.A1 = function(n, response.rate){
+#   x1 = rnorm(n, mean = 0, sd = sqrt(1/3))
+#   x2 = rnorm(n, mean = 0, sd = sqrt(1/3))
+#   
+#   m = function(x1, x2) 0.5+0.5*x1+x2+0.05*(x1^2-1/3)
+#   y = rnorm(n, mean = m(x1, x2), sd = sqrt(1/3))
+#   mean(y)
+#   
+#   response.prob = function(y, x1, x2){
+#     eta = -0.125 + 0.5*x2 + 0.25*y
+#     propensity = exp(eta)/(1+exp(eta))
+#     return(propensity)
+#   }
+#   
+#   propensity = response.prob(y, x1, x2)
+#   # propensity[propensity > 1] = 0.95
+#   r = rbinom(n, size = 1, prob = propensity)
+#   mean(r)
+#   
+#   mean(y[r == 1]); mean(y[r == 0]);
+#   
+#   dat = data.frame(x1 = x1, x2 = x2, y = y, r = r)
+#   return(dat)
+# }
+# 
+# Cho_M2_gamma005.A2 = function(n, response.rate){
+#   x1 = rnorm(n, mean = 0, sd = sqrt(1/3))
+#   x2 = rnorm(n, mean = 0, sd = sqrt(1/3))
+#   
+#   m = function(x1, x2) 0.5+0.5*x1+x2+0.05*(x1^2-1/3)
+#   y = rnorm(n, mean = m(x1, x2), sd = sqrt(1/3))
+#   mean(y)
+#   
+#   response.prob = function(y, x1, x2){
+#     eta = 0.7679 + 0.5*x2 + 0.25*y
+#     propensity = exp(eta)/(1+exp(eta))
+#     return(propensity)
+#   }
+#   
+#   propensity = response.prob(y, x1, x2)
+#   # propensity[propensity > 1] = 0.95
+#   r = rbinom(n, size = 1, prob = propensity)
+#   mean(r)
+#   
+#   mean(y[r == 1]); mean(y[r == 0]);
+#   
+#   dat = data.frame(x1 = x1, x2 = x2, y = y, r = r)
+#   return(dat)
+# }
+# 
+# Cho_M1_gamma000.A1 = function(n, response.rate){
+#   x1 = rnorm(n, mean = 0, sd = sqrt(1/3))
+#   x2 = rnorm(n, mean = 0, sd = sqrt(1/3))
+#   
+#   m = function(x1, x2, x3) 0.5+0.5*x1+x2
+#   y = rnorm(n, mean = m(x1, x2, x3), sd = sqrt(1/3))
+#   mean(y)
+#   
+#   response.prob = function(y, x1, x2){
+#     eta = 0.1246 - 0.5*x1 - 0.25*y
+#     propensity = exp(eta)/(1+exp(eta))
+#     return(propensity)
+#   }
+#   
+#   propensity = response.prob(y, x1, x2)
+#   # propensity[propensity > 1] = 0.95
+#   r = rbinom(n, size = 1, prob = propensity)
+#   mean(r)
+#   
+#   mean(y[r == 1]); mean(y[r == 0]);
+#   
+#   dat = data.frame(x1 = x1, x2 = x2, y = y, r = r)
+#   return(dat)
+# }
+# 
+# Cho_M1_gamma000.A2 = function(n, response.rate){
+#   x1 = rnorm(n, mean = 0, sd = sqrt(1/3))
+#   x2 = rnorm(n, mean = 0, sd = sqrt(1/3))
+#   
+#   m = function(x1, x2, x3, x4) 0.5+0.5*x1+x2
+#   y = rnorm(n, mean = m(x1, x2, x3, x4), sd = sqrt(1/3))
+#   # y = rbinom(n, size = 1, prob = exp(m(x1, x2, x3))/(1+exp(m(x1, x2, x3))))
+#   mean(y)
+#   
+#   response.prob = function(y, x1, x2){
+#     eta = 1.0099 - 0.5*x1 - 0.25*y
+#     propensity = exp(eta)/(1+exp(eta))
+#     return(propensity)
+#   }
+#   
+#   propensity = response.prob(y, x1, x2)
+#   # propensity[propensity > 1] = 0.95
+#   r = rbinom(n, size = 1, prob = propensity)
+#   mean(r)
+#   
+#   mean(y[r == 1]); mean(y[r == 0]);
+#   
+#   dat = data.frame(x1 = x1, x2 = x2, y = y, r = r)
+#   return(dat)
+# }
+# 
+# Cho_M2_gamma000.A1 = function(n, response.rate){
+#   x1 = rnorm(n, mean = 0, sd = sqrt(1/3))
+#   x2 = rnorm(n, mean = 0, sd = sqrt(1/3))
+#   
+#   m = function(x1, x2) 0.5+0.5*x1+x2
+#   y = rnorm(n, mean = m(x1, x2), sd = sqrt(1/3))
+#   mean(y)
+#   
+#   response.prob = function(y, x1, x2){
+#     eta = -0.125 + 0.5*x2 + 0.25*y
+#     propensity = exp(eta)/(1+exp(eta))
+#     return(propensity)
+#   }
+#   
+#   propensity = response.prob(y, x1, x2)
+#   # propensity[propensity > 1] = 0.95
+#   r = rbinom(n, size = 1, prob = propensity)
+#   mean(r)
+#   
+#   mean(y[r == 1]); mean(y[r == 0]);
+#   
+#   dat = data.frame(x1 = x1, x2 = x2, y = y, r = r)
+#   return(dat)
+# }
+# 
+# Cho_M2_gamma000.A2 = function(n, response.rate){
+#   x1 = rnorm(n, mean = 0, sd = sqrt(1/3))
+#   x2 = rnorm(n, mean = 0, sd = sqrt(1/3))
+#   
+#   m = function(x1, x2) 0.5+0.5*x1+x2
+#   y = rnorm(n, mean = m(x1, x2), sd = sqrt(1/3))
+#   mean(y)
+#   
+#   response.prob = function(y, x1, x2){
+#     eta = 0.7679 + 0.5*x2 + 0.25*y
+#     propensity = exp(eta)/(1+exp(eta))
+#     return(propensity)
+#   }
+#   
+#   propensity = response.prob(y, x1, x2)
+#   # propensity[propensity > 1] = 0.95
+#   r = rbinom(n, size = 1, prob = propensity)
+#   mean(r)
+#   
+#   mean(y[r == 1]); mean(y[r == 0]);
+#   
+#   dat = data.frame(x1 = x1, x2 = x2, y = y, r = r)
+#   return(dat)
+# }

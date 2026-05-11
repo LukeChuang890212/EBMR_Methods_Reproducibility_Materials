@@ -222,11 +222,11 @@ FORMULAS <- list(
 #   - A function: function(data) -> data.frame/matrix with named columns
 #------------------------------------------------------------------------------#
 H_ALPHA <- list(
-  full = function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2,
-                             u1_u2 = dat$u1*dat$u2, z1_z2 = dat$z1*dat$z2,
-                             u1_z1 = dat$u1*dat$z1, z1_u2 = dat$z1*dat$u2,
-                             u1_z2 = dat$u1*dat$z2, u2_z2 = dat$u2*dat$z2),
-  # full = c("u1", "u2", "z1", "z2"),
+  # full = function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2,
+  #                            u1_u2 = dat$u1*dat$u2, z1_z2 = dat$z1*dat$z2,
+  #                            u1_z1 = dat$u1*dat$z1, z1_u2 = dat$z1*dat$u2,
+  #                            u1_z2 = dat$u1*dat$z2, u2_z2 = dat$u2*dat$z2),
+  full = c("u1", "u2", "z1", "z2"),
   # full = function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2,
   #                            u2_sq = dat$u2^2, z2_sq = dat$z2^2),
   u1_subset = c("u1", "z1", "z2"),
@@ -234,21 +234,21 @@ H_ALPHA <- list(
   z_only = c("z1", "z2"),
   u1u2_z1 = c("u1", "u2", "z1"),
   u1u2_z2 = c("u1", "u2", "z2"),
-  full_sq1 = function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2,
-                                 u1_u2 = dat$u1*dat$u2, z1_z2 = dat$z1*dat$z2,
-                                 u1_z1 = dat$u1*dat$z1, z1_u2 = dat$z1*dat$u2,
-                                 u1_z2 = dat$u1*dat$z2, u2_z2 = dat$u2*dat$z2, u2_sq = dat$u2^2),
-  full_sq2 = function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2,
-                                 u1_u2 = dat$u1*dat$u2, z1_z2 = dat$z1*dat$z2,
-                                 u1_z1 = dat$u1*dat$z1, z1_u2 = dat$z1*dat$u2,
-                                 u1_z2 = dat$u1*dat$z2, u2_z2 = dat$u2*dat$z2, z2_sq = dat$z2^2),
-  # full_sq1 = function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2, u2_sq = dat$u2^2),
-  # full_sq2 = function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2, z2_sq = dat$z2^2),
+  # full_sq1 = function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2,
+  #                                u1_u2 = dat$u1*dat$u2, z1_z2 = dat$z1*dat$z2,
+  #                                u1_z1 = dat$u1*dat$z1, z1_u2 = dat$z1*dat$u2,
+  #                                u1_z2 = dat$u1*dat$z2, u2_z2 = dat$u2*dat$z2, u2_sq = dat$u2^2),
+  # full_sq2 = function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2,
+  #                                u1_u2 = dat$u1*dat$u2, z1_z2 = dat$z1*dat$z2,
+  #                                u1_z1 = dat$u1*dat$z1, z1_u2 = dat$z1*dat$u2,
+  #                                u1_z2 = dat$u1*dat$z2, u2_z2 = dat$u2*dat$z2, z2_sq = dat$z2^2),
+  full_sq1 = function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2, u2_sq = dat$u2^2),
+  full_sq2 = function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2, z2_sq = dat$z2^2),
   with_v1 = c("u1", "u2", "z1", "z2", "v1"),
   with_v2 = c("u1", "u2", "z1", "z2", "v2"),
   with_v3 = c("u1", "u2", "v3"),
   with_v4 = c("u1", "u2", "v4"),
-  cho = c("x1", "x2", "x3")
+  cho = function(dat) cbind(x1 = dat$x1, x2 = dat$x2, x3 = dat$x3)
 )
 
 #------------------------------------------------------------------------------#
@@ -263,7 +263,9 @@ create_ps_spec <- function(formulas, h_alpha_list, inv_link = "logistic_compleme
     formula.list = formulas,
     h_alpha.list = h_alpha_list,
     inv_link = inv_link_fn,
-    outcome = outcome
+    outcome = outcome,
+    optimizer = NULL,
+    cond_threshold = NULL
   )
 }
 
@@ -629,19 +631,19 @@ SCENARIOS <- list(
 
   cho1 = create_scenario(
     id = "cho1",
-    description = "Cho2025: RM2/RM3 variants",
+    description = "Cho2025: M1 (gamma=0, gamma=0.05)",
     ps_spec_id = "cho1",
-    settings = c("Cho_RM2q", "Cho_RM2p"),
-    missing_rates = c("miss30", "miss50"),
+    settings = c("Cho_M1_gamma000", "Cho_M1_gamma005"),
+    missing_rates = c("miss50", "miss30"),
     model_type = "correct",
     version = "test7"
   ),
 
   cho2 = create_scenario(
     id = "cho2",
-    description = "Cho2025: RM2/RM3 misspecified",
+    description = "Cho2025: M2 (gamma=0, gamma=0.05)",
     ps_spec_id = "cho2",
-    settings = c("Cho_RM3q", "Cho_RM3p"),
+    settings = c("Cho_M2_gamma000", "Cho_M2_gamma005"),
     model_type = "correct",
     version = "test5"
   )
@@ -869,8 +871,60 @@ run_scenario <- function(scenario_id,
               formula.list = ps_spec$formula.list[model_set],
               h_alpha.list = ps_spec$h_alpha.list[model_set],
               inv_link = ps_spec$inv_link,
-              outcome = ps_spec$outcome
+              outcome = ps_spec$outcome,
+              optimizer = ps_spec$optimizer,
+              cond_threshold = ps_spec$cond_threshold
             )
+
+            # Check optimizer overrides from config file (per-model)
+            override_file <- "config/optimizer_overrides.txt"
+            if (file.exists(override_file)) {
+              override_lines <- readLines(override_file)
+              override_lines <- override_lines[!grepl("^#|^\\s*$", override_lines)]
+
+              # Initialize per-model lists (default: NULL = use package defaults)
+              J_sub <- length(model_set)
+              opt_list <- vector("list", J_sub)
+              cond_list <- vector("list", J_sub)
+              has_override <- FALSE
+
+              for (ol in override_lines) {
+                fields <- trimws(strsplit(ol, "\\|")[[1]])
+                if (length(fields) >= 7) {
+                  o_scenario <- fields[1]; o_setting <- fields[2]
+                  o_miss <- fields[3]; o_n <- as.numeric(fields[4])
+                  o_model_idx <- as.numeric(trimws(strsplit(fields[5], ",")[[1]]))
+                  o_optimizer <- fields[6]; o_cond <- as.numeric(fields[7])
+
+                  if (o_scenario == scenario_id && o_setting == setting &&
+                      o_miss == miss_rate && o_n == current_n) {
+                    # Apply override only to matching models within model_set
+                    for (k in seq_along(model_set)) {
+                      if (model_set[k] %in% o_model_idx) {
+                        opt_list[[k]] <- o_optimizer
+                        cond_list[[k]] <- o_cond
+                        has_override <- TRUE
+                      }
+                    }
+                  }
+                }
+              }
+
+              if (has_override) {
+                # Fill NULLs with defaults
+                for (k in seq_along(model_set)) {
+                  if (is.null(opt_list[[k]])) opt_list[[k]] <- "L-BFGS-B"
+                  if (is.null(cond_list[[k]])) cond_list[[k]] <- 1e8
+                }
+                subset_ps_spec$optimizer <- opt_list
+                subset_ps_spec$cond_threshold <- cond_list
+                # Report which models are overridden
+                overridden <- which(sapply(opt_list, function(x) x != "L-BFGS-B"))
+                cat("      [Override] Models", paste(model_set[overridden], collapse=","),
+                    "-> optimizer=", opt_list[[overridden[1]]],
+                    ", cond=", cond_list[[overridden[1]]], "\n")
+              }
+            }
 
             # Output file
             type_suffix <- if (type == "Hajek") "_Hajek" else ""
@@ -882,7 +936,28 @@ run_scenario <- function(scenario_id,
 
             # Check if already exists
             if (file.exists(save_file)) {
-              cat("      Already exists, skipping\n")
+              cat("      Already exists, showing summary:\n")
+              # Print summary even when skipping
+              sim_result <- readRDS(save_file)
+              cleaned <- clean_sim_result(sim_result, multiplier = 2, verbose = FALSE)
+              sim_clean <- cleaned$result
+              mu.true <- get_mu_true(setting)
+              bias_ipw <- round(mean(sim_clean[1, ], na.rm = TRUE) - mu.true, 3)
+              esd_ipw <- round(sd(sim_clean[1, ], na.rm = TRUE), 3)
+              ese_ipw <- round(mean(sim_clean[3, ], na.rm = TRUE), 3)
+              ci_lower <- sim_clean[1, ] - 1.96 * sim_clean[3, ]
+              ci_upper <- sim_clean[1, ] + 1.96 * sim_clean[3, ]
+              cp_ipw <- round(mean((ci_lower <= mu.true) & (mu.true <= ci_upper), na.rm = TRUE), 3)
+              bias_true <- round(mean(sim_clean[2, ], na.rm = TRUE) - mu.true, 3)
+              esd_true <- round(sd(sim_clean[2, ], na.rm = TRUE), 3)
+              ese_true <- round(mean(sim_clean[4, ], na.rm = TRUE), 3)
+              ci_lower_true <- sim_clean[2, ] - 1.96 * sim_clean[4, ]
+              ci_upper_true <- sim_clean[2, ] + 1.96 * sim_clean[4, ]
+              cp_true <- round(mean((ci_lower_true <= mu.true) & (mu.true <= ci_upper_true), na.rm = TRUE), 3)
+              cat("      Replicates: ", cleaned$n_successful, "/", cleaned$n_total,
+                  " (NA:", cleaned$n_na, ", Outliers:", cleaned$n_outliers, ")\n", sep = "")
+              cat("      IPW:      Bias=", bias_ipw, " ESD=", esd_ipw, " ESE=", ese_ipw, " CP=", cp_ipw, "\n", sep = "")
+              cat("      IPW.true: Bias=", bias_true, " ESD=", esd_true, " ESE=", ese_true, " CP=", cp_true, "\n", sep = "")
               next
             }
 
@@ -927,12 +1002,12 @@ run_scenario <- function(scenario_id,
             if (copied) next
 
             # Define true PS model function based on setting
-            ps_model.true <- if (setting %in% c("Cho_RM2", "Cho_RM2p", "Cho_RM2q")) {
+            ps_model.true <- if (setting %in% c("Cho_M1", "Cho_M1_gamma005", "Cho_M1_gamma000")) {
               function(dat, alpha.true) {
                 eta <- cbind(rep(1, nrow(dat)), dat$x1, dat$y) %*% alpha.true
                 exp(eta) / (1 + exp(eta))
               }
-            } else if (setting %in% c("Cho_RM3", "Cho_RM3p", "Cho_RM3q")) {
+            } else if (setting %in% c("Cho_M2", "Cho_M2_gamma005", "Cho_M2_gamma000")) {
               function(dat, alpha.true) {
                 eta <- cbind(rep(1, nrow(dat)), dat$x2, dat$y) %*% alpha.true
                 exp(eta) / (1 + exp(eta))
@@ -959,14 +1034,15 @@ run_scenario <- function(scenario_id,
               n = current_n,
               replicate_num = replicate_num,
               save_file = save_file,
-              type = type
+              type = type,
+              setting = setting
             )
 
             # Print console summary after simulation completes
             # Uses clean_sim_result() from Simulation.r for consistent logic
             if (file.exists(save_file)) {
               sim_result <- readRDS(save_file)
-              cleaned <- clean_sim_result(sim_result, multiplier = 3, verbose = FALSE)
+              cleaned <- clean_sim_result(sim_result, multiplier = 2, verbose = FALSE)
               sim_clean <- cleaned$result
 
               # Compute mu.true for this setting
