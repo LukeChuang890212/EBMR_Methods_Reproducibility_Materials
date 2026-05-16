@@ -388,7 +388,8 @@ WangShaoKim2014 = function(formula, outcome = NULL, h_alpha, inv_link,
 #' print(nu_estimates)
 #' }
 
-ensemble = function(ps.matrix, h_nu, init = NULL, se.fit = T, wt = NULL) {
+ensemble = function(ps.matrix, h_nu, init = NULL, se.fit = T, wt = NULL,
+                    nu_optimizer = "L-BFGS-B", nu_cond_threshold = 1e8) {
   # Basic setup
   r = as.matrix(private$r)
   n = private$n
@@ -494,7 +495,8 @@ ensemble = function(ps.matrix, h_nu, init = NULL, se.fit = T, wt = NULL) {
   uniform_init <- if (!is.null(init)) init else rep(1/J, J)
 
   gmm_fit <- private$gmm(Phi_nu, private$W_nu, n, h_dim, J, uniform_init, se.fit, dg_nu, d2g_nu,
-                          Gamma_direct = Gamma_nu_direct)
+                          Gamma_direct = Gamma_nu_direct,
+                          optimizer = nu_optimizer, cond_threshold = nu_cond_threshold)
 
   results = list(coefficients = gmm_fit$estimates,
                  h_x = h_x,
@@ -537,7 +539,8 @@ ensemble = function(ps.matrix, h_nu, init = NULL, se.fit = T, wt = NULL) {
 #' print(ipw_estimates)
 #' }
 
-EBMR_IPW = function(h_nu, model_indices = NULL, nu_init = rep(1/J, J), se.fit = TRUE, true_ps = NULL, wt = NULL, type = c("HT", "Hajek")) {
+EBMR_IPW = function(h_nu, model_indices = NULL, nu_init = rep(1/J, J), se.fit = TRUE, true_ps = NULL, wt = NULL, type = c("HT", "Hajek"),
+                    nu_optimizer = "L-BFGS-B", nu_cond_threshold = 1e8) {
   # Basic setup
   r = as.matrix(private$r)
   y = as.matrix(private$y)
@@ -567,7 +570,9 @@ EBMR_IPW = function(h_nu, model_indices = NULL, nu_init = rep(1/J, J), se.fit = 
   #-----------------------------------------------------------------------------#
   # Ensemble step
   #-----------------------------------------------------------------------------#
-  ensemble_fit = private$ensemble(ps.matrix, h_nu, nu_init, se.fit, wt = wt)
+  ensemble_fit = private$ensemble(ps.matrix, h_nu, nu_init, se.fit, wt = wt,
+                                  nu_optimizer = nu_optimizer,
+                                  nu_cond_threshold = nu_cond_threshold)
   nu.hat = ensemble_fit$coefficients
   w.hat = nu.hat^2/sum(nu.hat^2)
   ensemble_ps = ps.matrix%*%w.hat
