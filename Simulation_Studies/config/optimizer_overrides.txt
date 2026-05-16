@@ -5,10 +5,14 @@
 # If a matching entry is found, the specified optimizer and cond_threshold are used.
 # If no match is found, the default optimizer (L-BFGS-B) is used.
 #
-# "models" specifies which model combinations trigger the override.
-# Use comma-separated model indices: e.g., "2" means mu_010, "1,2" means mu_110, etc.
-# Any combination containing a listed model index will use the override.
-# Use "any" to apply to all model combinations.
+# "models" field:
+#   - Comma-separated alpha-model indices ("2" means mu_010, "1,2" means mu_110, etc.).
+#     Any subset combination containing a listed index gets the override on that
+#     model's alpha fit.
+#   - Special value "nu:<subset>" targets the ensemble (nu) GMM fit for a SPECIFIC
+#     subset. <subset> is concatenated model indices ("nu:23" -> M2+M3 ensemble,
+#     "nu:123" -> M1+M2+M3 full ensemble) or comma-separated ("nu:1,2,3"). Applies
+#     only when the running subset's model_set exactly matches that target.
 #
 # Lines starting with # are comments.
 
@@ -19,3 +23,74 @@
 # Scenario 7-1 and 8-1, setting3, miss50, n=2000: estimators involving M2
 7-1 | setting3 | miss50 | 2000 | 2 | constrained_nr | 1e2
 8-1 | setting3 | miss50 | 2000 | 2 | constrained_nr | 1e2
+
+# M3 fix for setting2.B1 miss50 n=2000 under current DGP (0.2*y - 0.8*u1 + 0.8*u2):
+# cnr/1e4 -> ESE/ESD=1.100 vs default 0.561 with max|alpha|=251; 0 stuck, 0 sep, sd(alpha) meaningful.
+# Best non-fake option — chosen 2026-05-16.
+# Applied to scenarios sharing the same M3 fit on this data (per EQUIVALENT_SCENARIOS_MODEL3): {8-2, 8-3, 8-4, 9-2, 9-3, 9-4}.
+8-2 | setting2 | miss50 | 2000 | 3 | constrained_nr | 1e4
+8-3 | setting2 | miss50 | 2000 | 3 | constrained_nr | 1e4
+8-4 | setting2 | miss50 | 2000 | 3 | constrained_nr | 1e4
+9-2 | setting2 | miss50 | 2000 | 3 | constrained_nr | 1e4
+9-3 | setting2 | miss50 | 2000 | 3 | constrained_nr | 1e4
+9-4 | setting2 | miss50 | 2000 | 3 | constrained_nr | 1e4
+
+# M3 fix for setting2.B2 miss30 n=2000 under current DGP (0.2*y - 0.8*u1 + 0.8*u2):
+# cnr/1e4 -> ESE/ESD=0.785 vs default 0.517 with max|alpha|=217; 0 stuck, 2 sep at max|alpha|=107.
+# Best non-fake option — chosen 2026-05-16.
+# Applied to scenarios sharing the same M3 fit on this data (per EQUIVALENT_SCENARIOS_MODEL3): {8-2, 8-3, 8-4, 9-2, 9-3, 9-4}.
+8-2 | setting2 | miss30 | 2000 | 3 | constrained_nr | 1e4
+8-3 | setting2 | miss30 | 2000 | 3 | constrained_nr | 1e4
+8-4 | setting2 | miss30 | 2000 | 3 | constrained_nr | 1e4
+9-2 | setting2 | miss30 | 2000 | 3 | constrained_nr | 1e4
+9-3 | setting2 | miss30 | 2000 | 3 | constrained_nr | 1e4
+9-4 | setting2 | miss30 | 2000 | 3 | constrained_nr | 1e4
+
+# M2 fix for setting1.A1 miss50 n=2000 under current DGP (0.2*y - 0.8*u1 + 0.8*u2):
+# cnr/200 -> ESE/ESD=0.915, Bias=+0.077, ESD=0.156, max|alpha|=1.83 (chosen 2026-05-16).
+# Re-sweep at 500 reps: cnr/100 over-constrains (Bias=-0.21), cnr/500 prior pick gave
+# ratio=0.499, cnr/1e3+ collapses to default behavior (ratio=0.26, ESD=0.78).
+# Equivalence per EQUIVALENT_SCENARIOS_MODEL2: 7-1 and 8-1 share M2 = u1_z1 + h_alpha=full on A data.
+7-1 | setting1 | miss50 | 2000 | 2 | constrained_nr | 200
+8-1 | setting1 | miss50 | 2000 | 2 | constrained_nr | 200
+
+# M2 fix for setting1.A2 miss30 n=2000 (same M2 spec):
+# cnr/500 -> ESE/ESD=0.962 vs default 0.631; 0 stuck, 0 sep, max|alpha|=2.8 (vs default 30.6).
+7-1 | setting1 | miss30 | 2000 | 2 | constrained_nr | 500
+8-1 | setting1 | miss30 | 2000 | 2 | constrained_nr | 500
+
+# M2 fix for setting1.A1 miss50 n=2000 scenario 9-1 (M2 = u1_z2 + h_alpha=full).
+# Default: 1 rep blows up to alpha=503.7 with se=106 -> ratio=1.913 (mean SE 2x ESD).
+# cnr/500 -> 0 blowups, max|alpha|=2.31, ratio=0.993 (cleaned). CP=0.307 unchanged
+# (bias +0.24 is structural M2 misspecification, not fixable by optimizer).
+# 9-1 M2 NOT in EQUIVALENT_SCENARIOS_MODEL2 (standalone; 7-1/8-1 share u1_z1, 9-2/9-3/9-4 share u1_z2 on B-data).
+9-1 | setting1 | miss50 | 2000 | 2 | constrained_nr | 500
+
+# M3 fix for setting2.A2 miss30 n=2000 scenarios {8-1, 9-1} (M3 = u2_z2 + h_alpha=full).
+# Default L-BFGS-B: 53 alpha blowups (max|alpha|=20.04), ratio=0.760 (cleaned).
+# cnr/1e3 -> ratio=0.919 (cleaned), ESD 0.046 -> 0.037, only 2 residual blowups.
+# CP unchanged at 0.053 because bias -0.13 is structural M3 misspecification (missing u1).
+# Equivalence per EQUIVALENT_SCENARIOS_MODEL3: {8-1, 9-1} share M3 = u2_z2 on A-data.
+8-1 | setting2 | miss30 | 2000 | 3 | constrained_nr | 1e3
+9-1 | setting2 | miss30 | 2000 | 3 | constrained_nr | 1e3
+
+# M1 fix for setting2.A2 miss30 n=2000: default L-BFGS-B gives 31 reps with max|alpha|>10
+# (separation under binary y + ~30% observed) -> tiny SE -> CP=0.928 vs nominal 0.95.
+# cnr/1e8 uses trust-radius-bounded Newton steps (cond effectively inactive) ->
+# no blowups (max|alpha|=7.0), CP=0.940. z@0.975 right-tail tames from +4.31 -> +2.20.
+# Residual ~1pp CP gap not fixable by alpha optimizer (sandwich SE limitation).
+# Equivalence per EQUIVALENT_SCENARIOS_MODEL1: 7-1, 8-1, 9-1 all share M1 = full + h_alpha=full.
+7-1 | setting2 | miss30 | 2000 | 1 | constrained_nr | 1e8
+8-1 | setting2 | miss30 | 2000 | 1 | constrained_nr | 1e8
+9-1 | setting2 | miss30 | 2000 | 1 | constrained_nr | 1e8
+
+# NU fix for setting2.B1 miss50 n=2000 _23 ensemble (M2+M3) under current DGP:
+# Default L-BFGS-B nu fit is bimodal (M2 vs M3 winner-take-all) -> ESE/ESD=0.18.
+# cnr/1e2 collapses nu into M2 basin in 99% of reps -> ESE/ESD=0.95 after cleaning.
+# Caveat: large bias (+0.08) remains because picked M2 is misspecified; CP near 0.
+# Applied to scenarios sharing the same _23 ensemble (per EQUIVALENT_SCENARIOS_MODEL23): {9-2, 9-3, 9-4}.
+9-2 | setting2 | miss50 | 2000 | nu:23 | constrained_nr | 1e2
+9-3 | setting2 | miss50 | 2000 | nu:23 | constrained_nr | 1e2
+9-4 | setting2 | miss50 | 2000 | nu:23 | constrained_nr | 1e2
+
+

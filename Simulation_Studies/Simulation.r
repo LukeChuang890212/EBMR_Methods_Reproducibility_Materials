@@ -26,7 +26,7 @@ library(kableExtra)
 #'
 #' @param sim_result Simulation result matrix (rows are statistics, columns are replicates)
 #' @param multiplier IQR multiplier for outlier detection (default: 2)
-#' @param max_pct Maximum fraction of replicates to remove as outliers (default: 0.02)
+#' @param max_pct Maximum fraction of replicates to remove as outliers (default: 0.01)
 #' @param verbose Whether to print summary messages (default: TRUE)
 #' @return List with:
 #'   - result: cleaned simulation result matrix
@@ -34,7 +34,7 @@ library(kableExtra)
 #'   - n_na: number of replicates removed due to NA
 #'   - n_outliers: number of replicates removed as outliers
 #'   - n_successful: number of successful (clean) replicates
-clean_sim_result <- function(sim_result, multiplier = 2, max_pct = 0.02, verbose = TRUE) {
+clean_sim_result <- function(sim_result, multiplier = 2, max_pct = 0.01, verbose = TRUE) {
   n_total <- ncol(sim_result)
   n_na <- 0
   n_outliers <- 0
@@ -273,8 +273,9 @@ generate_data <- function(setting_name, n = 2000, replicate_num = 1000,
 #' @return Simulation results matrix (invisibly)
 simulate <- function(all_data, ps_model.true, alpha.true, ps_specifications,
                      n, replicate_num, save_file = NULL, type = "HT",
-                     setting = NULL) {
-  library(EBMRalgorithmFast5)
+                     setting = NULL,
+                     nu_optimizer = "L-BFGS-B", nu_cond_threshold = 1e8) {
+  library(EBMRalgorithmFast4)
   library(parallel)
   library(foreach)
   library(doSNOW)
@@ -288,7 +289,8 @@ simulate <- function(all_data, ps_model.true, alpha.true, ps_specifications,
   registerDoSNOW(cl)
 
   # Export local variables to workers
-  clusterExport(cl, c("ps_model.true", "alpha.true", "ps_specifications", "n", "all_data", "type", "setting"),
+  clusterExport(cl, c("ps_model.true", "alpha.true", "ps_specifications", "n", "all_data", "type", "setting",
+                      "nu_optimizer", "nu_cond_threshold"),
                 envir = environment())
 
   # Progress bar
@@ -296,7 +298,7 @@ simulate <- function(all_data, ps_model.true, alpha.true, ps_specifications,
   pb <- txtProgressBar(max = replicate_num, style = 3)
   progress <- function(n) setTxtProgressBar(pb, n)
   opts <- list(progress = progress)
-  parallel_packages <- c("EBMRalgorithmFast5", "stringr", "Matrix", "numDeriv")
+  parallel_packages <- c("EBMRalgorithmFast4", "stringr", "Matrix", "numDeriv")
 
   start <- Sys.time()
 
@@ -327,11 +329,13 @@ simulate <- function(all_data, ps_model.true, alpha.true, ps_specifications,
       }
 
       # EBMR algorithm using Fast version with analytical gradients
-      ebmr <- EBMRAlgorithmFast5$new("y", ps_specifications, dat, W)
+      ebmr <- EBMRAlgorithmFast4$new("y", ps_specifications, dat, W)
       result <- ebmr$EBMR_IPW(
         h_nu = h_nu,
         true_ps = ps_model.true(dat, alpha.true),
-        type = type
+        type = type,
+        nu_optimizer = nu_optimizer,
+        nu_cond_threshold = nu_cond_threshold
       )
       estimates <- unlist(result[1:4])
 
@@ -627,10 +631,25 @@ summarize_all_settings_with_all_missing_rates <- function(
         "$(", alpha30, ")^{\\top}$ correspond to missingness rates of 50\\% and 30\\%, respectively."
       )
     } else {
-      outcome_type <- if (setting %in% c("setting3")) "continuous" else "binary"
+      outcome_type <- if (setting %in% c("setting1", "setting3")) "continuous" else "binary"
+      # Scenario-specific model description (default: generic "correctly specified model")
+      model_desc <- if (scenario == "7-1") {
+        paste0("a correctly specified model with ",
+               "$\\pi_2(\\bm{X}, Y; \\bm{\\alpha}_2) = \\mathrm{expit}\\{(1, U_1, Z_1, Y)\\bm{\\alpha}_2\\}$ and ",
+               "$\\pi_3(\\bm{X}, Y; \\bm{\\alpha}_3) = \\mathrm{expit}\\{(1, U_2, Z_1, Y)\\bm{\\alpha}_3\\}$.")
+      } else if (scenario == "8-1") {
+        paste0("a correctly specified model with ",
+               "$\\pi_2(\\bm{X}, Y; \\bm{\\alpha}_2) = \\mathrm{expit}\\{(1, U_1, Z_1, Y)\\bm{\\alpha}_2\\}$ and ",
+               "$\\pi_3(\\bm{X}, Y; \\bm{\\alpha}_3) = \\mathrm{expit}\\{(1, U_2, Z_2, Y)\\bm{\\alpha}_3\\}$.")
+      } else if (scenario == "9-3") {
+        paste0("a locally misspecified model with ",
+               "$\\bm{h}_{\\bm{\\alpha}_1}(\\bm{X}) = (1, U_1, U_2, Z_1, Z_2, U_2^2)$.")
+      } else {
+        "a correctly specified model."
+      }
       paste0(
         "Estimation of $\\mu_0 = ", mu_str, "$ is conducted under ", outcome_type, " outcome $Y$, ",
-        "where the set of candidate models includes a correctly specified model. ",
+        "where the set of candidate models includes ", model_desc, " ",
         "The parameter vectors $\\bm{\\alpha}_0 = (", alpha50, ")^{\\top}$ and ",
         "$(", alpha30, ")^{\\top}$ correspond to missingness rates of 50\\% and 30\\%, respectively."
       )

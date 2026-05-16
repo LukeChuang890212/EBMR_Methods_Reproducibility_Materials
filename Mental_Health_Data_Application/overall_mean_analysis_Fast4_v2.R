@@ -1,10 +1,10 @@
 #------------------------------------------------------------------------------#
 # Overall Population Mean Estimation: E[teacher_report]
-# Using EBMRalgorithmFast5 (new nu moment function)
+# Using EBMRalgorithmFast4 (v2: reduced PS formulas, h_alpha without fhp)
 #------------------------------------------------------------------------------#
 
 setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Mental_Health_Data_Application")
-devtools::load_all("../EBMRalgorithmFast5", quiet = TRUE)
+devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
 library(tidyverse)
 library(numDeriv)
 library(Matrix)
@@ -28,8 +28,8 @@ mu_cc <- mean(dat$teacher_report[dat$r == 1])
 se_cc <- sd(dat$teacher_report[dat$r == 1]) / sqrt(sum(dat$r))
 
 cat("================================================================================\n")
-cat("     OVERALL POPULATION MEAN ESTIMATION: E[teacher_report]                      \n")
-cat("     Using EBMRalgorithmFast5                                                   \n")
+cat("     OVERALL POPULATION MEAN ESTIMATION: E[teacher_report]  (v2)               \n")
+cat("     Using EBMRalgorithmFast4                                                  \n")
 cat("================================================================================\n\n")
 
 cat("Sample size:", n, "\n")
@@ -50,8 +50,12 @@ mu_mar <- sum(dat$r * dat$teacher_report / ps_mar) / n
 cat(sprintf("MAR IPW estimate: %.4f\n\n", mu_mar))
 
 #------------------------------------------------------------------------------#
-# EBMR Setup (EBMRalgorithmFast5)
+# EBMR Setup (EBMRalgorithmFast4)
 #------------------------------------------------------------------------------#
+# W <- function(g.matrix) {
+#   solve(var(g.matrix))
+# }
+
 W <- function(g.matrix) {
   return(solve(t(g.matrix)%*%g.matrix/nrow(g.matrix)))
 }
@@ -89,7 +93,7 @@ h_nu <- function(data) {
 #------------------------------------------------------------------------------#
 # Fit EBMR with all 3 models
 #------------------------------------------------------------------------------#
-ebmr <- EBMRAlgorithmFast5$new("teacher_report", ps_specifications, dat, W)
+ebmr <- EBMRAlgorithmFast4$new("teacher_report", ps_specifications, dat, W)
 result <- ebmr$EBMR_IPW(h_nu = h_nu, true_ps = NULL)
 
 # Extract alpha and nu estimates for bootstrap initialization
@@ -227,20 +231,20 @@ library(doSNOW)
 B <- 1000
 n_cores <- detectCores() - 1
 
-boot_file <- "MHD_results/popmean_boot_Fast5_111_B1000.RDS"
+boot_file <- "MHD_results/popmean_boot_Fast4_v2_111_B1000.RDS"
 
 if (file.exists(boot_file)) {
   cat("\n================================================================================\n")
   cat("                     BOOTSTRAP STANDARD ERRORS (FROM FILE)                     \n")
   cat("================================================================================\n\n")
 
-  boot_cc <- readRDS("MHD_results/popmean_boot_Fast5_CC_B1000.RDS")
+  boot_cc <- readRDS("MHD_results/popmean_boot_Fast4_v2_CC_B1000.RDS")
   boot_se_cc <- sd(boot_cc, na.rm = TRUE)
   boot_se <- numeric(length(model_set_labels))
   names(boot_se) <- model_set_labels
   boot_results <- list()
   for (label in model_set_labels) {
-    bf <- sprintf("MHD_results/popmean_boot_Fast5_%s_B1000.RDS", label)
+    bf <- sprintf("MHD_results/popmean_boot_Fast4_v2_%s_B1000.RDS", label)
     if (file.exists(bf)) {
       boot_results[[label]] <- readRDS(bf)
       boot_se[label] <- sd(boot_results[[label]], na.rm = TRUE)
@@ -266,7 +270,7 @@ if (file.exists(boot_file)) {
   boot_results_raw <- foreach(
     b = 1:B,
     .options.snow = opts,
-    .packages = c("EBMRalgorithmFast5", "stringr", "Matrix", "numDeriv"),
+    .packages = c("EBMRalgorithmFast4", "stringr", "Matrix", "numDeriv"),
     .export = c("dat", "n", "ps_specifications", "all_model_sets",
                 "model_set_labels", "W", "h_nu",
                 "alpha_init_from_data", "nu_init_from_data")
@@ -288,7 +292,7 @@ if (file.exists(boot_file)) {
 
     mu_list <- list()
     tryCatch({
-      ebmr_b <- EBMRAlgorithmFast5$new("teacher_report", ps_spec_b, dat_b, W)
+      ebmr_b <- EBMRAlgorithmFast4$new("teacher_report", ps_spec_b, dat_b, W)
       for (j in seq_along(all_model_sets)) {
         model_set <- all_model_sets[[j]]
         label <- model_set_labels[j]
@@ -322,16 +326,16 @@ if (file.exists(boot_file)) {
   boot_se_cc <- sd(boot_cc, na.rm = TRUE)
 
   # Save
-  saveRDS(boot_cc, "MHD_results/popmean_boot_Fast5_CC_B1000.RDS")
+  saveRDS(boot_cc, "MHD_results/popmean_boot_Fast4_v2_CC_B1000.RDS")
   for (label in model_set_labels) {
     saveRDS(boot_results[[label]],
-            sprintf("MHD_results/popmean_boot_Fast5_%s_B1000.RDS", label))
+            sprintf("MHD_results/popmean_boot_Fast4_v2_%s_B1000.RDS", label))
   }
   cat("  Bootstrap results saved.\n")
 }
 
 #------------------------------------------------------------------------------#
-# Outlier-trimmed Bootstrap SE (IQR x 2, 1% cap)
+# Outlier-trimmed Bootstrap SE (IQR x 3, 1% cap)
 #------------------------------------------------------------------------------#
 compute_trimmed_boot_se <- function(x, label) {
   x <- x[!is.na(x)]
@@ -340,7 +344,7 @@ compute_trimmed_boot_se <- function(x, label) {
 
   Q1 <- quantile(x, 0.25); Q3 <- quantile(x, 0.75)
   IQR_val <- Q3 - Q1
-  is_outlier <- x < (Q1 - 2 * IQR_val) | x > (Q3 + 2 * IQR_val)
+  is_outlier <- x < (Q1 - 3 * IQR_val) | x > (Q3 + 3 * IQR_val)
   max_remove <- floor(0.01 * n_total)
   if (sum(is_outlier) > max_remove && max_remove > 0) {
     dist_med <- abs(x - median(x))
@@ -361,7 +365,7 @@ cat("\n=========================================================================
 cat("                              FINAL SUMMARY                                     \n")
 cat("================================================================================\n\n")
 
-cat("Bootstrap SE with outlier removal (IQR x 2, 1%% cap):\n")
+cat("Bootstrap SE with outlier removal (IQR x 3, 1%% cap):\n")
 cat(sprintf("  %-10s %12s %12s %12s\n", "Label", "Boot(raw)", "Boot(trim)", "Outliers"))
 cat("  ", paste(rep("-", 50), collapse = ""), "\n")
 
@@ -471,6 +475,8 @@ cat("  Baseline (xi=0):", round(sensitivity_results$mu_ipw[1], 4), "\n")
 cat("  At xi_max:", round(sensitivity_results$mu_ipw[n_xi], 4), "\n")
 cat("  Change from baseline:", round(sensitivity_results$mu_ipw[n_xi] - sensitivity_results$mu_ipw[1], 4), "\n")
 
+cat("\n================================================================================\n")
+
 #------------------------------------------------------------------------------#
 # LaTeX Table Output
 #------------------------------------------------------------------------------#
@@ -491,7 +497,7 @@ tex <- c()
 tex <- c(tex, "\\begin{table}[ht]")
 tex <- c(tex, paste0(I, "\\centering"))
 tex <- c(tex, paste0(I, "\\caption{Population mean estimation results for $E[\\text{teacher\\_report}]$ ",
-                     "using EBMRalgorithmFast5. Analytical SE is based on the influence function. ",
+                     "using EBMRalgorithmFast4. Analytical SE is based on the influence function. ",
                      "Bootstrap SE is based on ", B, " bootstrap samples with IQR $\\times$ 2 outlier trimming.}"))
 tex <- c(tex, paste0(I, "\\begin{threeparttable}"))
 tex <- c(tex, paste0(I, "\\begin{tabularx}{\\textwidth}{l *{4}{>{\\centering\\arraybackslash}X}}"))
@@ -530,7 +536,7 @@ for (j in seq_along(all_model_sets)) {
 tex <- c(tex, paste0(II, "\\bottomrule"))
 tex <- c(tex, paste0(I, "\\end{tabularx}"))
 tex <- c(tex, paste0(I, "\\end{threeparttable}"))
-tex <- c(tex, paste0(I, "\\label{tab:MHD_Fast5}"))
+tex <- c(tex, paste0(I, "\\label{tab:MHD_Fast4_v2}"))
 tex <- c(tex, "\\end{table}")
 
 cat(paste(tex, collapse = "\n"), "\n")

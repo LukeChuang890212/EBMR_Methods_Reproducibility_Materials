@@ -66,24 +66,24 @@ show_config()
 #------------------------------------------------------------------------------#
 
 # For setting3 (continuous Y) - correct models, need A1 and A2 data at n=2000
-generate_data("setting3.A1", n = 2000, replicate_num = 1000)
-generate_data("setting3.A2", n = 2000, replicate_num = 1000)
+generate_data("setting1.A1", n = 2000, replicate_num = 1000)
+generate_data("setting1.A2", n = 2000, replicate_num = 1000)
 
 # For setting4 (binary Y) - correct models, need A1 and A2 at n=2000
-generate_data("setting4.A1", n = 2000, replicate_num = 1000)
-generate_data("setting4.A2", n = 2000, replicate_num = 1000)
+generate_data("setting2.A1", n = 2000, replicate_num = 1000)
+generate_data("setting2.A2", n = 2000, replicate_num = 1000)
 
 # For setting3 - misspecified models need B1 and B2 at n=2000 and n=500
-generate_data("setting3.B1", n = 2000, replicate_num = 1000)
-generate_data("setting3.B1", n = 500, replicate_num = 1000)
-generate_data("setting3.B2", n = 2000, replicate_num = 1000)
-generate_data("setting3.B2", n = 500, replicate_num = 1000)
+generate_data("setting1.B1", n = 2000, replicate_num = 1000)
+generate_data("setting1.B1", n = 500, replicate_num = 1000)
+generate_data("setting1.B2", n = 2000, replicate_num = 1000)
+generate_data("setting1.B2", n = 500, replicate_num = 1000)
 
 # For setting4 - misspecified models need B1 and B2 at n=2000 and n=500
-generate_data("setting4.B1", n = 2000, replicate_num = 1000)
-generate_data("setting4.B1", n = 500, replicate_num = 1000)
-generate_data("setting4.B2", n = 2000, replicate_num = 1000)
-generate_data("setting4.B2", n = 500, replicate_num = 1000)
+generate_data("setting2.B1", n = 2000, replicate_num = 1000)
+generate_data("setting2.B1", n = 500, replicate_num = 1000)
+generate_data("setting2.B2", n = 2000, replicate_num = 1000)
+generate_data("setting2.B2", n = 500, replicate_num = 1000)
 
 # # For setting11 - correct models (7-1, 8-1, 9-1), need A1 and A2 data at n=2000
 # generate_data("setting13.A1", n = 2000, replicate_num = 1000)
@@ -207,17 +207,30 @@ generate_data("Cho_M2_gamma000.A2", n = 2000, replicate_num = 1000)
 # Each entry: list(scenario, settings)
 # runs sequentially as listed
 run_list <- list(
-  list(scenario = "9-1", settings = c("setting3", "setting4")),
-  list(scenario = "9-2", settings = c("setting3", "setting4")),
-  list(scenario = "9-1", settings = c("setting14")),
-  list(scenario = "7-1", settings = c("setting3", "setting4")),
-  list(scenario = "8-1", settings = c("setting3", "setting4")),
-  list(scenario = "9-3", settings = c("setting3", "setting4")),
+  list(scenario = "9-3", settings = c("setting2", "setting1")),
+  list(scenario = "9-2", settings = c("setting1", "setting2")),
+  # list(scenario = "9-1", settings = c("setting14")),
+  # list(scenario = "9-1", settings = c("setting1", "setting2")),
+  # list(scenario = "8-1", settings = c("setting1", "setting2")),
+  # list(scenario = "7-1", settings = c("setting1", "setting2")),
   list(scenario = "cho1", settings = c("Cho_M1_gamma000")),
   list(scenario = "cho2", settings = c("Cho_M2_gamma000")),
   list(scenario = "cho1", settings = c("Cho_M1_gamma005")),
   list(scenario = "cho2", settings = c("Cho_M2_gamma005"))
 )
+
+# run_list <- list(
+#   list(scenario = "9-1", settings = c("setting14")),
+#   list(scenario = "9-2", settings = c("setting14")),
+#   list(scenario = "9-1", settings = c("setting14")),
+#   list(scenario = "7-1", settings = c("setting14")),
+#   list(scenario = "8-1", settings = c("setting14")),
+#   list(scenario = "9-3", settings = c("setting14"))
+#   # list(scenario = "cho1", settings = c("Cho_M1_gamma000")),
+#   # list(scenario = "cho2", settings = c("Cho_M2_gamma000")),
+#   # list(scenario = "cho1", settings = c("Cho_M1_gamma005")),
+#   # list(scenario = "cho2", settings = c("Cho_M2_gamma005"))
+# )
 
 all_latex_tables <- list()
 
@@ -227,7 +240,7 @@ for (entry in run_list) {
     # Run the scenario
     run_scenario(scenario_id,
                  setting = setting,
-                 version = "test63",
+                 version = "test65",
                  type = "HT")
 
     # Summarize immediately after completion
@@ -247,7 +260,7 @@ for (entry in run_list) {
       n.vector = unlist(params$n_vector),
       all_data_file.list = params$data_files,
       alpha_true.list = params$alpha_true,
-      version = "test63",
+      version = "test65",
       type = "HT"
     )
 

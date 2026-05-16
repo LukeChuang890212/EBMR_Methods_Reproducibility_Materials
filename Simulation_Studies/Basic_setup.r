@@ -392,18 +392,18 @@ misspecified_model_all_data_file.list = list(
 correct_model_alpha.true.list = list(
   setting1 = list(
     miss50 =list(
-      setting1_1 = c(0.0519, 0.2, -0.2, -0.2)  # cbind(1, y, u1, y*u1), no tilt, z2~N(0,4), u2~N(2,1)
+      setting1_1 = c(0.0803, 0.2, -0.8, 0.8)  # cbind(1, y, u1, u2), no tilt, z1~Bern(0.4), z2~N(0,1), u1~Bern(0.6), u2~N(0,1), m(x) 1+u1+u2+z1+z2, continuous Y
     ),
     miss30 =list(
-      setting1_2 = c(-0.8105, 0.2, -0.2, -0.2)  # cbind(1, y, u1, y*u1), no tilt, z2~N(0,4), u2~N(2,1)
+      setting1_2 = c(-0.9646, 0.2, -0.8, 0.8)  # cbind(1, y, u1, u2), no tilt, z1~Bern(0.4), z2~N(0,1), u1~Bern(0.6), u2~N(0,1), m(x) 1+u1+u2+z1+z2, continuous Y
     )
   ),
   setting2 = list(
     miss50 =list(
-      setting2_1 = c(0.0407, 0.2, -0.2, -0.2)  # cbind(1, y, u1, y*u1), no tilt, z2~N(0,4), u2~N(2,1)
+      setting2_1 = c(0.3193, 0.2, -0.8, 0.8)  # cbind(1, y, u1, u2), no tilt, z1~Bern(0.4), z2~N(0,1), u1~Bern(0.6), u2~N(0,1), m(x) 1+u1+u2+z1+z2, binary Y
     ),
     miss30 =list(
-      setting2_2 = c(-0.8127, 0.2, -0.2, -0.2)  # cbind(1, y, u1, y*u1), no tilt, z2~N(0,4), u2~N(2,1)
+      setting2_2 = c(-0.6734, 0.2, -0.8, 0.8)  # cbind(1, y, u1, u2), no tilt, z1~Bern(0.4), z2~N(0,1), u1~Bern(0.6), u2~N(0,1), m(x) 1+u1+u2+z1+z2, binary Y
     )
   ),
   setting3 = list(
@@ -416,10 +416,10 @@ correct_model_alpha.true.list = list(
   ),
   setting4 = list(
     miss50 =list(
-      setting4_1 = c(0.0672, 0.15, -0.30, 0.80)  # cbind(1, y, u1, u2), no tilt, z1~Bern(0.4), u1~Bern(0.6), u2~N(0,1), m(x) 1+u1+u2+z1+z2, binary Y
+      setting4_1 = c(-0.5173, 1.0, -0.5, 0.5)  # cbind(1, y, u1, u2), no tilt, z1~Bern(0.4), z2~N(0,1), u1~Bern(0.6), u2~N(0,1), m(x) 1+u1+u2+z1+z2, binary Y
     ),
     miss30 =list(
-      setting4_2 = c(-0.9027, 0.15, -0.30, 0.80)  # cbind(1, y, u1, u2), no tilt, z1~Bern(0.4), u1~Bern(0.6), u2~N(0,1), m(x) 1+u1+u2+z1+z2, binary Y
+      setting4_2 = c(-1.4592, 1.0, -0.5, 0.5)  # cbind(1, y, u1, u2), no tilt, z1~Bern(0.4), z2~N(0,1), u1~Bern(0.6), u2~N(0,1), m(x) 1+u1+u2+z1+z2, binary Y
     )
   ),
   setting5 = list(
@@ -564,22 +564,22 @@ correct_model_alpha.true.list = list(
 misspecified_model_alpha.true.list = list(
   setting1 = list(
     miss50 =list(
-      setting1_1_mild_1000 = c(0.1891, 0.2, -0.2, -0.2),  # n>=1000, cbind(1, y, u1, y*u1), z2~N(0,4), u2~N(2,1)
-      setting1_1_mild_300 = c(0.3216, 0.2, -0.2, -0.2)    # n<1000, cbind(1, y, u1, y*u1), z2~N(0,4), u2~N(2,1)
+      setting1_1_mild_1000 = c(0.1765, 0.2, -0.8, 0.8),  # n>=1000, cbind(1, y, u1, u2), tilt exp(n^{-1/2}*(y+u1+u2)), continuous Y
+      setting1_1_mild_300 = c(0.2730, 0.2, -0.8, 0.8)    # n<1000, cbind(1, y, u1, u2), tilt exp(n^{-1/2}*(y+u1+u2)), continuous Y
     ),
     miss30 =list(
-      setting1_2_mild_1000 = c(-0.5896, 0.2, -0.2, -0.2),  # n>=1000, cbind(1, y, u1, y*u1), z2~N(0,4), u2~N(2,1)
-      setting1_2_mild_300 = c(-0.3915, 0.2, -0.2, -0.2)    # n<1000, cbind(1, y, u1, y*u1), z2~N(0,4), u2~N(2,1)
+      setting1_2_mild_1000 = c(-0.7843, 0.2, -0.8, 0.8),  # n>=1000, cbind(1, y, u1, u2), tilt exp(n^{-1/2}*(y+u1+u2)), continuous Y
+      setting1_2_mild_300 = c(-0.6167, 0.2, -0.8, 0.8)    # n<1000, cbind(1, y, u1, u2), tilt exp(n^{-1/2}*(y+u1+u2)), continuous Y
     )
   ),
   setting2 = list(
     miss50 =list(
-      setting2_1_mild_1000 = c(0.1789, 0.2, -0.2, -0.2),  # n>=1000, cbind(1, y, u1, y*u1), z2~N(0,4), u2~N(2,1)
-      setting2_1_mild_300 = c(0.3103, 0.2, -0.2, -0.2)    # n<1000, cbind(1, y, u1, y*u1), z2~N(0,4), u2~N(2,1)
+      setting2_1_mild_1000 = c(0.8794, 0.2, -0.8, 0.8),  # n>=1000, cbind(1, y, u1, u2), tilt exp(10*n^{-1/2}*(y+u1+u2)), binary Y
+      setting2_1_mild_300 = c(1.4141, 0.2, -0.8, 0.8)    # n<1000, cbind(1, y, u1, u2), tilt exp(10*n^{-1/2}*(y+u1+u2)), binary Y
     ),
     miss30 =list(
-      setting2_2_mild_1000 = c(-0.5928, 0.2, -0.2, -0.2),  # n>=1000, cbind(1, y, u1, y*u1), z2~N(0,4), u2~N(2,1)
-      setting2_2_mild_300 = c(-0.3981, 0.2, -0.2, -0.2)    # n<1000, cbind(1, y, u1, y*u1), z2~N(0,4), u2~N(2,1)
+      setting2_2_mild_1000 = c(0.2012, 0.2, -0.8, 0.8),  # n>=1000, cbind(1, y, u1, u2), tilt exp(10*n^{-1/2}*(y+u1+u2)), binary Y
+      setting2_2_mild_300 = c(0.7290, 0.2, -0.8, 0.8)    # n<1000, cbind(1, y, u1, u2), tilt exp(10*n^{-1/2}*(y+u1+u2)), binary Y
     )
   ),
   setting3 = list(
@@ -594,12 +594,12 @@ misspecified_model_alpha.true.list = list(
   ),
   setting4 = list(
     miss50 =list(
-      setting4_1_mild_1000 = c(0.5660, 0.15, -0.30, 0.80),  # n>=1000, cbind(1, y, u1, u2), 10x tilt, m(x) 1+u1+u2+z1+z2, binary Y
-      setting4_1_mild_500 = c(1.0545, 0.15, -0.30, 0.80)    # n<1000, cbind(1, y, u1, u2), 10x tilt, m(x) 1+u1+u2+z1+z2, binary Y
+      setting4_1_mild_1000 = c(0.0153, 1.0, -0.5, 0.5),  # n>=1000, cbind(1, y, u1, u2), 10x tilt, m(x) 1+u1+u2+z1+z2, binary Y
+      setting4_1_mild_500 = c(0.5347, 1.0, -0.5, 0.5)    # n<1000, cbind(1, y, u1, u2), 10x tilt, m(x) 1+u1+u2+z1+z2, binary Y
     ),
     miss30 =list(
-      setting4_2_mild_1000 = c(-0.1039, 0.15, -0.30, 0.80),  # n>=1000, cbind(1, y, u1, u2), 10x tilt, m(x) 1+u1+u2+z1+z2, binary Y
-      setting4_2_mild_500 = c(0.5310, 0.15, -0.30, 0.80)    # n<1000, cbind(1, y, u1, u2), 10x tilt, m(x) 1+u1+u2+z1+z2, binary Y
+      setting4_2_mild_1000 = c(-0.6297, 1.0, -0.5, 0.5),  # n>=1000, cbind(1, y, u1, u2), 10x tilt, m(x) 1+u1+u2+z1+z2, binary Y
+      setting4_2_mild_500 = c(-0.0120, 1.0, -0.5, 0.5)    # n<1000, cbind(1, y, u1, u2), 10x tilt, m(x) 1+u1+u2+z1+z2, binary Y
     )
   ),
   setting5 = list(

@@ -876,7 +876,12 @@ run_scenario <- function(scenario_id,
               cond_threshold = ps_spec$cond_threshold
             )
 
-            # Check optimizer overrides from config file (per-model)
+            # Check optimizer overrides from config file (per-model and nu-fit)
+            # model_idx field accepts comma-separated alpha-model indices ("2", "1,2")
+            # OR the special value "nu" which targets the ensemble (nu) fit instead.
+            nu_optimizer_override <- "L-BFGS-B"
+            nu_cond_override <- 1e8
+            has_nu_override <- FALSE
             override_file <- "config/optimizer_overrides.txt"
             if (file.exists(override_file)) {
               override_lines <- readLines(override_file)
@@ -893,17 +898,45 @@ run_scenario <- function(scenario_id,
                 if (length(fields) >= 7) {
                   o_scenario <- fields[1]; o_setting <- fields[2]
                   o_miss <- fields[3]; o_n <- as.numeric(fields[4])
-                  o_model_idx <- as.numeric(trimws(strsplit(fields[5], ",")[[1]]))
+                  o_model_field <- fields[5]
                   o_optimizer <- fields[6]; o_cond <- as.numeric(fields[7])
 
                   if (o_scenario == scenario_id && o_setting == setting &&
                       o_miss == miss_rate && o_n == current_n) {
-                    # Apply override only to matching models within model_set
-                    for (k in seq_along(model_set)) {
-                      if (model_set[k] %in% o_model_idx) {
-                        opt_list[[k]] <- o_optimizer
-                        cond_list[[k]] <- o_cond
-                        has_override <- TRUE
+                    if (startsWith(tolower(trimws(o_model_field)), "nu")) {
+                      # Nu-fit override syntax: "nu:<subset>" where subset is the
+                      # concatenated/comma-separated model indices the override
+                      # applies to. Examples: "nu:23" (only M2+M3 ensemble),
+                      # "nu:123" (only the full M1+M2+M3 ensemble), "nu:1,2".
+                      # Applies only when model_set exactly matches the target.
+                      suffix <- sub("^nu:?", "", tolower(trimws(o_model_field)))
+                      if (nzchar(suffix)) {
+                        target_set <- if (grepl(",", suffix)) {
+                          sort(as.integer(trimws(strsplit(suffix, ",")[[1]])))
+                        } else {
+                          sort(as.integer(strsplit(suffix, "")[[1]]))
+                        }
+                        # setequal: type-agnostic set comparison (model_set is integer
+                        # from combn(); target_set could be int or double depending on
+                        # parsing path -- identical() would be too strict here).
+                        if (J_sub > 1 && setequal(model_set, target_set) &&
+                            length(model_set) == length(target_set)) {
+                          nu_optimizer_override <- o_optimizer
+                          nu_cond_override <- o_cond
+                          has_nu_override <- TRUE
+                        }
+                      } else {
+                        warning(sprintf("optimizer_overrides.txt: bare 'nu' no longer supported; use 'nu:<subset>' (e.g. 'nu:23'). Line skipped: %s", ol))
+                      }
+                    } else {
+                      # Alpha-model override: parse comma-separated indices
+                      o_model_idx <- as.numeric(trimws(strsplit(o_model_field, ",")[[1]]))
+                      for (k in seq_along(model_set)) {
+                        if (model_set[k] %in% o_model_idx) {
+                          opt_list[[k]] <- o_optimizer
+                          cond_list[[k]] <- o_cond
+                          has_override <- TRUE
+                        }
                       }
                     }
                   }
@@ -923,6 +956,10 @@ run_scenario <- function(scenario_id,
                 cat("      [Override] Models", paste(model_set[overridden], collapse=","),
                     "-> optimizer=", opt_list[[overridden[1]]],
                     ", cond=", cond_list[[overridden[1]]], "\n")
+              }
+              if (has_nu_override) {
+                cat("      [Override] nu fit -> optimizer=", nu_optimizer_override,
+                    ", cond=", nu_cond_override, "\n")
               }
             }
 
@@ -1035,7 +1072,9 @@ run_scenario <- function(scenario_id,
               replicate_num = replicate_num,
               save_file = save_file,
               type = type,
-              setting = setting
+              setting = setting,
+              nu_optimizer = nu_optimizer_override,
+              nu_cond_threshold = nu_cond_override
             )
 
             # Print console summary after simulation completes
