@@ -3,7 +3,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 n_val <- 2000
 n_reps <- 200
@@ -24,7 +24,7 @@ for (rep_i in 1:n_reps) {
     optimizer = "constrained_nr"
   )
   tryCatch({
-    ebmr <- EBMRAlgorithmFast4$new("y", single_ps, dat, W_fn)
+    ebmr <- EPS$new("y", single_ps, dat, W_fn)
     pi_hat <- ebmr$ps_fit.list[[1]]$fitted.values
     mu_vals[rep_i] <- mean(dat[["r"]] * dat[["y"]] / pi_hat)
     cond_vals[rep_i] <- ebmr$ps_fit.list[[1]]$gmm_fit$opt$solution_cond

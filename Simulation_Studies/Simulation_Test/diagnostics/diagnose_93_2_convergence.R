@@ -2,7 +2,7 @@ setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 
 source("Data_Generation.r")
 source("config/scenarios.R")
-library(EBMRalgorithmFast4)
+library(EPS)
 source("Basic_setup.r")
 
 data_file <- misspecified_model_all_data_file.list$setting3$miss50[[1]]
@@ -32,7 +32,7 @@ for (rep_i in c(extreme_reps, normal_reps)) {
   label <- if (rep_i %in% extreme_reps) "OUT" else "NORM"
 
   tryCatch({
-    ebmr <- EBMRAlgorithmFast4$new("y", subset_ps_spec, dat, W_func)
+    ebmr <- EPS$new("y", subset_ps_spec, dat, W_func)
     fit <- ebmr$ps_fit.list[[1]]
     gmm <- fit$gmm_fit
 

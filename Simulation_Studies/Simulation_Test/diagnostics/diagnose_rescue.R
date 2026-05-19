@@ -2,7 +2,7 @@ setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
-  library(EBMRalgorithmFast4)
+  library(EPS)
 })
 
 W_func  <- function(g.matrix) solve(t(g.matrix) %*% g.matrix / nrow(g.matrix))
@@ -29,7 +29,7 @@ run_with_rescue_diag <- function(i) {
     outcome      = ps_spec[["outcome"]]
   )
 
-  ebmr <- EBMRAlgorithmFast4$new("y", ps_sub, dat, W_func)
+  ebmr <- EPS$new("y", ps_sub, dat, W_func)
   # Access the internals via the environment trick
   # We need to call WangShaoKim2014 directly and trace the rescue
   # Instead: run normally and report what happened

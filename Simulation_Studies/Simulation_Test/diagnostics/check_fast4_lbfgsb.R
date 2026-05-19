@@ -1,11 +1,11 @@
-## Test EBMRalgorithmFast4 with L-BFGS-B only (bounds=5 default)
+## Test EPS with L-BFGS-B only (bounds=5 default)
 
 setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 source("Data_Generation.r")
 source("config/scenarios.R")
 
 old_wd <- getwd()
-setwd("../EBMRalgorithmFast4")
+setwd("../EPS")
 source("R/EBMRAlgorithm.r")
 setwd(old_wd)
 
@@ -39,7 +39,7 @@ for (i in 1:n_reps) {
   dat <- setting4.B1(n_val)
 
   tryCatch({
-    ebmr <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_func)
+    ebmr <- EPS$new("y", ps_spec, dat, W_func)
     result <- ebmr$EBMR_IPW(h_nu = h_nu_func)
 
     mu_hat[i] <- result$mu_ipw
@@ -74,7 +74,7 @@ for (i in 1:n_reps) {
 }
 
 valid <- !is.na(mu_hat)
-cat(sprintf("\n=== EBMRalgorithmFast4 L-BFGS-B (bounds=5) Results (%d/%d valid) ===\n", sum(valid), n_reps))
+cat(sprintf("\n=== EPS L-BFGS-B (bounds=5) Results (%d/%d valid) ===\n", sum(valid), n_reps))
 
 resid <- mu_hat[valid] - mu_true
 q1 <- quantile(resid, 0.25)

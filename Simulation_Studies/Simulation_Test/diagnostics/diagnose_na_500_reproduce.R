@@ -2,7 +2,7 @@ setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 
 source("Data_Generation.r")
 source("config/scenarios.R")
-library(EBMRalgorithmFast4)
+library(EPS)
 source("Basic_setup.r")
 
 data_file <- misspecified_model_all_data_file.list$setting3$miss50[[2]]  # n=500
@@ -23,7 +23,7 @@ W_func <- function(g.matrix) solve(t(g.matrix) %*% g.matrix / nrow(g.matrix))
 cat("=== Type 1: All-NA rep (rep 93) ===\n")
 dat <- all_data[((93 - 1) * n_val + 1):(93 * n_val), ]
 tryCatch({
-  ebmr <- EBMRAlgorithmFast4$new("y", subset_ps_spec, dat, W_func)
+  ebmr <- EPS$new("y", subset_ps_spec, dat, W_func)
   cat("Constructor succeeded\n")
   res <- ebmr$EBMR_IPW(
     h_nu = function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2),
@@ -39,7 +39,7 @@ tryCatch({
 cat("\n=== Type 1: All-NA rep (rep 140) ===\n")
 dat <- all_data[((140 - 1) * n_val + 1):(140 * n_val), ]
 tryCatch({
-  ebmr <- EBMRAlgorithmFast4$new("y", subset_ps_spec, dat, W_func)
+  ebmr <- EPS$new("y", subset_ps_spec, dat, W_func)
   cat("Constructor succeeded\n")
   res <- ebmr$EBMR_IPW(
     h_nu = function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2),
@@ -55,7 +55,7 @@ tryCatch({
 cat("\n=== Type 2: se_ipw-only NA rep (rep 327) ===\n")
 dat <- all_data[((327 - 1) * n_val + 1):(327 * n_val), ]
 tryCatch({
-  ebmr <- EBMRAlgorithmFast4$new("y", subset_ps_spec, dat, W_func)
+  ebmr <- EPS$new("y", subset_ps_spec, dat, W_func)
   cat("Constructor succeeded\n")
 
   # First without SE

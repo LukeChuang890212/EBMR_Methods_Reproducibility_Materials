@@ -2,7 +2,7 @@ setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 
 source("Data_Generation.r")
 source("config/scenarios.R")
-library(EBMRalgorithmFast4)
+library(EPS)
 library(numDeriv)
 source("Basic_setup.r")
 
@@ -23,7 +23,7 @@ W_func <- function(g.matrix) solve(t(g.matrix) %*% g.matrix / nrow(g.matrix))
 # Rep 27 (outlier)
 rep_i <- 27
 dat <- all_data[((rep_i - 1) * n_val + 1):(rep_i * n_val), ]
-ebmr <- EBMRAlgorithmFast4$new("y", subset_ps_spec, dat, W_func)
+ebmr <- EPS$new("y", subset_ps_spec, dat, W_func)
 
 J <- 2
 ps.matrix <- do.call(cbind, lapply(ebmr$ps_fit.list, function(f) f$fitted.values))

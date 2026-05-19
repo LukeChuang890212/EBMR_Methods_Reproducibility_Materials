@@ -7,12 +7,12 @@
 setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 
 cat("===== Layer 1: installed package has new args? =====\n")
-library(EBMRalgorithmFast4)
-fmls <- names(formals(EBMRalgorithmFast4:::EBMR_IPW))
+library(EPS)
+fmls <- names(formals(EPS:::EBMR_IPW))
 ok1 <- all(c("nu_optimizer", "nu_cond_threshold") %in% fmls)
 cat(sprintf("EBMR_IPW formals include nu_optimizer/nu_cond_threshold: %s\n", ok1))
-cat(sprintf("  installed at: %s\n", find.package("EBMRalgorithmFast4")))
-if (!ok1) stop("Package is stale -- run devtools::install('EBMRalgorithmFast4') first.")
+cat(sprintf("  installed at: %s\n", find.package("EPS")))
+if (!ok1) stop("Package is stale -- run devtools::install('EPS') first.")
 
 cat("\n===== Layer 2: Simulation.r passes nu params through to EBMR_IPW? =====\n")
 source("Simulation.r")

@@ -2,7 +2,7 @@ setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
-  devtools::load_all("../EBMRalgorithmFast4")
+  devtools::load_all("../EPS")
 })
 W_func <- function(g.matrix) solve(t(g.matrix) %*% g.matrix / nrow(g.matrix))
 n_val <- 2000
@@ -24,7 +24,7 @@ for (i in test_reps) {
     inv_link     = ps_spec[["inv_link"]],
     outcome      = ps_spec[["outcome"]]
   )
-  ebmr <- EBMRAlgorithmFast4[["new"]]("y", ps_sub3, dat, W_func)
+  ebmr <- EPS[["new"]]("y", ps_sub3, dat, W_func)
   gf <- ebmr[["ps_fit.list"]][[1]][["gmm_fit"]]
   cat(sprintf("  Rep %d: conv=%s, iter=%d, grad=%.2e, obj=%.6f, alpha=(%s)\n",
       i, gf[["opt"]][["converged"]], gf[["opt"]][["iterations"]],
@@ -98,7 +98,7 @@ for (mo in c(500, 1000, 2000)) {
 
     # Use the package's gmm via an EBMR object's private method
     # Simpler: just create the object and access the gmm
-    ebmr <- EBMRAlgorithmFast4[["new"]]("y", ps_sub3, dat, W_func)
+    ebmr <- EPS[["new"]]("y", ps_sub3, dat, W_func)
 
     # Re-run gmm with higher max_outer
     # Access private$gmm through environment

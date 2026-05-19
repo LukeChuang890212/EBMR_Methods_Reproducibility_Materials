@@ -6,7 +6,7 @@ source("Data_Generation.r")
 source("config/scenarios.R")
 
 old_wd <- getwd()
-setwd("../EBMRalgorithmFast4")
+setwd("../EPS")
 source("R/EBMRAlgorithm.r")
 setwd(old_wd)
 
@@ -33,12 +33,12 @@ for (i in 1:n_reps) {
 
   tryCatch({
     # GN multi-start (current default)
-    ebmr_gn <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_func, method = "GN")
+    ebmr_gn <- EPS$new("y", ps_spec, dat, W_func, method = "GN")
     r_gn <- ebmr_gn$EBMR_IPW(h_nu = h_nu_func, method = "GN")
     obj_gn <- r_gn$ensemble_fit$gmm_fit$opt$objective
 
     # L-BFGS-B (fallback method)
-    ebmr_lb <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_func, method = "L-BFGS-B")
+    ebmr_lb <- EPS$new("y", ps_spec, dat, W_func, method = "L-BFGS-B")
     r_lb <- ebmr_lb$EBMR_IPW(h_nu = h_nu_func, method = "L-BFGS-B")
     obj_lb <- r_lb$ensemble_fit$gmm_fit$opt$objective
 

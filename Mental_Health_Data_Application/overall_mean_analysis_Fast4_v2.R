@@ -1,10 +1,10 @@
 #------------------------------------------------------------------------------#
 # Overall Population Mean Estimation: E[teacher_report]
-# Using EBMRalgorithmFast4 (v2: reduced PS formulas, h_alpha without fhp)
+# Using EPS (v2: reduced PS formulas, h_alpha without fhp)
 #------------------------------------------------------------------------------#
 
 setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Mental_Health_Data_Application")
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 library(tidyverse)
 library(numDeriv)
 library(Matrix)
@@ -29,7 +29,7 @@ se_cc <- sd(dat$teacher_report[dat$r == 1]) / sqrt(sum(dat$r))
 
 cat("================================================================================\n")
 cat("     OVERALL POPULATION MEAN ESTIMATION: E[teacher_report]  (v2)               \n")
-cat("     Using EBMRalgorithmFast4                                                  \n")
+cat("     Using EPS                                                  \n")
 cat("================================================================================\n\n")
 
 cat("Sample size:", n, "\n")
@@ -50,7 +50,7 @@ mu_mar <- sum(dat$r * dat$teacher_report / ps_mar) / n
 cat(sprintf("MAR IPW estimate: %.4f\n\n", mu_mar))
 
 #------------------------------------------------------------------------------#
-# EBMR Setup (EBMRalgorithmFast4)
+# EBMR Setup (EPS)
 #------------------------------------------------------------------------------#
 # W <- function(g.matrix) {
 #   solve(var(g.matrix))
@@ -93,7 +93,7 @@ h_nu <- function(data) {
 #------------------------------------------------------------------------------#
 # Fit EBMR with all 3 models
 #------------------------------------------------------------------------------#
-ebmr <- EBMRAlgorithmFast4$new("teacher_report", ps_specifications, dat, W)
+ebmr <- EPS$new("teacher_report", ps_specifications, dat, W)
 result <- ebmr$EBMR_IPW(h_nu = h_nu, true_ps = NULL)
 
 # Extract alpha and nu estimates for bootstrap initialization
@@ -270,7 +270,7 @@ if (file.exists(boot_file)) {
   boot_results_raw <- foreach(
     b = 1:B,
     .options.snow = opts,
-    .packages = c("EBMRalgorithmFast4", "stringr", "Matrix", "numDeriv"),
+    .packages = c("EPS", "stringr", "Matrix", "numDeriv"),
     .export = c("dat", "n", "ps_specifications", "all_model_sets",
                 "model_set_labels", "W", "h_nu",
                 "alpha_init_from_data", "nu_init_from_data")
@@ -292,7 +292,7 @@ if (file.exists(boot_file)) {
 
     mu_list <- list()
     tryCatch({
-      ebmr_b <- EBMRAlgorithmFast4$new("teacher_report", ps_spec_b, dat_b, W)
+      ebmr_b <- EPS$new("teacher_report", ps_spec_b, dat_b, W)
       for (j in seq_along(all_model_sets)) {
         model_set <- all_model_sets[[j]]
         label <- model_set_labels[j]
@@ -497,7 +497,7 @@ tex <- c()
 tex <- c(tex, "\\begin{table}[ht]")
 tex <- c(tex, paste0(I, "\\centering"))
 tex <- c(tex, paste0(I, "\\caption{Population mean estimation results for $E[\\text{teacher\\_report}]$ ",
-                     "using EBMRalgorithmFast4. Analytical SE is based on the influence function. ",
+                     "using EPS. Analytical SE is based on the influence function. ",
                      "Bootstrap SE is based on ", B, " bootstrap samples with IQR $\\times$ 2 outlier trimming.}"))
 tex <- c(tex, paste0(I, "\\begin{threeparttable}"))
 tex <- c(tex, paste0(I, "\\begin{tabularx}{\\textwidth}{l *{4}{>{\\centering\\arraybackslash}X}}"))

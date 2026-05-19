@@ -3,7 +3,7 @@ source("Data_Generation.r")
 source("config/scenarios.R")
 
 old_wd <- getwd()
-setwd("../EBMRalgorithmFast4")
+setwd("../EPS")
 source("R/EBMRAlgorithm.r")
 setwd(old_wd)
 
@@ -58,7 +58,7 @@ for (rep_i in test_reps) {
   # Fit with baseline (no W' gradient term)
   # Temporarily remove dg to force numerical gradient in optim
   # Actually, we just need to compare. Let's fit with the current code (which has W' term)
-  ebmr <- EBMRAlgorithmFast4$new("y", ps_spec_m2, dat, W_func, bounds = 5)
+  ebmr <- EPS$new("y", ps_spec_m2, dat, W_func, bounds = 5)
   fit <- ebmr$ps_fit.list[[1]]
   alpha_with_Wprime <- fit$coefficients
   gmm_fit <- fit$gmm_fit

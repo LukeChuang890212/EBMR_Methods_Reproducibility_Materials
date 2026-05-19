@@ -3,7 +3,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 n_val <- 2000
 ps_spec <- get_ps_spec("9-alt1")
@@ -28,7 +28,7 @@ diagnose_single <- function(model_idx, rep_i, cond_thresh = 1e8, trust_r = 2.0) 
   )
 
   # Run with default settings
-  ebmr <- EBMRAlgorithmFast4$new("y", single_ps, dat, W_fn)
+  ebmr <- EPS$new("y", single_ps, dat, W_fn)
   gmm_fit <- ebmr$ps_fit.list[[1]]$gmm_fit
   cat(sprintf("  Default: converged=%s, grad=%.2e, obj=%.6f, iter=%d\n",
       gmm_fit$opt$converged, gmm_fit$opt$final_grad_norm,
@@ -73,7 +73,7 @@ for (rep_i in 1:200) {
   )
   dat <- all_data[((rep_i-1)*n_val + 1):(rep_i*n_val), ]
   tryCatch({
-    ebmr <- EBMRAlgorithmFast4$new("y", single_ps, dat, W_fn)
+    ebmr <- EPS$new("y", single_ps, dat, W_fn)
     if (!ebmr$ps_fit.list[[1]]$gmm_fit$opt$converged) {
       fail_reps <- c(fail_reps, rep_i)
     }
@@ -118,7 +118,7 @@ for (ct in c(1e8, 1e10, 1e12, Inf)) {
   # Let me check what happens with L-BFGS-B first as baseline
   single_ps_lb <- single_ps
   single_ps_lb$optimizer <- "L-BFGS-B"
-  ebmr_lb <- EBMRAlgorithmFast4$new("y", single_ps_lb, dat, W_fn)
+  ebmr_lb <- EPS$new("y", single_ps_lb, dat, W_fn)
   gmm_lb <- ebmr_lb$ps_fit.list[[1]]$gmm_fit
 
   cat(sprintf("\n  cond_threshold=%s:\n", format(ct, scientific=TRUE)))

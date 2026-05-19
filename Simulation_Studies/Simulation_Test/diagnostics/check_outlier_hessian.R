@@ -2,7 +2,7 @@ setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
-  library(EBMRalgorithmFast4)
+  library(EPS)
 })
 
 W_func  <- function(g.matrix) solve(t(g.matrix) %*% g.matrix / nrow(g.matrix))
@@ -57,7 +57,7 @@ cat(sprintf("%-5s %-8s %-8s %-10s %-10s %-10s %-10s %-8s %-8s %s\n",
 for (i in outlier_reps) {
   set.seed(12345 + i)
   dat  <- all_data[((i-1)*n_val + 1):(i*n_val), ]
-  ebmr <- EBMRAlgorithmFast4$new("y", ps_sub, dat, W_func)
+  ebmr <- EPS$new("y", ps_sub, dat, W_func)
   res  <- ebmr$EBMR_IPW(h_nu=h_nu_fn, type="HT", se.fit=FALSE)
   fit  <- ebmr$ps_fit.list[[1]]$gmm_fit
   hpd  <- isTRUE(fit$opt$hessian_pd)

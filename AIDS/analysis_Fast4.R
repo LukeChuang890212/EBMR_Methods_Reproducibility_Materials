@@ -1,12 +1,12 @@
 #------------------------------------------------------------------------------#
 # AIDS Clinical Trial Data Analysis (ACTG175)
 # Estimate population mean of cd496 (CD4 count at 96 weeks)
-# Using EBMRalgorithmFast4
+# Using EPS
 # Analysis by treatment arm
 #------------------------------------------------------------------------------#
 
 setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/AIDS")
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 library(speff2trial)
 library(Matrix)
 library(numDeriv)
@@ -19,7 +19,7 @@ data(ACTG175)
 dat <- ACTG175
 
 cat("================================================================================\n")
-cat("  ACTG175 AIDS Clinical Trial Data Analysis (EBMRalgorithmFast4)\n")
+cat("  ACTG175 AIDS Clinical Trial Data Analysis (EPS)\n")
 cat("  Goal: Estimate population mean of CD4 count at 96 weeks (cd496)\n")
 cat("================================================================================\n\n")
 
@@ -158,7 +158,7 @@ run_arm_analysis <- function(arm_data, arm_name) {
   cat("Naive estimate (observed mean):", round(naive_est, 2), "\n\n")
 
   # Fit EBMR
-  ebmr <- EBMRAlgorithmFast4$new("y", ps_specifications, arm_data, W)
+  ebmr <- EPS$new("y", ps_specifications, arm_data, W)
 
   # Model summaries
   cat("=== Model Summaries ===\n\n")
@@ -229,7 +229,7 @@ run_arm_analysis <- function(arm_data, arm_name) {
     registerDoSNOW(cl)
     clusterExport(cl, c("arm_data", "ps_specifications", "W", "h_nu",
                          "all_model_sets", "model_set_labels"), envir = environment())
-    clusterEvalQ(cl, devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE))
+    clusterEvalQ(cl, devtools::load_all("../EPS", quiet = TRUE))
 
     pb <- txtProgressBar(max = B, style = 3)
     progress <- function(nn) setTxtProgressBar(pb, nn)
@@ -247,7 +247,7 @@ run_arm_analysis <- function(arm_data, arm_name) {
 
       mu_vec <- setNames(rep(NA, 7), model_set_labels)
       tryCatch({
-        ebmr_b <- EBMRAlgorithmFast4$new("y", ps_specifications, dat_b, W)
+        ebmr_b <- EPS$new("y", ps_specifications, dat_b, W)
         for (jj in 1:7) {
           tryCatch({
             res_b <- ebmr_b$EBMR_IPW(h_nu = h_nu, model_indices = all_model_sets[[jj]],

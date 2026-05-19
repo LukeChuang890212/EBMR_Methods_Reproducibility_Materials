@@ -3,7 +3,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 n_val <- 2000
 n_reps <- 200
@@ -28,7 +28,7 @@ for (rep_i in 1:n_reps) {
     optimizer = "constrained_nr"
   )
   tryCatch({
-    ebmr <- EBMRAlgorithmFast4$new("y", single_ps, dat, W_fn)
+    ebmr <- EPS$new("y", single_ps, dat, W_fn)
     sc <- ebmr$ps_fit.list[[1]]$gmm_fit$opt$solution_cond
     if (!is.na(sc) && sc >= 1e8) {
       degen_reps <- c(degen_reps, rep_i)
@@ -55,12 +55,12 @@ for (rep_i in degen_reps[1:min(5, length(degen_reps))]) {
     alpha_init.list = list(NULL),
     optimizer = "constrained_nr"
   )
-  ebmr_cnr <- EBMRAlgorithmFast4$new("y", single_ps, dat, W_fn)
+  ebmr_cnr <- EPS$new("y", single_ps, dat, W_fn)
   gmm_cnr <- ebmr_cnr$ps_fit.list[[1]]$gmm_fit
 
   # L-BFGS-B result
   single_ps$optimizer <- "L-BFGS-B"
-  ebmr_lb <- EBMRAlgorithmFast4$new("y", single_ps, dat, W_fn)
+  ebmr_lb <- EPS$new("y", single_ps, dat, W_fn)
   gmm_lb <- ebmr_lb$ps_fit.list[[1]]$gmm_fit
 
   cat(sprintf("\nRep %d:\n", rep_i))
@@ -88,7 +88,7 @@ for (rep_i in degen_reps[1:min(5, length(degen_reps))]) {
     single_ps$optimizer <- "constrained_nr"
     single_ps$alpha_init.list <- list(rnorm(length(gmm_cnr$estimates)) * 0.5)
     tryCatch({
-      ebmr_t <- EBMRAlgorithmFast4$new("y", single_ps, dat, W_fn)
+      ebmr_t <- EPS$new("y", single_ps, dat, W_fn)
       gmm_t <- ebmr_t$ps_fit.list[[1]]$gmm_fit
       sc <- gmm_t$opt$solution_cond
       if (!is.na(sc) && sc < 1e8 && gmm_t$opt$final_grad_norm < best_nondegen_grad) {
@@ -121,7 +121,7 @@ single_ps <- list(
   alpha_init.list = list(NULL),
   optimizer = "constrained_nr"
 )
-ebmr_g <- EBMRAlgorithmFast4$new("y", single_ps, dat, W_fn)
+ebmr_g <- EPS$new("y", single_ps, dat, W_fn)
 gmm_g <- ebmr_g$ps_fit.list[[1]]$gmm_fit
 pi_g <- ebmr_g$ps_fit.list[[1]]$fitted.values
 cat(sprintf("Good rep %d: obj=%.6f, grad=%.2e, cond=%.2e\n",

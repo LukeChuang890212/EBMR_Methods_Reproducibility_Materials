@@ -5,7 +5,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 library(numDeriv)
 
 ps_spec_base <- get_ps_spec("9-alt1")
@@ -194,6 +194,6 @@ ps_spec <- list(
   outcome = ps_spec_base$outcome
 )
 W_fn <- function(g.matrix) solve(var(g.matrix))
-ebmr <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_fn)
+ebmr <- EPS$new("y", ps_spec, dat, W_fn)
 ipw_pkg <- ebmr$EBMR_IPW(h_alpha_fn, model_indices = 3, se.fit = TRUE)
 cat(sprintf("mu_ipw = %.6f, SE = %.6f\n", ipw_pkg$mu_ipw, ipw_pkg$se_ipw))

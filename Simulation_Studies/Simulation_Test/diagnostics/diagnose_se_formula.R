@@ -3,7 +3,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 n_val <- 2000
 n_reps <- 200
@@ -46,7 +46,7 @@ H0n_norm_vals <- rep(NA_real_, n_reps)
 for (rep_i in 1:n_reps) {
   dat <- all_data[((rep_i-1)*n_val + 1):(rep_i*n_val), ]
   tryCatch({
-    ebmr <- EBMRAlgorithmFast4$new("y", single_ps, dat, W)
+    ebmr <- EPS$new("y", single_ps, dat, W)
 
     r_vec <- dat[["r"]]; y_vec <- dat[["y"]]
     pi_hat <- ebmr$ps_fit.list[[1]]$fitted.values
@@ -136,7 +136,7 @@ eta_norm_vals2 <- rep(NA_real_, n_reps)
 for (rep_i in 1:n_reps) {
   dat <- all_data[((rep_i-1)*n_val + 1):(rep_i*n_val), ]
   tryCatch({
-    ebmr <- EBMRAlgorithmFast4$new("y", single_ps2, dat, W)
+    ebmr <- EPS$new("y", single_ps2, dat, W)
     gmm_fit <- ebmr$ps_fit.list[[1]]$gmm_fit
     alpha_mat2[rep_i, ] <- gmm_fit$estimates
     se1_alpha_mat2[rep_i, ] <- gmm_fit$se1

@@ -2,7 +2,7 @@ setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 
 source("Data_Generation.r")
 source("config/scenarios.R")
-library(EBMRalgorithmFast4)
+library(EPS)
 source("Basic_setup.r")
 
 # Find result files with good ESE/ESD ratios

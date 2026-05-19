@@ -4,7 +4,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 mu_true <- get_mu_true("setting3")
 ps_spec_base <- get_ps_spec("7")
@@ -45,10 +45,10 @@ ps_spec_lb <- list(
 for (i in 1:20) {
   dat <- all_data[((i-1)*nn + 1):(i*nn), ]
 
-  ebmr_nr <- EBMRAlgorithmFast4$new("y", ps_spec_pkg, dat, W_sm)
+  ebmr_nr <- EPS$new("y", ps_spec_pkg, dat, W_sm)
   ipw_nr <- ebmr_nr$EBMR_IPW(h_nu_fn, model_indices = 1, se.fit = TRUE)
 
-  ebmr_lb <- EBMRAlgorithmFast4$new("y", ps_spec_lb, dat, W_sm)
+  ebmr_lb <- EPS$new("y", ps_spec_lb, dat, W_sm)
   ipw_lb <- ebmr_lb$EBMR_IPW(h_nu_fn, model_indices = 1, se.fit = TRUE)
 
   cat(sprintf("%5d | mu=%.2f se=%.4f | mu=%.2f se=%.4f\n",

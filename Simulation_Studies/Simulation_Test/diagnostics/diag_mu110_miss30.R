@@ -4,7 +4,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast5", quiet = TRUE)
+devtools::load_all("../EIPS", quiet = TRUE)
 library(parallel); library(foreach); library(doSNOW)
 
 mu_true <- get_mu_true("setting4")
@@ -26,7 +26,7 @@ registerDoSNOW(cl)
 clusterExport(cl, c("nn", "ps_spec_sub", "W_sm", "h_nu_fn", "n_reps"), envir = environment())
 clusterEvalQ(cl, {
   setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
-  devtools::load_all("../EBMRalgorithmFast5", quiet = TRUE)
+  devtools::load_all("../EIPS", quiet = TRUE)
   source("Data_Generation.r")
 })
 pb <- txtProgressBar(max = n_reps, style = 3)
@@ -39,7 +39,7 @@ sim_result <- foreach(
   tryCatch({
     set.seed(i)
     dat <- setting4.A2(nn)
-    ebmr <- EBMRAlgorithmFast5$new("y", ps_spec_sub, dat, W_sm)
+    ebmr <- EIPS$new("y", ps_spec_sub, dat, W_sm)
     ipw <- ebmr$EBMR_IPW(h_nu_fn, model_indices = 1:2, se.fit = TRUE)
     c(mu = ipw$mu_ipw, se = ipw$se_ipw, w1 = ipw$w.hat[1], w2 = ipw$w.hat[2])
   }, error = function(e) c(mu = NA, se = NA, w1 = NA, w2 = NA))

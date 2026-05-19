@@ -2,7 +2,7 @@
 ## Tests both miss50 (A1 data) and miss30 (A2 data). 1000 reps per config.
 setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 suppressMessages({ source("Basic_setup.r"); source("Data_Generation.r"); source("Simulation.r") })
-library(EBMRalgorithmFast4); library(parallel); library(foreach); library(doSNOW)
+library(EPS); library(parallel); library(foreach); library(doSNOW)
 
 W_sm <- function(g.matrix) solve(t(g.matrix) %*% g.matrix / nrow(g.matrix))
 h_full <- function(dat) cbind(u1=dat$u1, u2=dat$u2, z1=dat$z1, z2=dat$z2)
@@ -31,7 +31,7 @@ run_one <- function(all_data, alpha.true, opt, cond) {
   clusterExport(cl, c("nn","W_sm","h_full","inv_link_fn","all_data",
                       "alpha.true","ps_model.true","make_ps_spec_M1","opt","cond"),
                 envir = environment())
-  clusterEvalQ(cl, { library(EBMRalgorithmFast4) })
+  clusterEvalQ(cl, { library(EPS) })
   pb <- txtProgressBar(max = n_reps, style = 3)
   opts <- list(progress = function(n) setTxtProgressBar(pb, n))
   res <- foreach(i = 1:n_reps, .combine = 'cbind', .options.snow = opts,
@@ -39,7 +39,7 @@ run_one <- function(all_data, alpha.true, opt, cond) {
     tryCatch({
       dat <- all_data[((i-1)*nn+1):(i*nn), ]
       sp <- make_ps_spec_M1(opt, cond)
-      ebmr <- EBMRAlgorithmFast4$new("y", sp, dat, W_sm)
+      ebmr <- EPS$new("y", sp, dat, W_sm)
       out <- ebmr$EBMR_IPW(h_nu = h_full, true_ps = ps_model.true(dat),
                            se.fit = TRUE, type = "HT")
       a <- unname(ebmr$ps_fit.list[[1]]$coefficients)

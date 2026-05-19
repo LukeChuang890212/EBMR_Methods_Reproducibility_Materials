@@ -1,4 +1,4 @@
-# GMM functions for EBMRalgorithmFast4
+# GMM functions for EIPS
 #
 # Optimizations:
 # 1. Use crossprod instead of t() %*%

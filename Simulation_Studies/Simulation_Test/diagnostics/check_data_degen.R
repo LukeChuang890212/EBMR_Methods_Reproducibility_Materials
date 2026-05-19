@@ -3,7 +3,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 n_val <- 2000
 n_reps <- 200
@@ -26,7 +26,7 @@ for (rep_i in 1:n_reps) {
     optimizer = "constrained_nr"
   )
   tryCatch({
-    ebmr <- EBMRAlgorithmFast4$new("y", single_ps, dat, W_fn)
+    ebmr <- EPS$new("y", single_ps, dat, W_fn)
     cond_vals[rep_i] <- ebmr$ps_fit.list[[1]]$gmm_fit$opt$solution_cond
   }, error = function(e) NULL)
 }
@@ -87,7 +87,7 @@ single_ps <- list(
   alpha_init.list = list(NULL),
   optimizer = "L-BFGS-B"
 )
-ebmr1 <- EBMRAlgorithmFast4$new("y", single_ps, dat1, W_fn)
+ebmr1 <- EPS$new("y", single_ps, dat1, W_fn)
 dm_cols <- colnames(ebmr1$ps_fit.list[[1]]$design_matrix)
 hx_cols <- colnames(ebmr1$ps_fit.list[[1]]$h_x)
 cat(sprintf("  Design matrix columns: %s\n", paste(dm_cols, collapse=", ")))
@@ -97,7 +97,7 @@ cat(sprintf("  h(x) columns: %s\n", paste(hx_cols, collapse=", ")))
 cat("\n=== Design matrix column means ===\n")
 for (j in seq_along(dm_cols)) {
   collect(function(d) {
-    ebmr_tmp <- EBMRAlgorithmFast4$new("y", single_ps, d, W_fn)
+    ebmr_tmp <- EPS$new("y", single_ps, d, W_fn)
     mean(ebmr_tmp$ps_fit.list[[1]]$design_matrix[, j])
   }, sprintf("dm_col%d_mean", j))
 }

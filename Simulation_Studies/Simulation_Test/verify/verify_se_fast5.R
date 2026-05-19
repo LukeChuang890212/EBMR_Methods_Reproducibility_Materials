@@ -5,7 +5,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast5", quiet = TRUE)
+devtools::load_all("../EIPS", quiet = TRUE)
 
 mu_true <- get_mu_true("setting4")
 ps_spec_base <- get_ps_spec("9")
@@ -43,7 +43,7 @@ for (est_label in c("mu_011", "mu_101", "mu_001")) {
     dat <- setting4.B1(nn)
 
     # Analytical SE
-    ebmr <- EBMRAlgorithmFast5$new("y", ps_spec_sub, dat, W_sm)
+    ebmr <- EIPS$new("y", ps_spec_sub, dat, W_sm)
     if (J == 1) {
       ipw <- ebmr$EBMR_IPW(h_nu_fn, se.fit = TRUE)
     } else {
@@ -58,7 +58,7 @@ for (est_label in c("mu_011", "mu_101", "mu_001")) {
       idx <- sample(nn, nn, replace = TRUE)
       dat_b <- dat[idx, ]
       ebmr_b <- tryCatch({
-        eb <- EBMRAlgorithmFast5$new("y", ps_spec_sub, dat_b, W_sm)
+        eb <- EIPS$new("y", ps_spec_sub, dat_b, W_sm)
         if (J == 1) {
           ipw_b <- eb$EBMR_IPW(h_nu_fn, se.fit = FALSE)
         } else {

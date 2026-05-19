@@ -2,7 +2,7 @@
 ## (M2 alpha default, M3 alpha cnr/1e4 per current override).
 setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 suppressMessages({ source("Basic_setup.r"); source("Data_Generation.r"); source("Simulation.r") })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 library(parallel); library(foreach); library(doSNOW)
 
 W_sm <- function(g.matrix) solve(t(g.matrix) %*% g.matrix / nrow(g.matrix))
@@ -61,8 +61,8 @@ clusterExport(cl, c("nn","ps_spec_23","W_sm","h_full","h_nu_fn","inv_link_fn",
               envir = environment())
 clusterEvalQ(cl, {
   setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
-  devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
-  gmm_fn <- EBMRalgorithmFast4:::gmm
+  devtools::load_all("../EPS", quiet = TRUE)
+  gmm_fn <- EPS:::gmm
 })
 pb <- txtProgressBar(max = n_reps, style = 3)
 opts <- list(progress = function(n) setTxtProgressBar(pb, n))
@@ -70,7 +70,7 @@ res <- foreach(i = 1:n_reps, .combine = 'cbind', .options.snow = opts,
                .packages = c("stringr","Matrix")) %dopar% {
   tryCatch({
     dat <- all_data[((i - 1) * nn + 1):(i * nn), ]
-    ebmr <- EBMRAlgorithmFast4$new("y", ps_spec_23, dat, W_sm)
+    ebmr <- EPS$new("y", ps_spec_23, dat, W_sm)
     ps_M2 <- as.vector(ebmr$ps_fit.list[[1]]$fitted.values)
     ps_M3 <- as.vector(ebmr$ps_fit.list[[2]]$fitted.values)
     ps.matrix <- cbind(ps_M2, ps_M3)

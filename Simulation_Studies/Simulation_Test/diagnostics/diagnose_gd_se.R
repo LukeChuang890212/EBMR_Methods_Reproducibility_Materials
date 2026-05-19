@@ -3,7 +3,7 @@ source("Data_Generation.r")
 source("config/scenarios.R")
 
 old_wd <- getwd()
-setwd("../EBMRalgorithmFast4")
+setwd("../EPS")
 source("R/EBMRAlgorithm.r")
 setwd(old_wd)
 
@@ -55,7 +55,7 @@ for (m in methods) {
   for (i in 1:n_reps) {
     dat <- datasets[[i]]
     tryCatch({
-      ebmr <- EBMRAlgorithmFast4$new("y", ps_spec_m2, dat, W_func, bounds = 5, gmm_method = m)
+      ebmr <- EPS$new("y", ps_spec_m2, dat, W_func, bounds = 5, gmm_method = m)
 
       # Call EBMR_IPW to get both mu and SE
       ipw_result <- ebmr$EBMR_IPW(h_nu = h_nu_func)

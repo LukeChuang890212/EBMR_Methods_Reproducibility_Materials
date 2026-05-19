@@ -7,7 +7,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 # Mirror exactly what run_scenario does for _23:
 scenario_id <- "9-3"; setting <- "setting2"; miss_rate <- "miss50"; current_n <- 2000
@@ -68,7 +68,7 @@ W_sm <- function(g.matrix) solve(t(g.matrix) %*% g.matrix / nrow(g.matrix))
 max_a_M2 <- numeric(n_check); max_a_M3 <- numeric(n_check)
 for (i in 1:n_check) {
   dat <- all_data[((i-1)*nn+1):(i*nn), ]
-  ebmr <- EBMRAlgorithmFast4$new("y", subset_ps_spec, dat, W_sm)
+  ebmr <- EPS$new("y", subset_ps_spec, dat, W_sm)
   a_M2 <- unname(ebmr$ps_fit.list[[1]]$coefficients)
   a_M3 <- unname(ebmr$ps_fit.list[[2]]$coefficients)
   max_a_M2[i] <- max(abs(a_M2))

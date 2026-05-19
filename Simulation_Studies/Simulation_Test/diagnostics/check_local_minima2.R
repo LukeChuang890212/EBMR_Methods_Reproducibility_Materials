@@ -2,7 +2,7 @@ setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 
 source("Data_Generation.r")
 source("config/scenarios.R")
-library(EBMRalgorithmFast4)
+library(EPS)
 library(numDeriv)
 source("Basic_setup.r")
 
@@ -26,7 +26,7 @@ rep_i <- 27
 dat <- all_data[((rep_i - 1) * n_val + 1):(rep_i * n_val), ]
 
 cat("=== Rep 27 [OUTLIER] - Package result ===\n")
-ebmr <- EBMRAlgorithmFast4$new("y", subset_ps_spec, dat, W_func)
+ebmr <- EPS$new("y", subset_ps_spec, dat, W_func)
 
 # Call EBMR_IPW to trigger ensemble
 result <- ebmr$EBMR_IPW(h_nu = h_nu_func, se.fit = FALSE)

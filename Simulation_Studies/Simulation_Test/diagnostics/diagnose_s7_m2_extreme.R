@@ -4,7 +4,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 ps_spec_base <- get_ps_spec("7")
 h_alpha_fn <- function(dat) cbind(u1=dat$u1, u2=dat$u2, z1=dat$z1, z2=dat$z2)
@@ -34,7 +34,7 @@ cat("=== Checking extreme reps ===\n\n")
 for (i in c(158, 207, 225, 242, 267)) {
   if (i * nn > nrow(all_data)) { cat(sprintf("Rep %d: data not available\n\n", i)); next }
   dat <- all_data[((i-1)*nn + 1):(i*nn), ]
-  ebmr <- EBMRAlgorithmFast4$new("y", ps_spec_m2, dat, W_sm)
+  ebmr <- EPS$new("y", ps_spec_m2, dat, W_sm)
   fit <- ebmr$ps_fit.list[[1]]
 
   alpha <- fit$coefficients

@@ -4,7 +4,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 ps_spec_base <- get_ps_spec("9-alt1")
 h_alpha_fn <- function(dat) cbind(
@@ -37,7 +37,7 @@ cat("=== Checking W convergence in nu estimation for mu_011 ===\n\n")
 # Manually replicate nu estimation to track W changes
 for (rep_i in 1:5) {
   dat <- all_data[((rep_i-1)*2000 + 1):(rep_i*2000), ]
-  ebmr <- EBMRAlgorithmFast4$new("y", ps_spec_sub, dat, W_fn)
+  ebmr <- EPS$new("y", ps_spec_sub, dat, W_fn)
 
   # Get PS matrix for models 2,3
   ps_mat <- do.call(cbind, lapply(ebmr$ps_fit.list, function(pf) pf$fitted.values))

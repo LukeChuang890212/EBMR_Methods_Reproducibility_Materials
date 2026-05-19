@@ -2,7 +2,7 @@ setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 
 source("Data_Generation.r")
 source("config/scenarios.R")
-library(EBMRalgorithmFast4)
+library(EPS)
 source("Basic_setup.r")
 
 data_file <- misspecified_model_all_data_file.list$setting3$miss50[[1]]
@@ -30,7 +30,7 @@ for (model_idx in c(1, 2)) {
     dat <- all_data[((rep_i - 1) * n_val + 1):(rep_i * n_val), ]
 
     tryCatch({
-      ebmr <- EBMRAlgorithmFast4$new("y", subset_ps_spec, dat, W_func)
+      ebmr <- EPS$new("y", subset_ps_spec, dat, W_func)
       ps_fit <- ebmr$ps_fit.list[[1]]
       ps_fitted <- ps_fit$fitted.values
       r <- as.numeric(dat$r)

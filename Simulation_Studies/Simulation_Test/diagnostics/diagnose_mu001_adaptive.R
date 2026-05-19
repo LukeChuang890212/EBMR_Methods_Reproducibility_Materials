@@ -5,7 +5,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 ps_spec_base <- get_ps_spec("9-alt1")
 h_alpha_fn <- function(dat) cbind(
@@ -112,7 +112,7 @@ ps_spec <- list(
   alpha_init.list = list(alpha)
 )
 W_fn <- function(g.matrix) solve(var(g.matrix))
-ebmr <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_fn)
+ebmr <- EPS$new("y", ps_spec, dat, W_fn)
 ipw <- ebmr$EBMR_IPW(h_alpha_fn, model_indices = 1, se.fit = TRUE)
 cat(sprintf("mu_ipw=%.6f, se=%.6f\n", ipw$mu_ipw, ipw$se_ipw))
 cat(sprintf("GMM converged: %s, grad_norm: %.2e\n",

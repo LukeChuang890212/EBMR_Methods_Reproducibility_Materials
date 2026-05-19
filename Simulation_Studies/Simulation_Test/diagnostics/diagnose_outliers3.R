@@ -55,7 +55,7 @@ cat("\n\n========== Reproducing outlier reps to check convergence ==========\n")
 
 source("Data_Generation.r")
 source("config/scenarios.R")
-library(EBMRalgorithmFast4)
+library(EPS)
 library(numDeriv)
 
 # Load the data
@@ -95,7 +95,7 @@ for (rep_i in check_reps) {
   label <- if (is_outlier_rep) "OUTLIER" else "NORMAL"
 
   tryCatch({
-    ebmr <- EBMRAlgorithmFast4$new("y", subset_ps_spec, dat, W)
+    ebmr <- EPS$new("y", subset_ps_spec, dat, W)
     fit <- ebmr$ps_fit.list[[1]]
     gmm_fit <- fit$gmm_fit
 

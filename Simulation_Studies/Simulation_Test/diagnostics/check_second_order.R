@@ -10,7 +10,7 @@ source("Data_Generation.r")
 source("config/scenarios.R")
 
 old_wd <- getwd()
-setwd("../EBMRalgorithmFast4")
+setwd("../EPS")
 source("R/EBMRAlgorithm.r")
 setwd(old_wd)
 
@@ -38,7 +38,7 @@ for (i in 1:n_reps) {
   n <- nrow(dat)
 
   tryCatch({
-    ebmr <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_func, method = "GN")
+    ebmr <- EPS$new("y", ps_spec, dat, W_func, method = "GN")
 
     cat(sprintf("--- Rep %d ---\n", i))
 

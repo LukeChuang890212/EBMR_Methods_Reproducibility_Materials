@@ -1,7 +1,7 @@
 ## Re-confirm s1.B1 n=2000, M3 only, constrained_nr cond=1e3, 1000 reps.
 setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 suppressMessages({ source("Basic_setup.r"); source("Data_Generation.r"); source("Simulation.r") })
-devtools::load_all("../EBMRalgorithmFast5", quiet = TRUE)
+devtools::load_all("../EIPS", quiet = TRUE)
 library(parallel); library(foreach); library(doSNOW)
 
 W_sm <- function(g.matrix) solve(t(g.matrix) %*% g.matrix / nrow(g.matrix))
@@ -41,7 +41,7 @@ clusterExport(cl, c("nn","ps_spec","W_sm","h_full","h_nu_fn","inv_link_fn"),
               envir = environment())
 clusterEvalQ(cl, {
   setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
-  devtools::load_all("../EBMRalgorithmFast5", quiet = TRUE)
+  devtools::load_all("../EIPS", quiet = TRUE)
   source("Data_Generation.r")
 })
 pb <- txtProgressBar(max = n_reps, style = 3)
@@ -52,7 +52,7 @@ res <- foreach(i = 1:n_reps, .combine = 'rbind', .options.snow = opts,
   out <- tryCatch({
     set.seed(i)
     dat <- setting1.B1(nn)
-    ebmr <- EBMRAlgorithmFast5$new("y", ps_spec, dat, W_sm)
+    ebmr <- EIPS$new("y", ps_spec, dat, W_sm)
     ipw <- ebmr$EBMR_IPW(h_nu_fn, model_indices = 1, se.fit = TRUE)
     a <- unname(ebmr$ps_fit.list[[1]]$coefficients)
     c(mu_ipw = ipw$mu_ipw, se_ipw = ipw$se_ipw,

@@ -5,7 +5,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 library(numDeriv)
 
 ps_spec_base <- get_ps_spec("7")
@@ -63,7 +63,7 @@ for (rep_i in c(1, 3, 7, 13)) {
   }
 
   # Get L-BFGS-B solution
-  ebmr <- EBMRAlgorithmFast4$new("y", ps_spec_lb, dat, W_sm)
+  ebmr <- EPS$new("y", ps_spec_lb, dat, W_sm)
   alpha_lb <- ebmr$ps_fit.list[[1]]$coefficients
 
   # Compute 2Γ'WG (iterative criterion)

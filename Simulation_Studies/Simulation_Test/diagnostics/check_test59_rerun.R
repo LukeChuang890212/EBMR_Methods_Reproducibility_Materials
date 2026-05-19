@@ -4,7 +4,7 @@ source("Basic_setup.r")
 source("Data_Generation.r")
 source("config/scenarios.R")
 source("Simulation.r")
-library(EBMRalgorithmFast4)
+library(EPS)
 
 # Scenario 9-3, model 2 only => ps_spec "9-alt1", model index 2
 ps_spec <- get_ps_spec("9-alt1")
@@ -52,7 +52,7 @@ t0 <- Sys.time()
 for (i in 1:n_reps) {
   dat <- all_data[((i-1)*n + 1):(i*n), ]
 
-  ebmr <- EBMRAlgorithmFast4$new("y", ps_spec_2, dat, W_func)
+  ebmr <- EPS$new("y", ps_spec_2, dat, W_func)
   result <- ebmr$EBMR_IPW(
     h_nu = function(dat) cbind(u1 = dat$u1, u2 = dat$u2, z1 = dat$z1, z2 = dat$z2, u1_u2 = dat$u1*dat$u2),
     true_ps = ps_model.true(dat, alpha.true),

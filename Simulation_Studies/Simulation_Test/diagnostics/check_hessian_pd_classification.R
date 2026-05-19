@@ -2,7 +2,7 @@ setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
-  library(EBMRalgorithmFast4)
+  library(EPS)
   library(numDeriv)
 })
 
@@ -27,7 +27,7 @@ for (i in 1:n_reps) {
   set.seed(12345 + i)
   dat <- all_data[((i-1)*n_val + 1):(i*n_val), ]
 
-  ebmr <- EBMRAlgorithmFast4$new("y", ps_sub, dat, W_func)
+  ebmr <- EPS$new("y", ps_sub, dat, W_func)
   h_nu_fn <- function(d) cbind(u1=d$u1, u2=d$u2, z1=d$z1, z2=d$z2, u1_u2=d$u1*d$u2)
   ebmr$EBMR_IPW(h_nu=h_nu_fn, type="HT", se.fit=FALSE)
 

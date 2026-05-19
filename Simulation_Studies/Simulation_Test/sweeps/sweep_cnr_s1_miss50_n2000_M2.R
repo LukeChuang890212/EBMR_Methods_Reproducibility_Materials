@@ -4,7 +4,7 @@
 ## Compare default L-BFGS-B/1e8 vs constrained_nr/{1e2, 5e2, 1e3, 1e4, 1e5}.
 setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 suppressMessages({ source("Basic_setup.r"); source("Data_Generation.r"); source("Simulation.r") })
-devtools::load_all("../EBMRalgorithmFast5", quiet = TRUE)
+devtools::load_all("../EIPS", quiet = TRUE)
 library(parallel); library(foreach); library(doSNOW)
 
 W_sm <- function(g.matrix) solve(t(g.matrix) %*% g.matrix / nrow(g.matrix))
@@ -54,7 +54,7 @@ run_one <- function(cfg, optspec) {
                 envir = environment())
   clusterEvalQ(cl, {
     setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
-    devtools::load_all("../EBMRalgorithmFast5", quiet = TRUE)
+    devtools::load_all("../EIPS", quiet = TRUE)
     source("Data_Generation.r")
   })
   pb <- txtProgressBar(max = n_reps, style = 3)
@@ -64,7 +64,7 @@ run_one <- function(cfg, optspec) {
     out <- tryCatch({
       set.seed(i)
       dat <- get(cfg$dgp)(cfg$n)
-      ebmr <- EBMRAlgorithmFast5$new("y", ps_spec, dat, W_sm)
+      ebmr <- EIPS$new("y", ps_spec, dat, W_sm)
       ipw <- ebmr$EBMR_IPW(h_nu_fn, model_indices = 1, se.fit = TRUE)
       a <- unname(ebmr$ps_fit.list[[1]]$coefficients)
       c(mu_ipw = ipw$mu_ipw, se_ipw = ipw$se_ipw,

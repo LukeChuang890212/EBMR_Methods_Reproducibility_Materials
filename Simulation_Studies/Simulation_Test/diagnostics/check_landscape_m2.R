@@ -3,7 +3,7 @@ source("Basic_setup.r")
 source("Data_Generation.r")
 source("config/scenarios.R")
 source("Simulation.r")
-library(EBMRalgorithmFast4)
+library(EPS)
 
 ps_spec <- get_ps_spec("9-alt1")
 ps_spec_2 <- list(
@@ -26,7 +26,7 @@ for (B in c(Inf, 50, 20, 15, 10, 7, 5, 3, 2, 1)) {
   lo <- if (is.infinite(B)) -Inf else -B
   hi <- if (is.infinite(B)) Inf  else  B
 
-  ebmr <- EBMRAlgorithmFast4$new("y", ps_spec_2, dat, W_func,
+  ebmr <- EPS$new("y", ps_spec_2, dat, W_func,
                                   lower = lo, upper = hi)
   invisible(ebmr$EBMR_IPW(
     h_nu = function(dat) cbind(u1=dat$u1, u2=dat$u2, z1=dat$z1, z2=dat$z2, u1_u2=dat$u1*dat$u2),

@@ -3,7 +3,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 n_val <- 2000
 ps_spec <- get_ps_spec("9-alt1")
@@ -23,7 +23,7 @@ W_fn <- function(g.matrix) solve(t(g.matrix) %*% g.matrix / nrow(g.matrix))
 
 # Fit one rep
 dat <- all_data[1:n_val, ]
-ebmr <- EBMRAlgorithmFast4$new("y", single_ps, dat, W_fn)
+ebmr <- EPS$new("y", single_ps, dat, W_fn)
 gmm_fit <- ebmr$ps_fit.list[[1]]$gmm_fit
 
 alpha_hat <- gmm_fit$estimates

@@ -6,7 +6,7 @@ source("Data_Generation.r")
 source("config/scenarios.R")
 
 old_wd <- getwd()
-setwd("../EBMRalgorithmFast4")
+setwd("../EPS")
 source("R/EBMRAlgorithm.r")
 setwd(old_wd)
 
@@ -44,7 +44,7 @@ for (bound in c(20, 10, 5, 3)) {
     dat <- setting4.B1(n_val)
 
     tryCatch({
-      ebmr <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_func,
+      ebmr <- EPS$new("y", ps_spec, dat, W_func,
                                       method = "L-BFGS-B", bounds = bound)
       result <- ebmr$EBMR_IPW(h_nu = h_nu_func, method = "L-BFGS-B")
 

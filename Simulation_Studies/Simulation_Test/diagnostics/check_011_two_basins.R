@@ -4,7 +4,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 ps_spec_base <- get_ps_spec("9-alt1")
 h_alpha_fn <- function(dat) cbind(u1=dat$u1, u2=dat$u2, z1=dat$z1, z2=dat$z2)
@@ -35,7 +35,7 @@ cat("=== Comparing two nu basins for mu_011 ===\n\n")
 
 for (rep_i in 1:10) {
   dat <- all_data[((rep_i-1)*2000 + 1):(rep_i*2000), ]
-  ebmr <- EBMRAlgorithmFast4$new("y", ps_spec_sub, dat, W_fn)
+  ebmr <- EPS$new("y", ps_spec_sub, dat, W_fn)
 
   ps_mat <- do.call(cbind, lapply(ebmr$ps_fit.list, function(pf) pf$fitted.values))
   r_vec <- as.vector(dat$r)

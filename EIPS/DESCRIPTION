@@ -1,7 +1,7 @@
-Package: EBMRalgorithmFast4
+Package: EIPS
 Type: Package
 Title: EBMR Algorithm with Analytical Gradients for Fast GMM Estimation
-Version: 4.0.0
+Version: 5.0.0
 Author: Ming-Ju Chuang
 Maintainer: Ming-Ju Chuang <yourself@somewhere.net>
 Description: Enhanced EBMR algorithm with analytical gradients and Gauss-Newton

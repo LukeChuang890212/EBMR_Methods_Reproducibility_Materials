@@ -3,7 +3,7 @@ source("Data_Generation.r")
 source("config/scenarios.R")
 
 old_wd <- getwd()
-setwd("../EBMRalgorithmFast4")
+setwd("../EPS")
 source("R/EBMRAlgorithm.r")
 setwd(old_wd)
 
@@ -75,7 +75,7 @@ for (rep_i in test_reps) {
 
   for (m in methods) {
     tryCatch({
-      ebmr <- EBMRAlgorithmFast4$new("y", ps_spec_m2, dat, W_func, bounds = 5, gmm_method = m)
+      ebmr <- EPS$new("y", ps_spec_m2, dat, W_func, bounds = 5, gmm_method = m)
       fit <- ebmr$ps_fit.list[[1]]
       alpha_hat <- fit$coefficients
       gmm_fit <- fit$gmm_fit

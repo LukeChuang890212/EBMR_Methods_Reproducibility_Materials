@@ -4,7 +4,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 library(parallel); library(foreach); library(doSNOW)
 
 mu_true <- get_mu_true("setting3")
@@ -35,7 +35,7 @@ cl <- makeCluster(n_cores)
 registerDoSNOW(cl)
 clusterExport(cl, c("all_data", "nn", "ps_spec_m2", "W_sm", "h_nu_fn", "n_reps"),
               envir = environment())
-clusterEvalQ(cl, devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE))
+clusterEvalQ(cl, devtools::load_all("../EPS", quiet = TRUE))
 
 pb <- txtProgressBar(max = n_reps, style = 3)
 progress <- function(n) setTxtProgressBar(pb, n)
@@ -47,7 +47,7 @@ sim_result <- foreach(
 ) %dopar% {
   tryCatch({
     dat <- all_data[((i-1)*nn + 1):(i*nn), ]
-    ebmr <- EBMRAlgorithmFast4$new("y", ps_spec_m2, dat, W_sm)
+    ebmr <- EPS$new("y", ps_spec_m2, dat, W_sm)
     fit <- ebmr$ps_fit.list[[1]]
     ipw <- ebmr$EBMR_IPW(h_nu_fn, model_indices = 1, se.fit = TRUE)
 

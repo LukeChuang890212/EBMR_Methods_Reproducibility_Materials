@@ -2,7 +2,7 @@ setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 
 source("Data_Generation.r")
 source("config/scenarios.R")
-library(EBMRalgorithmFast4)
+library(EPS)
 source("Basic_setup.r")
 
 # Identify outlier reps with normal alpha
@@ -45,7 +45,7 @@ for (rep_i in check_reps) {
   label <- if (rep_i %in% normal_alpha_out) "OUT" else "NORM"
 
   tryCatch({
-    ebmr <- EBMRAlgorithmFast4$new("y", subset_ps_spec, dat, W_func)
+    ebmr <- EPS$new("y", subset_ps_spec, dat, W_func)
 
     # Use EBMR_IPW to get the actual SE, then also manually decompose
     res_ipw <- ebmr$EBMR_IPW(

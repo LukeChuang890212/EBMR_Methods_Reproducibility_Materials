@@ -5,7 +5,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 library(numDeriv)
 
 ps_spec_base <- get_ps_spec("9-alt1")
@@ -37,7 +37,7 @@ cat("=== Verifying SE formula for mu_001, rep 2 ===\n\n")
 dat <- all_data[2001:4000, ]
 n <- 2000
 
-ebmr <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_fn)
+ebmr <- EPS$new("y", ps_spec, dat, W_fn)
 ipw <- ebmr$EBMR_IPW(h_nu_fn, model_indices = 3, se.fit = TRUE)
 cat(sprintf("Package SE: %.6f\n", ipw$se_ipw))
 cat(sprintf("mu_ipw: %.6f\n\n", ipw$mu_ipw))
@@ -118,7 +118,7 @@ cat(sprintf("SE naive (no alpha uncertainty): %.6f\n", se_naive))
 # Now do the same for REP 1 (the problematic one)
 cat("\n\n=== Same check for rep 1 (problematic) ===\n\n")
 dat1 <- all_data[1:2000, ]
-ebmr1 <- EBMRAlgorithmFast4$new("y", ps_spec, dat1, W_fn)
+ebmr1 <- EPS$new("y", ps_spec, dat1, W_fn)
 ipw1 <- ebmr1$EBMR_IPW(h_nu_fn, model_indices = 3, se.fit = TRUE)
 cat(sprintf("Package SE: %.6f\n", ipw1$se_ipw))
 

@@ -4,7 +4,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 ps_spec_base <- get_ps_spec("7")
 h_alpha_fn <- function(dat) cbind(u1=dat$u1, u2=dat$u2, z1=dat$z1, z2=dat$z2)
@@ -32,7 +32,7 @@ ps_spec <- list(
 cat("Setting 3, M2 (r ~ y + u1 + z1), NR cond=1e2, 10 reps:\n\n")
 for (i in 1:10) {
   dat <- all_data[((i-1)*nn + 1):(i*nn), ]
-  ebmr <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_sm)
+  ebmr <- EPS$new("y", ps_spec, dat, W_sm)
   ps <- ebmr$ps_fit.list[[1]]$fitted.values
   alpha <- ebmr$ps_fit.list[[1]]$coefficients
   cat(sprintf("  Rep %2d: PS min=%.4f med=%.4f max=%.4f sd=%.6f | alpha=(%s)\n",

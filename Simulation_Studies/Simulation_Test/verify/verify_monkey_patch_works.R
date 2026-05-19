@@ -2,7 +2,7 @@
 ## actually re-route the nu fit through my wrapper?
 setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 suppressMessages({ source("Basic_setup.r"); source("Data_Generation.r"); source("Simulation.r") })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 W_sm <- function(g.matrix) solve(t(g.matrix) %*% g.matrix / nrow(g.matrix))
 h_full <- function(dat) cbind(u1=dat$u1, u2=dat$u2, z1=dat$z1, z2=dat$z2)
@@ -35,20 +35,20 @@ spy_gmm <- function(g, W, n, esteq_dim, param_dim, init, se.fit = TRUE,
                     cond_threshold = 1e2, trust_radius = 2.0) {
   call_log$nu_optimizer <- c(call_log$nu_optimizer, optimizer)
   call_log$nu_cond      <- c(call_log$nu_cond, cond_threshold)
-  EBMRalgorithmFast4:::gmm(g, W, n, esteq_dim, param_dim, init, se.fit, dg, d2g,
+  EPS:::gmm(g, W, n, esteq_dim, param_dim, init, se.fit, dg, d2g,
                            lower, upper, stall_limit, max_outer_override,
                            Gamma_direct, optimizer, cond_threshold, trust_radius)
 }
 
 cat("===== Rep 1: WITHOUT patch (baseline package behavior) =====\n")
 dat <- all_data[1:nn, ]
-ebmr <- EBMRAlgorithmFast4$new("y", ps_spec_23, dat, W_sm)
+ebmr <- EPS$new("y", ps_spec_23, dat, W_sm)
 out_un <- ebmr$EBMR_IPW(h_nu_fn, true_ps = ps_model.true(dat, alpha.true), se.fit = TRUE, type = "HT")
 cat(sprintf("  mu_ipw=%.4f  se_ipw=%.4f  nu1=%.3f  nu2=%.3f  w1=%.3f\n",
             out_un$mu_ipw, out_un$se_ipw, out_un$nu.hat[1], out_un$nu.hat[2], out_un$w.hat[1]))
 
 cat("\n===== Rep 1: WITH patch (cnr/1e2 for nu fit) =====\n")
-ebmr2 <- EBMRAlgorithmFast4$new("y", ps_spec_23, dat, W_sm)
+ebmr2 <- EPS$new("y", ps_spec_23, dat, W_sm)
 priv_env <- ebmr2$.__enclos_env__$private
 patched <- tryCatch({
   unlockBinding("gmm", priv_env)
@@ -69,7 +69,7 @@ if (patched) {
 cat("\n===== Reps 2-3: confirm reproducibility =====\n")
 for (i in 2:3) {
   dat_i <- all_data[((i-1)*nn+1):(i*nn), ]
-  ebmr_i <- EBMRAlgorithmFast4$new("y", ps_spec_23, dat_i, W_sm)
+  ebmr_i <- EPS$new("y", ps_spec_23, dat_i, W_sm)
   pe_i <- ebmr_i$.__enclos_env__$private
   unlockBinding("gmm", pe_i); assign("gmm", spy_gmm, envir = pe_i); lockBinding("gmm", pe_i)
   out_i <- ebmr_i$EBMR_IPW(h_nu_fn, true_ps = ps_model.true(dat_i, alpha.true), se.fit = TRUE, type = "HT")

@@ -4,7 +4,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 library(nloptr)
 
 n_val <- 2000
@@ -95,7 +95,7 @@ for (rep_i in 1:n_check) {
     alpha_init.list = list(NULL), optimizer = "L-BFGS-B"
   )
   tryCatch({
-    ebmr <- EBMRAlgorithmFast4$new("y", single_ps, dat, W_fn)
+    ebmr <- EPS$new("y", single_ps, dat, W_fn)
     di <- list(design_mat = ebmr$ps_fit.list[[1]]$design_matrix,
                h_x = ebmr$ps_fit.list[[1]]$h_x,
                link_type = ebmr$ps_fit.list[[1]]$link_type)
@@ -162,7 +162,7 @@ if (n_degen > 0) {
       alpha_init.list = list(NULL), optimizer = "L-BFGS-B"
     )
     tryCatch({
-      ebmr <- EBMRAlgorithmFast4$new("y", single_ps, dat, W_fn)
+      ebmr <- EPS$new("y", single_ps, dat, W_fn)
       di <- list(design_mat = ebmr$ps_fit.list[[1]]$design_matrix,
                  h_x = ebmr$ps_fit.list[[1]]$h_x,
                  link_type = ebmr$ps_fit.list[[1]]$link_type)

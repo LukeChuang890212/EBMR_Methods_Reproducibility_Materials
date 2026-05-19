@@ -10,7 +10,7 @@ source("Data_Generation.r")
 source("config/scenarios.R")
 
 old_wd <- getwd()
-setwd("../EBMRalgorithmFast4")
+setwd("../EPS")
 source("R/EBMRAlgorithm.r")
 setwd(old_wd)
 
@@ -26,7 +26,7 @@ ps_spec$outcome <- "y"
 set.seed(42)
 dat <- setting3.B1(500)
 
-ebmr <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_func, method = "GN")
+ebmr <- EPS$new("y", ps_spec, dat, W_func, method = "GN")
 
 for (j in 1:3) {
   fit <- ebmr$ps_fit.list[[j]]
@@ -56,7 +56,7 @@ for (j in 1:3) {
   cat(sprintf("--- Model %d ---\n", j))
 
   # GN with default init (zero)
-  ebmr_default <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_func, method = "GN")
+  ebmr_default <- EPS$new("y", ps_spec, dat, W_func, method = "GN")
   fit_default <- ebmr_default$ps_fit.list[[j]]
   obj_default <- fit_default$opt$objective
   alpha_default <- fit_default$coefficients
@@ -76,7 +76,7 @@ for (j in 1:3) {
     ps_spec_s$alpha_init.list[[j]] <- init_s
 
     tryCatch({
-      ebmr_s <- EBMRAlgorithmFast4$new("y", ps_spec_s, dat, W_func, method = "GN")
+      ebmr_s <- EPS$new("y", ps_spec_s, dat, W_func, method = "GN")
       fit_s <- ebmr_s$ps_fit.list[[j]]
       obj_s <- fit_s$opt$objective
 
@@ -113,7 +113,7 @@ for (i in 1:n_reps) {
   dat <- setting4.B1(500)
 
   tryCatch({
-    ebmr <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_func, method = "GN")
+    ebmr <- EPS$new("y", ps_spec, dat, W_func, method = "GN")
 
     # Default init
     result_default <- ebmr$EBMR_IPW(h_nu = h_nu_func, method = "GN")

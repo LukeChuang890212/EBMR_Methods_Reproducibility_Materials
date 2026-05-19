@@ -2,7 +2,7 @@ setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 
 source("Data_Generation.r")
 source("config/scenarios.R")
-library(EBMRalgorithmFast4)
+library(EPS)
 source("Basic_setup.r")
 
 f <- "Simulation_Results/EBMR_IPW_setting3-miss50-scenario9-3_2_n2000_replicate1000_test59.RDS"
@@ -33,7 +33,7 @@ for (rep_i in c(extreme_reps, normal_reps)) {
   dat <- all_data[((rep_i - 1) * n_val + 1):(rep_i * n_val), ]
 
   tryCatch({
-    ebmr <- EBMRAlgorithmFast4$new("y", subset_ps_spec, dat, W_func)
+    ebmr <- EPS$new("y", subset_ps_spec, dat, W_func)
     ps_fitted <- ebmr$ps_fit.list[[1]]$fitted.values
 
     r_vec <- as.numeric(dat$r)
@@ -55,7 +55,7 @@ cat("\n=== IPW weight distribution across reps ===\n")
 max_weights <- numeric(20)
 for (rep_i in 1:20) {
   dat <- all_data[((rep_i - 1) * n_val + 1):(rep_i * n_val), ]
-  ebmr <- EBMRAlgorithmFast4$new("y", subset_ps_spec, dat, W_func)
+  ebmr <- EPS$new("y", subset_ps_spec, dat, W_func)
   ps_fitted <- ebmr$ps_fit.list[[1]]$fitted.values
   r_vec <- as.numeric(dat$r)
   max_weights[rep_i] <- max(r_vec / ps_fitted)

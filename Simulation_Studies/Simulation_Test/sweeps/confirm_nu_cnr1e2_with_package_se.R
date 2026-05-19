@@ -4,7 +4,7 @@
 ## alpha fits (done inside $new()) still use ps_spec_23's per-model override.
 setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 suppressMessages({ source("Basic_setup.r"); source("Data_Generation.r"); source("Simulation.r") })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 library(parallel); library(foreach); library(doSNOW)
 
 W_sm    <- function(g.matrix) solve(t(g.matrix) %*% g.matrix / nrow(g.matrix))
@@ -39,7 +39,7 @@ clusterExport(cl, c("nn","ps_spec_23","W_sm","h_full","h_nu_fn","inv_link_fn",
               envir = environment())
 clusterEvalQ(cl, {
   setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
-  devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+  devtools::load_all("../EPS", quiet = TRUE)
   # Wrapper that defaults the nu-fit optimizer/cond to cnr/1e2.
   # Methods.r:496 calls private$gmm(...) WITHOUT optimizer/cond_threshold, so the
   # wrapper's defaults apply. For alpha fits this wrapper is NEVER called because
@@ -49,7 +49,7 @@ clusterEvalQ(cl, {
                                stall_limit = 20L, max_outer_override = NULL,
                                Gamma_direct = NULL, optimizer = "constrained_nr",
                                cond_threshold = 1e2, trust_radius = 2.0) {
-    EBMRalgorithmFast4:::gmm(g, W, n, esteq_dim, param_dim, init, se.fit, dg, d2g,
+    EPS:::gmm(g, W, n, esteq_dim, param_dim, init, se.fit, dg, d2g,
                              lower, upper, stall_limit, max_outer_override,
                              Gamma_direct, optimizer, cond_threshold, trust_radius)
   }
@@ -60,7 +60,7 @@ res <- foreach(i = 1:n_reps, .combine = 'cbind', .options.snow = opts,
                .packages = c("stringr","Matrix")) %dopar% {
   tryCatch({
     dat <- all_data[((i - 1) * nn + 1):(i * nn), ]
-    ebmr <- EBMRAlgorithmFast4$new("y", ps_spec_23, dat, W_sm)
+    ebmr <- EPS$new("y", ps_spec_23, dat, W_sm)
     # Monkey-patch the private gmm AFTER alpha fits complete (R6 locks bindings,
     # so go via unlockBinding). Only the nu fit inside EBMR_IPW (Methods.r:496)
     # calls private$gmm without optimizer/cond_threshold, so cnr/1e2 defaults apply.

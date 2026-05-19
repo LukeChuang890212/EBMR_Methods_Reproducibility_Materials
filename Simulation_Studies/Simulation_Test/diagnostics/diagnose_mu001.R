@@ -4,7 +4,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 ps_spec_base <- get_ps_spec("9-alt1")
 h_alpha_fn <- function(dat) cbind(
@@ -37,11 +37,11 @@ dat <- all_data[1:2000, ]
 cat("=== Rep 1 diagnosis for mu_001 ===\n\n")
 
 # Fit with var(g) W
-ebmr_var <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_var)
+ebmr_var <- EPS$new("y", ps_spec, dat, W_var)
 ps_fit3_var <- ebmr_var$ps_fit.list[[3]]
 
 # Fit with second moment W
-ebmr_sm <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_sm)
+ebmr_sm <- EPS$new("y", ps_spec, dat, W_sm)
 ps_fit3_sm <- ebmr_sm$ps_fit.list[[3]]
 
 cat("Alpha estimates (M3):\n")

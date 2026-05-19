@@ -3,7 +3,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 n_val <- 2000
 ps_spec <- get_ps_spec("9-alt1")
@@ -25,7 +25,7 @@ single_ps <- list(
   optimizer = "constrained_nr"
 )
 
-ebmr <- EBMRAlgorithmFast4$new("y", single_ps, dat, W_fn)
+ebmr <- EPS$new("y", single_ps, dat, W_fn)
 gmm_fit <- ebmr$ps_fit.list[[1]]$gmm_fit
 design_mat <- ebmr$ps_fit.list[[1]]$design_matrix
 link_type <- ebmr$ps_fit.list[[1]]$link_type

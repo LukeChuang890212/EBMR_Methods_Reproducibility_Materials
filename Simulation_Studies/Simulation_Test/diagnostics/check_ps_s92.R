@@ -4,7 +4,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 ps_spec_base <- get_ps_spec("9")
 h_alpha_fn <- function(dat) cbind(u1=dat$u1, u2=dat$u2, z1=dat$z1, z2=dat$z2)
@@ -44,7 +44,7 @@ for (cond_val in c(1e4, 1e6)) {
   cat(sprintf("=== NR cond=%.0e, 5 reps ===\n", cond_val))
   for (i in 1:5) {
     dat <- all_data[((i-1)*nn + 1):(i*nn), ]
-    ebmr <- EBMRAlgorithmFast4$new("y", ps_spec_m3, dat, W_sm)
+    ebmr <- EPS$new("y", ps_spec_m3, dat, W_sm)
     ps <- ebmr$ps_fit.list[[1]]$fitted.values
     alpha <- ebmr$ps_fit.list[[1]]$coefficients
     mu <- mean(dat$r * dat$y / ps)

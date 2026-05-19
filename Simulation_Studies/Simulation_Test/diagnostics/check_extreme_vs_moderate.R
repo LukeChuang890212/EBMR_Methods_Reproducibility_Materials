@@ -6,7 +6,7 @@ source("Data_Generation.r")
 source("config/scenarios.R")
 
 old_wd <- getwd()
-setwd("../EBMRalgorithmFast4")
+setwd("../EPS")
 source("R/EBMRAlgorithm.r")
 setwd(old_wd)
 
@@ -30,7 +30,7 @@ for (i in 1:n_reps) {
 
   tryCatch({
     # Fit with GN (unconstrained)
-    ebmr_gn <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_func, method = "GN")
+    ebmr_gn <- EPS$new("y", ps_spec, dat, W_func, method = "GN")
 
     any_extreme <- FALSE
     for (j in 1:3) {
@@ -43,7 +43,7 @@ for (i in 1:n_reps) {
         obj_gn <- fit_gn$opt$objective
 
         # Now fit same PS model with L-BFGS-B [-5,5]
-        ebmr_lb <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_func, method = "L-BFGS-B")
+        ebmr_lb <- EPS$new("y", ps_spec, dat, W_func, method = "L-BFGS-B")
         fit_lb <- ebmr_lb$ps_fit.list[[j]]
         alpha_lb <- fit_lb$coefficients
         obj_lb <- fit_lb$opt$objective

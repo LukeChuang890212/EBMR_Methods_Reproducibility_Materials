@@ -4,7 +4,7 @@ source("Basic_setup.r")
 source("Data_Generation.r")
 source("config/scenarios.R")
 source("Simulation.r")
-library(EBMRalgorithmFast4)
+library(EPS)
 
 data_file <- misspecified_model_all_data_file.list$setting3$miss50[[1]]
 all_data <- readRDS(data_file)
@@ -40,7 +40,7 @@ for (rep_i in extreme_reps) {
   y_vec <- dat$y
 
   # Use package to fit
-  ebmr <- EBMRAlgorithmFast4$new("y", subset_ps_spec, dat, W_func)
+  ebmr <- EPS$new("y", subset_ps_spec, dat, W_func)
   fit <- ebmr$ps_fit.list[[1]]
   alpha <- fit$coefficients
   design_matrix <- fit$design_matrix
@@ -97,7 +97,7 @@ n <- nrow(dat)
 r_vec <- as.numeric(dat$r)
 y_vec <- dat$y
 
-ebmr <- EBMRAlgorithmFast4$new("y", subset_ps_spec, dat, W_func)
+ebmr <- EPS$new("y", subset_ps_spec, dat, W_func)
 fit <- ebmr$ps_fit.list[[1]]
 design_matrix <- fit$design_matrix
 h_x <- fit$h_x

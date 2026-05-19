@@ -4,7 +4,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 ps_spec_base <- get_ps_spec("9-alt1")
 h_alpha_fn <- function(dat) cbind(
@@ -46,7 +46,7 @@ for (max_outer in c(200, 500, 1000, 2000)) {
   # Instead, call gmm directly.
 
   # Build ebmr to get the design matrix etc
-  ebmr <- EBMRAlgorithmFast4$new("y", ps_spec_test, dat, W_var)
+  ebmr <- EPS$new("y", ps_spec_test, dat, W_var)
   fit <- ebmr$ps_fit.list[[1]]
   cat(sprintf("max_outer=default: grad=%.2e, obj=%.2e, iter=%d, converged=%s\n",
       fit$gmm_fit$opt$final_grad_norm, fit$gmm_fit$opt$objective,
@@ -62,7 +62,7 @@ formula3 <- ps_spec_base$formula.list[[3]]
 inv_link <- ps_spec_base$inv_link
 
 # Get the preprocessed pieces from the fitted object
-ebmr <- EBMRAlgorithmFast4$new("y", list(
+ebmr <- EPS$new("y", list(
   formula.list = list(formula3),
   h_alpha.list = list(h_alpha_fn),
   inv_link = inv_link,

@@ -275,7 +275,7 @@ simulate <- function(all_data, ps_model.true, alpha.true, ps_specifications,
                      n, replicate_num, save_file = NULL, type = "HT",
                      setting = NULL,
                      nu_optimizer = "L-BFGS-B", nu_cond_threshold = 1e8) {
-  library(EBMRalgorithmFast4)
+  library(EPS)
   library(parallel)
   library(foreach)
   library(doSNOW)
@@ -298,7 +298,7 @@ simulate <- function(all_data, ps_model.true, alpha.true, ps_specifications,
   pb <- txtProgressBar(max = replicate_num, style = 3)
   progress <- function(n) setTxtProgressBar(pb, n)
   opts <- list(progress = progress)
-  parallel_packages <- c("EBMRalgorithmFast4", "stringr", "Matrix", "numDeriv")
+  parallel_packages <- c("EPS", "stringr", "Matrix", "numDeriv")
 
   start <- Sys.time()
 
@@ -329,7 +329,7 @@ simulate <- function(all_data, ps_model.true, alpha.true, ps_specifications,
       }
 
       # EBMR algorithm using Fast version with analytical gradients
-      ebmr <- EBMRAlgorithmFast4$new("y", ps_specifications, dat, W)
+      ebmr <- EPS$new("y", ps_specifications, dat, W)
       result <- ebmr$EBMR_IPW(
         h_nu = h_nu,
         true_ps = ps_model.true(dat, alpha.true),

@@ -2,7 +2,7 @@ setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 
 source("Data_Generation.r")
 source("config/scenarios.R")
-library(EBMRalgorithmFast4)
+library(EPS)
 library(numDeriv)
 source("Basic_setup.r")
 
@@ -48,7 +48,7 @@ for (rep_i in check_reps) {
               rep_i, label, w1_stored[rep_i], w2_stored[rep_i]))
 
   tryCatch({
-    ebmr <- EBMRAlgorithmFast4$new("y", subset_ps_spec, dat, W_func)
+    ebmr <- EPS$new("y", subset_ps_spec, dat, W_func)
     J <- 2
     ps.matrix <- do.call(cbind, lapply(ebmr$ps_fit.list, function(f) f$fitted.values))
 

@@ -4,7 +4,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 ps_spec_base <- get_ps_spec("9-alt1")
 h_alpha_fn <- function(dat) cbind(
@@ -35,7 +35,7 @@ cat("=== Checking convergence of M2, M3, and nu for mu_011 with constrained_nr =
 
 for (i in 1:10) {
   dat <- all_data[((i-1)*2000 + 1):(i*2000), ]
-  ebmr <- EBMRAlgorithmFast4$new("y", ps_spec, dat, W_fn)
+  ebmr <- EPS$new("y", ps_spec, dat, W_fn)
   ipw <- ebmr$EBMR_IPW(h_nu_fn, model_indices = 2:3, se.fit = TRUE)
 
   # Check convergence of M2 and M3

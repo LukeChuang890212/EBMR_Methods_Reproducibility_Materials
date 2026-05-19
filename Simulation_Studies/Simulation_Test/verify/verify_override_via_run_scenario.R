@@ -6,7 +6,7 @@ suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
 })
-devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+devtools::load_all("../EPS", quiet = TRUE)
 
 cat("\n##### Step 1: call run_scenario as Simulation_demo.R does #####\n")
 run_scenario("9-3", setting = "setting2", version = "test65", type = "HT")

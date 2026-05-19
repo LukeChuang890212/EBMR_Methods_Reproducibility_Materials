@@ -2,7 +2,7 @@ setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
 suppressMessages({
   source("Basic_setup.r"); source("Data_Generation.r")
   source("config/scenarios.R"); source("Simulation.r")
-  library(EBMRalgorithmFast4)
+  library(EPS)
 })
 
 W_func <- function(g.matrix) solve(t(g.matrix) %*% g.matrix / nrow(g.matrix))
@@ -29,7 +29,7 @@ cat("=== Checking nu sensitivity to starting values ===\n\n")
 for (rep_i in 1:n_check) {
   dat <- all_data[((rep_i-1)*n_val + 1):(rep_i*n_val), ]
 
-  ebmr <- EBMRAlgorithmFast4[["new"]]("y", ps_sub, dat, W_func)
+  ebmr <- EPS[["new"]]("y", ps_sub, dat, W_func)
 
   # Get ps.matrix from the fitted models
   ps_mat <- do.call(cbind, lapply(1:2, function(j) ebmr[["ps_fit.list"]][[j]][["fitted.values"]]))
