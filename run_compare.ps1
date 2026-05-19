@@ -1,7 +1,0 @@
-Set-Location "C:\Users\stat-user\iCloudDrive\Desktop\EBMR"
-Write-Host "=== Step 1: Installing EBMRalgorithmFast4 ==="
-& "C:\Program Files\R\R-4.5.2\bin\Rscript.exe" -e "devtools::install('EBMRalgorithmFast4', quiet=TRUE, upgrade='never')"
-Write-Host "=== Step 1 done ==="
-Write-Host "=== Step 2: Running compare_se1_se2.R ==="
-& "C:\Program Files\R\R-4.5.2\bin\Rscript.exe" "C:\Users\stat-user\iCloudDrive\Desktop\EBMR\Simulation_Studies\compare_se1_se2.R"
-Write-Host "=== Step 2 done ==="

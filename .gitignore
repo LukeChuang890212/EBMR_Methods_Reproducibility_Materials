@@ -10,3 +10,11 @@
 # Exclude large simulation folders
 Simulation_Studies/Simulation_Data/
 Simulation_Studies/Simulation_Results/
+
+# Exclude session/IDE/temp files
+.claude/
+*.RDataTmp*
+*.log
+
+# Exclude Simulation_Test archive subdirectory (one-off debug scripts kept for record only)
+Simulation_Studies/Simulation_Test/archive/

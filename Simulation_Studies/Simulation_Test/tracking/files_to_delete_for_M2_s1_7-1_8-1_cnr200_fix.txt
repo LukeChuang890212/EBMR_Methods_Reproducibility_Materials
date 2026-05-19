@@ -1,0 +1,41 @@
+# Files to delete before re-running, so the M2 cnr/cond=200 fix
+# (setting1 miss50 n=2000, scenarios 7-1 / 8-1) actually takes effect.
+#
+# Override changed: 7-1, 8-1 setting1 miss50 n=2000 model 2 -> cnr/200 (was cnr/500).
+# Re-sweep at 500 reps showed:
+#   - cnr/200 gives ratio=0.915, Bias=+0.077, ESD=0.156, max|alpha|=1.83
+#   - cnr/500 prior pick gave ratio=0.499, Bias=+0.12, ESD=0.339
+#   - cnr/100 over-constrains (Bias=-0.21), cnr/1e3+ degenerates to default (ratio=0.26)
+# Equivalence per EQUIVALENT_SCENARIOS_MODEL2: {7-1, 8-1} share M2 = u1_z1 + h_alpha=full on A data.
+#
+# Why we delete:
+#   - Files with model_str containing M2 (_2, _12, _23, _123) in {7-1, 8-1} for setting1
+#     miss50 n=2000 were fit with the prior cnr/500 override -> ratio ~0.5 (acceptable but
+#     not best). Re-running with cnr/200 should give ratio ~0.9 for the _2 estimator.
+#   - The runner skips if save_file exists; equivalence-copy can propagate stale results
+#     between 7-1 and 8-1. Delete every M2-involving file in scope so the cnr/200 re-fit
+#     takes effect on regeneration.
+#
+# Scope: miss30 NOT included. Prior cnr/500 gave miss30 ratio=0.962 (already good); a
+# separate sweep would be needed to confirm whether cnr/200 helps or hurts miss30.
+#
+# ====================================================================
+# == test65 -- miss50 (8 files) ==
+# ====================================================================
+Simulation_Results/EBMR_IPW_setting1-miss50-scenario7-1_2_n2000_replicate1000_test65.RDS    # rerun (M2 only) -- equivalence-shadow risk
+Simulation_Results/EBMR_IPW_setting1-miss50-scenario7-1_12_n2000_replicate1000_test65.RDS   # rerun (M1+M2)
+Simulation_Results/EBMR_IPW_setting1-miss50-scenario7-1_23_n2000_replicate1000_test65.RDS   # rerun (M2+M3) -- equivalence-shadow risk
+Simulation_Results/EBMR_IPW_setting1-miss50-scenario7-1_123_n2000_replicate1000_test65.RDS  # rerun (M1+M2+M3)
+Simulation_Results/EBMR_IPW_setting1-miss50-scenario8-1_2_n2000_replicate1000_test65.RDS    # rerun (M2 only) -- originally flagged
+Simulation_Results/EBMR_IPW_setting1-miss50-scenario8-1_12_n2000_replicate1000_test65.RDS   # rerun (M1+M2)
+Simulation_Results/EBMR_IPW_setting1-miss50-scenario8-1_23_n2000_replicate1000_test65.RDS   # rerun (M2+M3)
+Simulation_Results/EBMR_IPW_setting1-miss50-scenario8-1_123_n2000_replicate1000_test65.RDS  # rerun (M1+M2+M3)
+#
+# Total: 8 files (miss50 only).
+#
+# After deleting, re-run via:
+#   run_scenario("8-1", setting = "setting1", version = "test65", type = "HT")
+#   run_scenario("7-1", setting = "setting1", version = "test65", type = "HT")
+#   # Equivalence-copy will propagate the fresh M2 fit (_2, _23) across {7-1, 8-1}.
+#
+# Supersedes the miss50 portion of files_to_delete_for_M2_s1_7-1_8-1_cnr500_fix.txt.

@@ -1,0 +1,116 @@
+## Confirm at 1000 reps: nu fit with cnr/cond=1e2 for s2.B1 9-3 _23
+## (M2 alpha default, M3 alpha cnr/1e4 per current override).
+setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
+suppressMessages({ source("Basic_setup.r"); source("Data_Generation.r"); source("Simulation.r") })
+devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+library(parallel); library(foreach); library(doSNOW)
+
+W_sm <- function(g.matrix) solve(t(g.matrix) %*% g.matrix / nrow(g.matrix))
+h_full <- function(dat) cbind(u1=dat$u1, u2=dat$u2, z1=dat$z1, z2=dat$z2)
+h_nu_fn <- function(dat) cbind(u1=dat$u1, u2=dat$u2, z1=dat$z1, z2=dat$z2, u1_u2=dat$u1*dat$u2)
+inv_link_fn <- function(eta) 1/(1+exp(eta))
+
+ps_spec_23 <- list(
+  formula.list = list(r ~ y + u1 + z2, r ~ y + u2 + z2),
+  h_alpha.list = list(h_full, h_full),
+  inv_link = inv_link_fn, outcome = "y",
+  optimizer = list("L-BFGS-B", "constrained_nr"),
+  cond_threshold = list(1e8, 1e4)
+)
+
+alpha.true <- misspecified_model_alpha.true.list$setting2$miss50[[1]]
+ps_model.true <- function(dat, alpha.true) {
+  X <- cbind(rep(1, nrow(dat)), dat$y, dat$u1, dat$u2)
+  1 / (1 + exp(X %*% alpha.true))
+}
+all_data <- readRDS("Simulation_Data/setting2.B1_n2000_replicate1000.RDS")
+
+n_cores <- min(detectCores() - 1, 10); n_reps <- 1000; nn <- 2000
+mu_true <- mean(all_data$y)
+cat(sprintf("\nConfig: s2.B1 _23, nu cnr/1e2, %d reps, mu_true(data)=%.4f\n", n_reps, mu_true))
+
+build_nu_fns <- function(ps.matrix, r, h_x_user) {
+  n <- length(r); J <- ncol(ps.matrix)
+  h_x <- cbind(rep(1, n), h_x_user)     # intercept prepended (matches package)
+  h_dim <- ncol(h_x)
+  Phi_nu <- function(param) {
+    ps_nu <- as.vector(ps.matrix %*% param)
+    (r / ps_nu - 1) * h_x
+  }
+  dg_nu <- function(param) {
+    ps_nu <- as.vector(ps.matrix %*% param)
+    neg_r_ps2 <- -r / (ps_nu * ps_nu)
+    base_mat <- neg_r_ps2 * ps.matrix
+    Gamma_arr <- array(0, dim = c(n, J, h_dim))
+    for (l in 1:h_dim) Gamma_arr[, , l] <- base_mat * h_x[, l]
+    Gamma_arr
+  }
+  Gamma_nu_direct <- function(param) {
+    ps_nu <- as.vector(ps.matrix %*% param)
+    neg_r_ps2 <- -r / (ps_nu * ps_nu)
+    crossprod(h_x * neg_r_ps2, ps.matrix) / n
+  }
+  list(Phi_nu = Phi_nu, dg_nu = dg_nu, Gamma_nu_direct = Gamma_nu_direct,
+       h_dim = h_dim, J = J)
+}
+
+t0 <- proc.time()
+cl <- makeCluster(n_cores); registerDoSNOW(cl)
+clusterExport(cl, c("nn","ps_spec_23","W_sm","h_full","h_nu_fn","inv_link_fn",
+                    "all_data","alpha.true","ps_model.true","build_nu_fns"),
+              envir = environment())
+clusterEvalQ(cl, {
+  setwd("c:/Users/stat-user/iCloudDrive/Desktop/EBMR/Simulation_Studies")
+  devtools::load_all("../EBMRalgorithmFast4", quiet = TRUE)
+  gmm_fn <- EBMRalgorithmFast4:::gmm
+})
+pb <- txtProgressBar(max = n_reps, style = 3)
+opts <- list(progress = function(n) setTxtProgressBar(pb, n))
+res <- foreach(i = 1:n_reps, .combine = 'cbind', .options.snow = opts,
+               .packages = c("stringr","Matrix")) %dopar% {
+  tryCatch({
+    dat <- all_data[((i - 1) * nn + 1):(i * nn), ]
+    ebmr <- EBMRAlgorithmFast4$new("y", ps_spec_23, dat, W_sm)
+    ps_M2 <- as.vector(ebmr$ps_fit.list[[1]]$fitted.values)
+    ps_M3 <- as.vector(ebmr$ps_fit.list[[2]]$fitted.values)
+    ps.matrix <- cbind(ps_M2, ps_M3)
+    h_x <- h_nu_fn(dat)
+    fns <- build_nu_fns(ps.matrix, dat$r, h_x)
+    gmm_fit <- gmm_fn(g = fns$Phi_nu, W = W_sm, n = nn,
+                      esteq_dim = fns$h_dim, param_dim = fns$J,
+                      init = rep(1/fns$J, fns$J), se.fit = FALSE,
+                      dg = fns$dg_nu, Gamma_direct = fns$Gamma_nu_direct,
+                      optimizer = "constrained_nr", cond_threshold = 1e2)
+    nu_hat <- unname(gmm_fit$estimates)
+    w_hat <- nu_hat / sum(nu_hat)
+    ensemble_ps <- as.vector(ps.matrix %*% w_hat)
+    ry_ps <- dat$r * dat$y / ensemble_ps
+    mu_ipw <- mean(ry_ps)
+    se_plugin <- sd(ry_ps) / sqrt(nn)
+    c(mu_ipw = mu_ipw, se_plugin = se_plugin,
+      nu1 = nu_hat[1], nu2 = nu_hat[2],
+      w1 = w_hat[1], w2 = w_hat[2])
+  }, error = function(e) c(mu_ipw=NA_real_, se_plugin=NA_real_,
+                           nu1=NA_real_, nu2=NA_real_, w1=NA_real_, w2=NA_real_))
+}
+close(pb); stopCluster(cl)
+elapsed <- (proc.time() - t0)["elapsed"]
+
+mu_v <- res["mu_ipw", ]; se_v <- res["se_plugin", ]
+w1_v <- res["w1", ]
+valid <- !is.na(mu_v) & !is.na(se_v) & is.finite(mu_v) & is.finite(se_v)
+mu_v <- mu_v[valid]; se_v <- se_v[valid]
+bias <- mean(mu_v) - mu_true; esd <- sd(mu_v)
+ese <- mean(se_v); ese_med <- median(se_v); ratio <- ese / esd
+ci_lo <- mu_v - 1.96*se_v; ci_hi <- mu_v + 1.96*se_v
+cp <- mean(ci_lo <= mu_true & mu_true <= ci_hi)
+n_M3 <- sum(w1_v < 0.1, na.rm = TRUE)
+n_mid <- sum(w1_v >= 0.1 & w1_v < 0.9, na.rm = TRUE)
+n_M2 <- sum(w1_v >= 0.9, na.rm = TRUE)
+cat(sprintf("\nn_valid=%d  Bias=%+.4f  ESD=%.4f  ESE(plug-in mean)=%.4f  ESE(median)=%.4f  ratio=%.3f  CP=%.3f\n",
+            length(mu_v), bias, esd, ese, ese_med, ratio, cp))
+cat(sprintf("w_M2 distribution: [0,0.1):%d  [0.1,0.9):%d  [0.9,1]:%d  mean=%.3f  sd=%.3f\n",
+            n_M3, n_mid, n_M2, mean(w1_v, na.rm=T), sd(w1_v, na.rm=T)))
+cat("\nNote: ESE here is the plug-in SE = sd(r*y/pi)/sqrt(n), which ignores alpha + nu\n")
+cat("      estimation uncertainty -- a LOWER BOUND on the proper sandwich SE.\n")
+cat(sprintf("\nelapsed: %.0fs\nDONE\n", elapsed))

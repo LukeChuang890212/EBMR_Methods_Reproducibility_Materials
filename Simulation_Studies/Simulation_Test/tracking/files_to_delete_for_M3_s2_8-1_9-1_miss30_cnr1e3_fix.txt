@@ -1,0 +1,44 @@
+# Files to delete before re-running, so the M3 cnr/cond=1e3 fix
+# (setting2.A2 miss30 n=2000, scenarios 8-1 / 9-1) actually takes effect.
+#
+# Override added: {8-1, 9-1} setting2 miss30 n=2000 model 3 -> cnr/1e3.
+# Sweep at 1000 reps (cleaned via clean_sim_result mult=2, max_pct=0.01) showed:
+#   - default L-BFGS-B/1e8: 53 alpha blowups (max=20.04), ratio=0.760, CP=0.057
+#   - cnr/1e2: over-constrained, Bias=+0.29, CP=0.000
+#   - cnr/5e2: ratio=0.612 (worse than default), CP=0.039
+#   - cnr/1e3: ratio=0.919, ESD 0.046->0.037, 2 residual blowups -> CHOSEN
+#   - cnr/1e4+: ratio degrades back toward default (0.77-0.82) as more blowups leak through
+# CP unchanged at ~0.05-0.06 because bias -0.13 is structural M3 misspecification
+# (M3 = u2_z2 missing u1, can't match true PS r ~ y+u1+u2).
+#
+# Equivalence per EQUIVALENT_SCENARIOS_MODEL3: {8-1, 9-1} share M3 = u2_z2 on A-data.
+#   (7-1's M3 = u2_z1 is a different formula -- not equivalent.)
+#
+# Why we delete:
+#   - Files with model_str containing M3 (_3, _13, _23, _123) in {8-1, 9-1} for setting2
+#     miss30 n=2000 were fit with default L-BFGS-B/1e8 -> contains the 5.3% alpha blowups.
+#   - The runner skips if save_file exists; equivalence-copy propagates between 8-1 and 9-1.
+#     Delete all M3-involving files in scope so the cnr/1e3 fit takes effect.
+#
+# Scope notes:
+#   - miss50 NOT included (separate issue space; would need its own sweep on A1 data).
+#   - n=500 NOT included (override matches n=2000 only).
+#
+# ====================================================================
+# == test65 -- miss30 (8 files) ==
+# ====================================================================
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario8-1_3_n2000_replicate1000_test65.RDS    # rerun (M3 only)  -- equivalence-shadow risk
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario8-1_13_n2000_replicate1000_test65.RDS   # rerun (M1+M3)
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario8-1_23_n2000_replicate1000_test65.RDS   # rerun (M2+M3)
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario8-1_123_n2000_replicate1000_test65.RDS  # rerun (M1+M2+M3)
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario9-1_3_n2000_replicate1000_test65.RDS    # rerun (M3 only)  -- originally flagged
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario9-1_13_n2000_replicate1000_test65.RDS   # rerun (M1+M3)
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario9-1_23_n2000_replicate1000_test65.RDS   # rerun (M2+M3)
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario9-1_123_n2000_replicate1000_test65.RDS  # rerun (M1+M2+M3)
+#
+# Total: 8 files (test65 only).
+#
+# After deleting, re-run via:
+#   run_scenario("8-1", setting = "setting2", version = "test65", type = "HT", missing_rates = "miss30")
+#   run_scenario("9-1", setting = "setting2", version = "test65", type = "HT", missing_rates = "miss30")
+#   # Equivalence-copy will propagate the fresh M3 fit (_3) between {8-1, 9-1}.

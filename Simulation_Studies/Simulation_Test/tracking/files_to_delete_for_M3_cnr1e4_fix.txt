@@ -1,0 +1,36 @@
+# Files to delete before re-running, so the M3 cnr/cond=1e4 fix
+# (setting2.B1 miss50 n=2000) actually takes effect.
+#
+# Override added: scenarios {8-2, 8-3, 8-4, 9-2, 9-3, 9-4} setting2 miss50 n=2000 model 3 -> cnr/1e4.
+# Equivalence per EQUIVALENT_SCENARIOS_MODEL3: all 6 share M3 = u2_z2 + h_alpha=full on this B-data.
+#
+# Why we delete:
+#   - Files with model_str containing M3 (_3, _13, _23, _123) in any of the 6 equivalence
+#     scenarios were fit with default L-BFGS-B/1e8 -> stale broken M3 (max|alpha|=251).
+#   - The runner skips if save_file exists; equivalence-copy can propagate broken results
+#     across the 6 scenarios. Delete every stale file in scope.
+#
+# ====================================================================
+# == test65 ==
+# ====================================================================
+Simulation_Results/EBMR_IPW_setting2-miss50-scenario9-3_3_n2000_replicate1000_test65.RDS    # rerun (M3 only) — originally flagged
+Simulation_Results/EBMR_IPW_setting2-miss50-scenario9-3_13_n2000_replicate1000_test65.RDS   # rerun (M1+M3)
+Simulation_Results/EBMR_IPW_setting2-miss50-scenario9-3_23_n2000_replicate1000_test65.RDS   # rerun (M2+M3)
+Simulation_Results/EBMR_IPW_setting2-miss50-scenario9-3_123_n2000_replicate1000_test65.RDS  # rerun (M1+M2+M3)
+Simulation_Results/EBMR_IPW_setting2-miss50-scenario9-2_3_n2000_replicate1000_test65.RDS    # rerun (M3 only) — equivalence-shadow risk
+Simulation_Results/EBMR_IPW_setting2-miss50-scenario9-2_13_n2000_replicate1000_test65.RDS   # rerun (M1+M3) — distinct M1 from 9-3 so no shadow but needs re-fit with override
+Simulation_Results/EBMR_IPW_setting2-miss50-scenario9-2_23_n2000_replicate1000_test65.RDS   # rerun (M2+M3) — equivalence-shadow risk
+Simulation_Results/EBMR_IPW_setting2-miss50-scenario9-2_123_n2000_replicate1000_test65.RDS  # rerun (M1+M2+M3)
+# Note: no test65 files exist for 8-2/8-3/8-4/9-4 in this scope.
+#
+# ====================================================================
+# == test61 ==
+# ====================================================================
+# (none currently exist for the M3-involving combos in scope.)
+#
+# Total: 8 files (test65 only).
+#
+# After deleting, re-run via:
+#   run_scenario("9-3", setting = "setting2", version = "test65", type = "HT")
+#   run_scenario("9-2", setting = "setting2", version = "test65", type = "HT")
+#   # Equivalence-copy will propagate the fresh M3 fit to other scenarios when run later.

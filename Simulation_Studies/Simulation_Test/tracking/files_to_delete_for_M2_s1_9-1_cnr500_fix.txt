@@ -1,0 +1,35 @@
+# Files to delete before re-running, so the M2 cnr/cond=500 fix
+# (setting1 miss50 n=2000, scenario 9-1) actually takes effect.
+#
+# Override added: 9-1 setting1 miss50 n=2000 model 2 -> cnr/500.
+# Sweep at 1000 reps (cleaned via clean_sim_result mult=2, max_pct=0.01) showed:
+#   - default L-BFGS-B/1e8: 1 rep with alpha=503.7 and se=106 -> ESE(mean)=0.21, ratio=1.913
+#   - cnr/1e2: over-constrained, Bias=-0.29, CP=0.06 (rejected)
+#   - cnr/2e2: ratio=1.017 but ESD too tight -> CP=0.20
+#   - cnr/5e2: ratio=0.993, CP=0.307, max|alpha|=2.31, 0 SE-blowups -> CHOSEN
+#   - cnr/1e3+: ratio jumps back to ~1.9 (near-degenerate Hessian leaks through despite small max|alpha|).
+# CP remains 0.307 because bias +0.24 is structural M2 misspecification (u1_z2 doesn't match true u1_u2);
+# fix improves ESE/ESD ratio but cannot improve CP.
+#
+# 9-1 M2 is NOT in EQUIVALENT_SCENARIOS_MODEL2 (standalone):
+#   - 7-1, 8-1 share M2 = u1_z1 (different formula)
+#   - 9-2, 9-3, 9-4 share M2 = u1_z2 but on B-data (misspecified setting)
+# So this fix only affects 9-1.
+#
+# Why we delete:
+#   - Files with model_str containing M2 (_2, _12, _23, _123) in scenario 9-1 for setting1
+#     miss50 n=2000 were fit with default L-BFGS-B/1e8 -> contains the SE-blowup rep.
+#   - The runner skips if save_file exists, so stale files block re-fitting with override.
+#
+# ====================================================================
+# == test65 -- miss50 (4 files) ==
+# ====================================================================
+Simulation_Results/EBMR_IPW_setting1-miss50-scenario9-1_2_n2000_replicate1000_test65.RDS    # rerun (M2 only) -- originally flagged
+Simulation_Results/EBMR_IPW_setting1-miss50-scenario9-1_12_n2000_replicate1000_test65.RDS   # rerun (M1+M2)
+Simulation_Results/EBMR_IPW_setting1-miss50-scenario9-1_23_n2000_replicate1000_test65.RDS   # rerun (M2+M3)
+Simulation_Results/EBMR_IPW_setting1-miss50-scenario9-1_123_n2000_replicate1000_test65.RDS  # rerun (M1+M2+M3)
+#
+# Total: 4 files (test65 only).
+#
+# After deleting, re-run via:
+#   run_scenario("9-1", setting = "setting1", version = "test65", type = "HT", missing_rates = "miss50")

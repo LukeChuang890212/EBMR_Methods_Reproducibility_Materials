@@ -1,0 +1,44 @@
+# Files to delete before re-running, so the M1 cnr/cond=1e8 fix
+# (setting2 miss30 n=2000, scenarios 7-1 / 8-1 / 9-1) actually takes effect.
+#
+# Override added: 7-1, 8-1, 9-1 setting2 miss30 n=2000 model 1 -> cnr/1e8.
+# Wider sweep at 1000 reps showed:
+#   - default L-BFGS-B/1e8: 31 alpha blowups (max|alpha|=14.66), CP=0.928, z@0.975=+4.31
+#   - cnr/1e4 (tight):      0 blowups, max|alpha|=2.4 (over-constrained), CP=0.922
+#   - cnr/1e7-1e8:          0 blowups, max|alpha|=6-7,                    CP=0.940
+#     -> trust-radius-bounded Newton steps prevent blowups even with cond effectively inactive.
+# Equivalence per EQUIVALENT_SCENARIOS_MODEL1: {7-1, 8-1, 9-1} all share M1 = full + h_alpha=full.
+#
+# Why we delete:
+#   - Files with model_str containing M1 (_1, _12, _13, _123) in {7-1, 8-1, 9-1} for setting2
+#     miss30 n=2000 were fit with default L-BFGS-B/1e8 -> contains the 3% alpha blowups
+#     that drive CP from nominal 0.95 down to 0.928.
+#   - The runner skips if save_file exists; equivalence-copy can propagate stale results
+#     across {7-1, 8-1, 9-1}. Delete every M1-involving file in scope.
+#
+# Scope: miss50 NOT included (separate issue space; would need its own sweep at A1 data).
+# n=500 NOT included (override matches n=2000 only).
+#
+# ====================================================================
+# == test65 -- miss30 (12 files) ==
+# ====================================================================
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario7-1_1_n2000_replicate1000_test65.RDS    # rerun (M1 only) -- equivalence-shadow risk
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario7-1_12_n2000_replicate1000_test65.RDS   # rerun (M1+M2)
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario7-1_13_n2000_replicate1000_test65.RDS   # rerun (M1+M3)
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario7-1_123_n2000_replicate1000_test65.RDS  # rerun (M1+M2+M3)
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario8-1_1_n2000_replicate1000_test65.RDS    # rerun (M1 only) -- originally flagged
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario8-1_12_n2000_replicate1000_test65.RDS   # rerun (M1+M2)
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario8-1_13_n2000_replicate1000_test65.RDS   # rerun (M1+M3)
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario8-1_123_n2000_replicate1000_test65.RDS  # rerun (M1+M2+M3)
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario9-1_1_n2000_replicate1000_test65.RDS    # rerun (M1 only) -- equivalence-shadow risk
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario9-1_12_n2000_replicate1000_test65.RDS   # rerun (M1+M2)
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario9-1_13_n2000_replicate1000_test65.RDS   # rerun (M1+M3)
+Simulation_Results/EBMR_IPW_setting2-miss30-scenario9-1_123_n2000_replicate1000_test65.RDS  # rerun (M1+M2+M3)
+#
+# Total: 12 files (test65 only).
+#
+# After deleting, re-run via:
+#   run_scenario("8-1", setting = "setting2", version = "test65", type = "HT", missing_rates = "miss30")
+#   run_scenario("7-1", setting = "setting2", version = "test65", type = "HT", missing_rates = "miss30")
+#   run_scenario("9-1", setting = "setting2", version = "test65", type = "HT", missing_rates = "miss30")
+#   # Equivalence-copy will propagate the fresh M1 fit (_1) across {7-1, 8-1, 9-1}.

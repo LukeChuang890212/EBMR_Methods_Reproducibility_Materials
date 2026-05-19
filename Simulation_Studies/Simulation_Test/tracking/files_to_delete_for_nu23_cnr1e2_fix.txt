@@ -1,0 +1,40 @@
+# Files to delete before re-running, so the nu:23 cnr/cond=1e2 fix
+# (setting2.B1 miss50 n=2000) actually takes effect.
+#
+# Override added: scenarios {9-2, 9-3, 9-4} setting2 miss50 n=2000 nu:23 -> cnr/1e2.
+# Equivalence per EQUIVALENT_SCENARIOS_MODEL23: 9-2/9-3/9-4 share M2=u1_z2+full
+# and M3=u2_z2+full on this B-data, so _23 ensemble fits are identical across
+# the three scenarios (allowing equivalence-copy after re-run).
+#
+# Why we delete:
+#   - Existing _23 files were fit with default L-BFGS-B/1e8 nu, which is bimodal
+#     (M2 vs M3 winner-take-all) -> ratio = 0.18 raw, 0.95 only after outlier
+#     cleaning. cnr/1e2 collapses nu into M2 basin in 99% of reps (ESD 0.026 ->
+#     0.010 after cleaning, ratio = 0.95). Bias remains (+0.08, CP near 0)
+#     because picked M2 is misspecified.
+#   - Scope is narrow (nu:23 only). Other multi-model subsets (_12, _13, _123)
+#     are untouched by this override; their files stay valid.
+#
+# ====================================================================
+# == test65 ==  (files to delete + re-run)
+# ====================================================================
+Simulation_Results/EBMR_IPW_setting2-miss50-scenario9-2_23_n2000_replicate1000_test65.RDS    # rerun (M2+M3 with nu cnr/1e2)
+Simulation_Results/EBMR_IPW_setting2-miss50-scenario9-3_23_n2000_replicate1000_test65.RDS    # rerun (M2+M3 with nu cnr/1e2)
+# Note: scenario 9-4 setting2 has no existing _23 test65 file. When run later, it
+# will either fit fresh with the override OR be propagated via equivalence-copy
+# from a re-run 9-2/9-3 file (both routes give the same corrected fit).
+#
+# ====================================================================
+# == other versions / sample sizes ==
+# ====================================================================
+# - n=500 files are NOT in scope (override matches n=2000 only).
+# - test61 files: none exist for _23 in {9-2, 9-3, 9-4} setting2 miss50 n=2000.
+#
+# Total: 2 files to delete (test65 only).
+#
+# After deleting, re-run via Simulation_demo.r or:
+#   run_scenario("9-2", setting = "setting2", version = "test65", type = "HT")
+#   run_scenario("9-3", setting = "setting2", version = "test65", type = "HT")
+#   run_scenario("9-4", setting = "setting2", version = "test65", type = "HT")
+#   # Whichever runs first produces the corrected _23 file; equivalence-copy
+#   # propagates it to the other two scenarios in the equivalence class.
