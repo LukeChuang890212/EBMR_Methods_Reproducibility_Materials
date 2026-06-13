@@ -1,25 +1,21 @@
 #------------------------------------------------------------------------------#
-# Data_Generation_test.r — refactored data generators (test version)
+# Data_Generation.r — data generators for the EBMR simulation studies
 #
-# Goal: produce IDENTICAL data frames to Data_Generation.r for any given RNG seed.
-# The redundant per-setting boilerplate is factored into a small number of helpers,
-# and each setting function becomes a short, declarative composition.
+# Refactored from an earlier 1928-line version into a short helper layer plus
+# 67 declarative per-setting functions. The redundant boilerplate was factored
+# into a small number of helpers, and each setting function is now a short
+# declarative composition (covariate draw -> outcome -> propensity -> sample r).
 #
 # RNG-faithfulness contract: every rbinom/rnorm/sample call happens in the
-# same order as the original, so set.seed(X); setting_name(n) produces the
-# same data frame whether sourced from this file or the original.
+# same order as the pre-refactor version, so set.seed(X); setting_name(n)
+# produces a data frame identical() to the pre-refactor output. The original
+# 1928-line file is preserved in git at tag pre-data-generation-refactor:
+#   git checkout pre-data-generation-refactor -- Simulation_Studies/Data_Generation.r
 #
-# Convention shared with Data_Generation.r:
-#   A suffix = correctly-specified PS    (A1=50% miss, A2=30% miss)
-#   B suffix = misspecified PS via local exp-tilt   (B1=50% miss, B2=30% miss)
-#   Cho_*    = Cho 2025 reference settings (uses x1,x2,x3 covariates)
-#
-# To verify equivalence:
-#   source("Data_Generation.r");           orig <- as.list(.GlobalEnv)
-#   source("Data_Generation_test.r");      refac <- as.list(.GlobalEnv)
-#   then compare orig[[name]](n) vs refac[[name]](n) under the same set.seed().
-# A ready-made comparison script lives at
-#   Simulation_Test/verify/compare_data_generation.R
+# Naming convention:
+#   A suffix = correctly-specified PS    (A1 = 50% miss, A2 = 30% miss)
+#   B suffix = misspecified PS via local exp-tilt   (B1 = 50% miss, B2 = 30% miss)
+#   Cho_*    = Cho 2025 reference settings (uses x1, x2, x3 covariates)
 #------------------------------------------------------------------------------#
 
 #==============================================================================
